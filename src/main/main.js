@@ -8,26 +8,43 @@ const setupAutoUpdater = require('./autoUpdater');
 const PaymentManager = require('../services/payment/payment_manager');
 const PrinterManager = require('../services/printer/printer_manager');
 const PaymentStore = require('../services/database/payment_store');
+const ConfigManager = require("../services/config/config_manager");
 
 // .env 파일 로드
-dotenv.config();
+dotenv.config({ path: ['.env.development.local', '.env.development', '.env'] });
 
 // 로그 설정
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
+const configManager = new ConfigManager();
 const carWashManager = new CarWashManager();
 const scannerManager = new ScannerManager();
 const printerManager = new PrinterManager();
 const paymentManager = new PaymentManager();
 const paymentStore = new PaymentStore();
 
+
+async function loadConfigToEnv() {
+  let configResult = await configManager.loadConfiguration();
+  console.log(configResult);
+  if (!configResult.success) {
+    log.info('config 파일을 불러오는데 실패하였습니다.');
+  } else {
+    process.env.SHOP_TOKEN = configResult.configuration['token'];
+    process.env.SHOP_IDX = configResult.configuration['shopIdx'];
+  }
+}
+
+loadConfigToEnv();
+
+
 const isProduction = process.env.NODE_ENV === 'production';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 let mainWindow;
 
-function createWindow() {
+async function createWindow() {
   const devToolWidth = isDevelopment ? 400 : 0;
   mainWindow = new BrowserWindow({
     width: 1080 + devToolWidth,
@@ -58,10 +75,10 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
 
   if (isDevelopment) {
-    mainWindow.loadURL('http://localhost:5173');
+    await mainWindow.loadURL('http://localhost:5173');
   } else {
     const indexPath = path.join(process.resourcesPath, 'dist', 'index.html');
-    mainWindow.loadFile(indexPath);
+    await mainWindow.loadFile(indexPath);
   }
 
   if (isDevelopment) {
@@ -78,6 +95,7 @@ function createWindow() {
 }
 
 function initIPCHandlers() {
+  setConfigHandler();
   setMachineHandlers();
   setScannerHandlers();
   setPrinterHandlers();
@@ -162,6 +180,10 @@ app.on('ready', () => {
 process.on('uncaughtException', (error) => {
   log.error('Uncaught Exception:', error);
 });
+
+function setConfigHandler() {
+  ipcMain.handle('config:load', configManager.loadConfiguration.bind(configManager));
+}
 
 // IPC handlers
 function setMachineHandlers() {

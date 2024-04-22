@@ -27,6 +27,7 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+config.json
 
 # Electron-builder 출력
 /release

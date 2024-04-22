@@ -22,6 +22,7 @@
     "electron-updater": "^6.3.9",
     "escpos": "^3.0.0-alpha.6",
     "escpos-usb": "^3.0.0-alpha.4",
+    "lodash": "^4.17.21",
     "modbus-serial": "^8.0.17",
     "node-hid": "^3.1.1",
     "react": "^18.2.0",
@@ -29,6 +30,7 @@
     "react-router-dom": "^6.10.0",
     "rxjs": "^7.8.1",
     "serialport": "^10.5.0",
+    "urlsafe-base64": "^1.0.0",
     "usb": "^1.8.8",
     "ws": "^8.18.0"
   },

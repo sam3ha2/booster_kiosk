@@ -8,8 +8,15 @@ const api = axios.create({
 
 // Request interceptor
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // const token = localStorage.getItem('token') // 토큰을 로컬 스토리지에서 가져옵니다.
+    if (typeof process.env.SHOP_TOKEN === 'undefined') {
+      const configResult = await window.configIPC.loadConfig();
+      if (configResult.success) {
+        process.env.SHOP_TOKEN = configResult.configuration['token']
+        process.env.SHOP_IDX = configResult.configuration['shopIdx']
+      }
+    }
     const token = process.env.SHOP_TOKEN
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`

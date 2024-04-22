@@ -1,5 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+contextBridge.exposeInMainWorld('configIPC', {
+  loadConfig: () => ipcRenderer.invoke('config:load'),
+});
+
 contextBridge.exposeInMainWorld('machineIPC', {
   startWash: (mode) => ipcRenderer.invoke('machine:start-wash', mode),
   stopWash: () => ipcRenderer.invoke('machine:stop-wash'),

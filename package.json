@@ -8,9 +8,11 @@
     "build": "vite build",
     "electron:build": "npm run build && electron-builder",
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
-    "dev:vite": "vite",
+    "dev:vite": "vite --mode development",
     "dev:electron": "wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .",
     "web": "vite",
+    "build:development": "vite build --mode development && electron-builder --win --x64",
+    "build:production": "rm .env.development && vite build && electron-builder --win --x64",
     "deploy": "electron-builder build --win --publish always"
   },
   "author": "Booster Team",
@@ -22,6 +24,7 @@
     "electron-updater": "^6.3.9",
     "escpos": "^3.0.0-alpha.6",
     "escpos-usb": "^3.0.0-alpha.4",
+    "lodash": "^4.17.21",
     "modbus-serial": "^8.0.17",
     "node-hid": "^3.1.1",
     "react": "^18.2.0",
@@ -29,6 +32,7 @@
     "react-router-dom": "^6.10.0",
     "rxjs": "^7.8.1",
     "serialport": "^10.5.0",
+    "urlsafe-base64": "^1.0.0",
     "usb": "^1.8.8",
     "ws": "^8.18.0"
   },
@@ -44,9 +48,5 @@
     "tailwindcss": "^3.4.13",
     "vite": "^5.1.4",
     "wait-on": "^8.0.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sam3ha2/booster_kiosk.git"
   }
 }

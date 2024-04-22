@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    run-as: root
+  build:
+    commands:
+      - apt-get update
+      - apt install -y wine64
+      - apt install -y libudev-dev libusb-1.0-0-dev
+      - wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+      - dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+#      - scripts/s3_upload
+      - yarn install --force --ignore-engines --ignore-platform
+      - yarn run build:$VITE_APP_ENV
+
+cache:
+  paths:
+    - node_modules/**/*
+    - dist_electron/node_modules/**/*
+    - /usr/local/share/.cache/yarn/v6/**/*

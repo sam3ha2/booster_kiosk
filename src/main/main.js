@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const CarWashManager = require('../utils/car_wash_manager');
+const CarWashManager = require('../services/car_wash/car_wash_manager');
 
 function createWindow() {
   const win = new BrowserWindow({

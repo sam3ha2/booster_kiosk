@@ -1,12 +1,23 @@
 const AbstractCarWashMachine = require('../abstract_car_wash_machine');
 
 class TypeACarWash extends AbstractCarWashMachine {
-  constructor(serialPort, config) {
-    super(serialPort, config);
+  constructor(config) {
+    super(config);
     this.status = 'idle';
   }
 
+  getSerialConfig() {
+    return {
+      path: this.config.portName,
+      baudRate: 115200, // 예시로 다른 baudRate를 사용
+      dataBits: 8,
+      stopBits: 1,
+      parity: 'none'
+    };
+  }
+
   async initialize() {
+    await super.initialize();
     await this.sendCommand(this.config.initCommand);
     console.log('Type A 세차기 초기화 완료');
   }

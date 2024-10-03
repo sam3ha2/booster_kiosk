@@ -69,6 +69,26 @@ const ApiService = {
       throw error
     }
   },
+
+  async createReservation(data) {
+    try {
+      const response = await api.post('/kiosk/reservations', {
+        tel: data.tel,
+        product_idx: data.product_idx,
+        payment: {
+          approval_number: data.payment.approval_number,
+          card_number: data.payment.card_number,
+          card_company_number: data.payment.card_company_number,
+          type: data.payment.type,
+          amount: data.payment.amount
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('예약 생성 실패:', error);
+      throw error;
+    }
+  },
 }
 
 export default ApiService

@@ -3,6 +3,7 @@ import Home from './views/Home.vue'
 import ProductList from './views/ProductList.vue'
 import Reservation from './views/Reservation.vue'
 import Payment from './views/Payment.vue'
+import ReservationComplete from './views/ReservationComplete.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/payment',
     name: 'payment',
     component: Payment
+  },
+  {
+    path: '/reservation-complete',
+    name: 'reservation-complete',
+    component: ReservationComplete
   }
 ]
 

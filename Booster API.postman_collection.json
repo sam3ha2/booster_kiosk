@@ -1,0 +1,976 @@
+{
+	"info": {
+		"_postman_id": "56d86f91-3cff-40aa-a777-133565791c3d",
+		"name": "Booster API",
+		"description": "## 소개 및 목적\n\n이 API 명세서는 부스터 키오스크에서 제공하는 세차 서비스 API에 대한 목적과 사용법을 설명합니다. 이 API를 통해 사용자는 부스터 키오스크에서 세차 서비스를 조회하고 예약하며, 현장 결제를 수행할 수 있습니다.\n\n## Base URL\n\n- 개발 환경: `https://dev.boosteron.co.kr/api`\n- 운영 환경: `https://boosteron.co.kr/api`\n    \n\n## 인증과 권한\n\n- API 접근을 위해서는 API 토큰을 발급 받아야 합니다.\n- API 토큰은 이메일(`dev@boosteron.co.kr`)로 요청하여 발급 받을 수 있습니다.\n    \n- API 요청의 `Authorization` 헤더에 `Bearer {API_TOKEN}` 형식으로 API 토큰을 포함하여 보내야 합니다.\n- 인증에 성공한 경우에만 API 요청이 처리되며, 권한이 없는 경우에는 적절한 에러 응답을 받을 수 있습니다.\n    \n\n## 에러 응답\n\nAPI 호출 중 발생할 수 있는 에러 상황 및 에러 코드는 다음과 같습니다:\n\n##### 예약 없음 (NOT_FOUND)\n\n``` json\n{\n    \"type\": \"NOT_FOUND\",\n    \"status\": 404,\n    \"message\": \"찾을 수 없습니다.\"\n}\n\n ```\n\n##### 필수 파라미터 부족 (VALIDATION_ERROR)\n\n``` json\n{\n    \"type\": \"VALIDATION_ERROR\",\n    \"status\": 400,\n    \"message\": \"파라미터 오류\"\n}\n\n ```\n\n##### 이미 완료된 예약 (VALIDATION_ERROR)\n\n``` json\n{\n    \"type\": \"VALIDATION_ERROR\",\n    \"status\": 400,\n    \"message\": \"이미 완료된 예약입니다\"\n}\n\n ```",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1857569",
+		"_collection_link": "https://boosterkor.postman.co/workspace/booster-Workspace~b0f9b8c6-37f3-42d1-800c-09a9c6d7b068/collection/1857569-56d86f91-3cff-40aa-a777-133565791c3d?action=share&source=collection_link&creator=1857569"
+	},
+	"item": [
+		{
+			"name": "영수증 표시 정보 조회",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{kioskToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kiosk/receipt-info",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kiosk",
+						"receipt-info"
+					]
+				},
+				"description": "이 API는 부스터 키오스크에서 결제 후 출력되는 영수증에 보여줄 세차장 정보를 제공합니다.\n\n### Response 예시\n\n``` json\n{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"registration_number\": \"123-1212-12344\",\n        \"representative_name\": \"대표자이름\",\n        \"shop_name\": \"부스터 판교 매장\",\n        \"shop_tel\": \"010-0000-0000\",\n        \"shop_address\": \"사업자주소지\"\n    }\n}\n\n ```\n\n### 응답 필드\n\n- `type`: 응답 타입 (\"SUCCESS\" 등)\n- `status`: 응답 상태 코드 (200, 404 등)\n- `message`: 응답 메시지 (\"SUCCESS\" 등)\n- `item`: 영수증 표시 정보\n    \n    - `registration_number`: 사업자 번호\n        \n    - `representative_name`: 대표자 이름\n        \n    - `shop_name`: 매장 이름\n    - `shop_tel`: 매장 전화번호\n    - `shop_address`: 매장 주소"
+			},
+			"response": [
+				{
+					"name": "성공",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/kiosk/receipt-info",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"receipt-info"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.2.2 Python/3.11.6"
+						},
+						{
+							"key": "Date",
+							"value": "Mon, 04 Mar 2024 06:21:29 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "318"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"registration_number\": \"123-1212-12344\",\n        \"representative_name\": \"대표자이름\",\n        \"shop_name\": \"부스터 판교 매장\",\n        \"shop_address\": \"사업자주소지\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "매장 정보 조회",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{kioskToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kiosk/receipt-info",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kiosk",
+						"receipt-info"
+					]
+				},
+				"description": "이 API는 부스터 키오스크에서 결제 후 출력되는 영수증에 보여줄 세차장 정보를 제공합니다.\n\n### Response 예시\n\n``` json\n{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"registration_number\": \"123-1212-12344\",\n        \"representative_name\": \"대표자이름\",\n        \"shop_name\": \"부스터 판교 매장\",\n        \"shop_address\": \"사업자주소지\"\n    }\n}\n\n ```\n\n### 응답 필드\n\n- `type`: 응답 타입 (\"SUCCESS\" 등)\n- `status`: 응답 상태 코드 (200, 404 등)\n- `message`: 응답 메시지 (\"SUCCESS\" 등)\n- `item`: 영수증 표시 정보\n    - `registration_number`: 사업자 번호\n    - `representative_name`: 대표자 이름\n    - `shop_name`: 매장 이름\n    - `shop_address`: 매장 주소"
+			},
+			"response": [
+				{
+					"name": "성공",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/kiosk/receipt-info",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"receipt-info"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.2.2 Python/3.11.6"
+						},
+						{
+							"key": "Date",
+							"value": "Mon, 04 Mar 2024 06:21:29 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "318"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"registration_number\": \"123-1212-12344\",\n        \"representative_name\": \"대표자이름\",\n        \"shop_name\": \"부스터 판교 매장\",\n        \"shop_address\": \"사업자주소지\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "상품 조회",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{kioskToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kiosk/products",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kiosk",
+						"products"
+					]
+				},
+				"description": "이 API는 부스터 키오스크에서 제공하는 세차 서비스 상품을 조회하는 역할을 합니다. 사용자는 이 엔드포인트를 호출하여 사용 가능한 세차 서비스 상품 목록을 받아볼 수 있습니다.\n\n### Response 예시\n\n``` json\n{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"total\": 4,\n    \"list\": [\n        {\n            \"seq\": 4,\n            \"idx\": \"d8809432-13bb-4155-93fa-ae5855331901\",\n            \"name\": \"Basic\",\n            \"description\": \"고압세차 + 프리워시(알카리) + 버블세제 + 초고압세척 + 건조\",\n            \"price\": 9000,\n            \"duration\": 10,\n            \"target_mode\": \"MODE1\",\n            \"payment_rf_only\": true\n        },\n        {\n            \"seq\": 3,\n            \"idx\": \"712664f6-61f5-488c-8fba-654cae2dac79\",\n            \"name\": \"Economy\",\n            \"description\": \"하부세차 + 고압세척 + 프리워시(알카리) + 버블세제 + 초고압세척 + 건조\",\n            \"price\": 11000,\n            \"duration\": 10,\n            \"target_mode\": \"MODE2\",\n            \"payment_rf_only\": false\n        },\n        {\n            \"seq\": 2,\n            \"idx\": \"b7d75404-9818-43ec-b90d-135e612b6294\",\n            \"name\": \"Preimium\",\n            \"description\": \"하부세차 + 고압세척 + 프리워시(알카리) + 중성세제 + 버블세제 + 초고압세척 +  왁스코팅제+ 건조\",\n            \"price\": 13000,\n            \"duration\": 11,\n            \"target_mode\": \"MODE3\",\n            \"payment_rf_only\": false\n        },\n        {\n            \"seq\": 1,\n            \"idx\": \"2ecb547e-f352-47db-adbe-f1d20fe6e53c\",\n            \"name\": \"Hi-end\",\n            \"description\": \"하부세차 + 고압세척 + 프리워시(알카리) + 버블세제 + 초고압세척 +  중성세제 + 초고압세척 + 왁스코팅제 + 건조\",\n            \"price\": 15000,\n            \"duration\": 13,\n            \"target_mode\": \"MODE4\",\n            \"payment_rf_only\": false\n        }\n    ]\n}\n\n ```\n\n### 응답 필드\n\n- `type`: 응답 타입 (\"SUCCESS\" 등)\n- `status`: 응답 상태 코드 (200, 404 등)\n- `message`: 응답 메시지 (\"SUCCESS\" 등)\n- `total`: 전체 상품 수\n- `list`: 상품 목록 배열\n    - `seq`: 순서\n    - `idx`: 상품 고유 식별자\n    - `name`: 상품 이름\n    - `description`: 상품 설명\n    - `price`: 상품 가격(원)\n    - `duration`: 세차 소요 시간(분)\n    - `target_mode`: 세차 모드(MODE1\\~4) SG 규격서의 MODE 와 매핑\n    - `payment_rf_only`: true 설정된 경우, 결제 방법 선택 없이 RF 결제 진행(event 등 RF전용으로 결제 필요한 경우)"
+			},
+			"response": [
+				{
+					"name": "성공",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/kiosk/products",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"products"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 12:43:22 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "1638"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"total\": 4,\n    \"list\": [\n        {\n            \"seq\": 4,\n            \"idx\": \"2ecb547e-f352-47db-adbe-f1d20fe6e53c\",\n            \"name\": \"Hi-end\",\n            \"description\": \"하부세차 + 고압세척 + 프리워시(알카리) + 버블세제 + 초고압세척 +  중성세제 + 초고압세척 + 왁스코팅제 + 건조\",\n            \"payment_rf_only\": false,\n            \"target_mode\": \"MODE4\",\n            \"price\": 15000,\n            \"duration\": 13\n        },\n        {\n            \"seq\": 3,\n            \"idx\": \"d8809432-13bb-4155-93fa-ae5855331901\",\n            \"name\": \"Basic\",\n            \"description\": \"고압세차 + 프리워시(알카리) + 버블세제 + 초고압세척 + 건조\",\n            \"payment_rf_only\": false,\n            \"target_mode\": \"MODE1\",\n            \"price\": 9000,\n            \"duration\": 10\n        },\n        {\n            \"seq\": 2,\n            \"idx\": \"712664f6-61f5-488c-8fba-654cae2dac79\",\n            \"name\": \"Economy\",\n            \"description\": \"하부세차 + 고압세척 + 프리워시(알카리) + 버블세제 + 초고압세척 + 건조\",\n            \"payment_rf_only\": false,\n            \"target_mode\": \"MODE2\",\n            \"price\": 11000,\n            \"duration\": 10\n        },\n        {\n            \"seq\": 1,\n            \"idx\": \"b7d75404-9818-43ec-b90d-135e612b6294\",\n            \"name\": \"Preimium\",\n            \"description\": \"하부세차 + 고압세척 + 프리워시(알카리) + 중성세제 + 버블세제 + 초고압세척 +  왁스코팅제+ 건조\",\n            \"payment_rf_only\": false,\n            \"target_mode\": \"MODE3\",\n            \"price\": 13000,\n            \"duration\": 11\n        }\n    ]\n}"
+				}
+			]
+		},
+		{
+			"name": "예약 조회",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0eXBlIjoiZGV2aWNlIiwiaWR4IjoiRzRDOVBhMjlTVFNPVERmN05USXFCQSIsImlhdCI6MTcxMTQ4ODM2NH0.Lb8dXmKPbAW0M38Q1C9wyNQpLswGiuRGALFvATpXmH4",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kiosk/reservations?hipass_idx=3&qr_idx=00199d95-e3fc-4f08-abf3-58e0e63a52dc&qr_created_at=1692711514&qr_checksum=$2a$12$VUhkMJYoasDO9J52xVJCte6Rc7sd0IUD7N6CSfXRTj2tb1lRPoRyO&is_test=Y",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kiosk",
+						"reservations"
+					],
+					"query": [
+						{
+							"key": "hipass_idx",
+							"value": "3"
+						},
+						{
+							"key": "qr_idx",
+							"value": "00199d95-e3fc-4f08-abf3-58e0e63a52dc",
+							"description": "qr idx로 조회 (UUID 형식)"
+						},
+						{
+							"key": "qr_created_at",
+							"value": "1692711514",
+							"description": "QR 코드 생성 시간 (timestamp 형식)"
+						},
+						{
+							"key": "qr_checksum",
+							"value": "$2a$12$VUhkMJYoasDO9J52xVJCte6Rc7sd0IUD7N6CSfXRTj2tb1lRPoRyO",
+							"description": "검증 키 (해시된 값)"
+						},
+						{
+							"key": "is_test",
+							"value": "Y",
+							"description": "테스트 모드 여부 (Y 또는 N)\n유효성 및 예약상태와 관계 없이 조회 되도록(prod에서는 무시됨)"
+						}
+					]
+				},
+				"description": "이 API는 부스터 키오스크에서 제공하는 세차 서비스 예약 정보를 조회하는 역할을 합니다. 사용자는 예약 식별자 및 기타 필요한 파라미터를 전달하여 해당 예약의 정보를 받아볼 수 있습니다.\n\n예약 조회는 두 가지 방식으로 가능합니다:\n\n1. `hipass_idx`를 활용하여 조회합니다. 이 경우 해당 하이패스 사용자의 예약 정보를 얻을 수 있습니다.\n2. QR 코드를 활용하여 조회합니다. QR 코드에 포함된 `qr_idx`, `qr_created_at`, `qr_checksum`을 함께 전송해 예약 정보를 얻을 수 있습니다.(이 경우 위 3가지 모두 필수 파라미터입니다.)\n    \n\n참고로 `hipass_idx` 와 `qr_idx 를 같이 전송하면 qr_idx` 기준으로 조회합니다.\n\n**중요**: QR 코드의 유효시간은 15초로 제한됩니다. 따라서 API 요청 전에 키오스크에서 유효시간을 확인하고, 유효한 경우에만 API를 호출하도록 권장합니다.\n\n### Response 예시\n\n``` json\n{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"idx\": \"ebfde02c-9fa1-4fb8-9dd5-50c965433def\",\n        \"product\": {\n            \"idx\": \"d8809432-13bb-4155-93fa-ae5855331901\",\n            \"name\": \"Basic\",\n            \"description\": \"고압세차 + 프리워시(알카리) + 버블세제 + 초고압세척 + 건조\",\n            \"duration\": 10,\n            \"target_mode\": \"MODE1\"\n        }\n    }\n}\n\n ```\n\n### 응답 필드\n\n- `type`: 응답 타입 (\"SUCCESS\" 등)\n- `status`: 응답 상태 코드 (200, 404 등)\n- `message`: 응답 메시지 (\"SUCCESS\" 등)\n- `item`: 예약 정보\n    - `idx`: 예약 식별자\n    - `product`: 예약된 상품 정보\n        - `idx`: 상품 식별자\n        - `name`: 상품 이름\n        - `description`: 상품 설명\n        - `duration`: 세차 소요 시간(분)"
+			},
+			"response": [
+				{
+					"name": "성공",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/kiosk/reservations?qr_idx=ebfde02c-9fa1-4fb8-9dd5-50c965433def&qr_created_at=1692711514&qr_checksum=$2a$12$VUhkMJYoasDO9J52xVJCte6Rc7sd0IUD7N6CSfXRTj2tb1lRPoRyO&is_test=Y",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations"
+							],
+							"query": [
+								{
+									"key": "hipass_idx",
+									"value": "3",
+									"description": "하이패스 번호로 예약 확인",
+									"disabled": true
+								},
+								{
+									"key": "qr_idx",
+									"value": "ebfde02c-9fa1-4fb8-9dd5-50c965433def",
+									"description": "qr idx로 조회 (UUID 형식)"
+								},
+								{
+									"key": "qr_created_at",
+									"value": "1692711514",
+									"description": "qr code 생성 시간(qr조회시 필수)"
+								},
+								{
+									"key": "qr_checksum",
+									"value": "$2a$12$VUhkMJYoasDO9J52xVJCte6Rc7sd0IUD7N6CSfXRTj2tb1lRPoRyO",
+									"description": "qr code 유효성 체크용(qr조회시 필수)"
+								},
+								{
+									"key": "is_test",
+									"value": "Y",
+									"description": "테스트 모드 여부 (Y 또는 N)\n유효성 체크 통과 여부(prod에서는 무시됨)"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 14:09:57 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "431"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"idx\": \"ebfde02c-9fa1-4fb8-9dd5-50c965433def\",\n        \"product\": {\n            \"idx\": \"d8809432-13bb-4155-93fa-ae5855331901\",\n            \"name\": \"Basic\",\n            \"description\": \"고압세차 + 프리워시(알카리) + 버블세제 + 초고압세척 + 건조\",\n            \"duration\": 10,\n            \"target_mode\": \"MODE1\"\n        }\n    }\n}"
+				},
+				{
+					"name": "예약 없을 때",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/kiosk/reservations?hipass_idx=3",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations"
+							],
+							"query": [
+								{
+									"key": "hipass_idx",
+									"value": "3",
+									"description": "하이패스 번호로 예약 확인"
+								},
+								{
+									"key": "qr_idx",
+									"value": "ebfde02c-9fa1-4fb8-9dd5-50c965433def",
+									"description": "qr idx로 조회 (UUID 형식)",
+									"disabled": true
+								},
+								{
+									"key": "qr_created_at",
+									"value": "1692711514",
+									"description": "QR 코드 생성 시간 (timestamp 형식)",
+									"disabled": true
+								},
+								{
+									"key": "qr_checksum",
+									"value": "$2a$12$VUhkMJYoasDO9J52xVJCte6Rc7sd0IUD7N6CSfXRTj2tb1lRPoRyO",
+									"description": "검증 키 (해시된 값)",
+									"disabled": true
+								},
+								{
+									"key": "is_test",
+									"value": "Y",
+									"description": "테스트 모드 여부 (Y 또는 N)\n유효성 체크 통과 여부(prod에서는 무시됨)",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"status": "NOT FOUND",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 11:23:50 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "107"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"NOT_FOUND\",\n    \"status\": 404,\n    \"message\": \"찾을 수 없습니다.\"\n}"
+				},
+				{
+					"name": "필수 파라미터 없을 때",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/kiosk/reservations?qr_idx=ebfde02c-9fa1-4fb8-9dd5-50c965433def&qr_created_at=1692711514&is_test=Y",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations"
+							],
+							"query": [
+								{
+									"key": "hipass_idx",
+									"value": "3",
+									"description": "하이패스 번호로 예약 확인",
+									"disabled": true
+								},
+								{
+									"key": "qr_idx",
+									"value": "ebfde02c-9fa1-4fb8-9dd5-50c965433def",
+									"description": "qr idx로 조회 (UUID 형식)"
+								},
+								{
+									"key": "qr_created_at",
+									"value": "1692711514",
+									"description": "QR 코드 생성 시간 (timestamp 형식)"
+								},
+								{
+									"key": "qr_checksum",
+									"value": "$2a$12$VUhkMJYoasDO9J52xVJCte6Rc7sd0IUD7N6CSfXRTj2tb1lRPoRyO",
+									"description": "검증 키 (해시된 값)",
+									"disabled": true
+								},
+								{
+									"key": "is_test",
+									"value": "Y",
+									"description": "테스트 모드 여부 (Y 또는 N)\n유효성 체크 통과 여부(prod에서는 무시됨)"
+								}
+							]
+						}
+					},
+					"status": "BAD REQUEST",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 14:11:43 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "106"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"VALIDATION_ERROR\",\n    \"status\": 400,\n    \"message\": \"파라미터 오류\"\n}"
+				}
+			]
+		},
+		{
+			"name": "예약 등록",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{kioskToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tel\": \"010-0000-0000\",\n    \"product_idx\": \"d8809432-13bb-4155-93fa-ae5855331901\",\n    \"payment\": {\n        \"approval_number\": \"승인 번호\",\n        \"card_number\": \"카드 번호\",\n        \"card_company_number\": \"카드사 번호\",\n        \"type\": \"CARD or RF\",\n        \"amount\": 20000\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/kiosk/reservations",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kiosk",
+						"reservations"
+					]
+				},
+				"description": "## 설명\n\n이 API는 부스터 키오스크에서 제공하는 세차 서비스 예약을 등록하는 역할을 합니다. 사용자는 아래와 같은 정보를 Request Body에 포함하여 예약을 등록할 수 있습니다:\n\n- `tel`: 예약자 전화번호\n- `product_idx`: 예약할 상품 식별자 (UUID 형식)\n- `payment`: 결제 정보\n    - `approval_number`: 결제 승인 번호\n    - `card_number`: 결제 카드 번호\n    - `card_company_number`: 결제 카드사 번호\n    - `type`: 결제 타입 (CARD 또는 RF)\n    - `amount`: 결제 금액\n\n### Response 예시\n\n``` json\n{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"idx\": \"b29fec6d-53d5-4ccc-8457-54046ab53836\"\n    }\n}\n\n```\n\n### 응답 필드\n\n- `type`: 응답 타입 (\"SUCCESS\" 등)\n- `status`: 응답 상태 코드 (200, 404 등)\n- `message`: 응답 메시지 (\"SUCCESS\" 등)\n- `item`: 예약 정보\n    - `idx`: 예약 식별자"
+			},
+			"response": [
+				{
+					"name": "성공",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tel\": \"010-0000-0000\",\n    \"product_idx\": \"d8809432-13bb-4155-93fa-ae5855331901\",\n    \"payment\": {\n        \"approval_number\": \"승인 번호\",\n        \"card_number\": \"카드 번호\",\n        \"card_company_number\": \"카드사 번호\",\n        \"type\": \"RF\",\n        \"amount\": 20000\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/kiosk/reservations",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 12:40:09 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "135"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"idx\": \"b29fec6d-53d5-4ccc-8457-54046ab53836\"\n    }\n}"
+				},
+				{
+					"name": "필수 파라미터 없을 때",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tel\": \"010-0000-0000\",\n    \"payment\": {\n        \"approval_number\": \"승인 번호\",\n        \"card_number\": \"카드 번호\",\n        \"card_company_number\": \"카드사 번호\",\n        \"type\": \"RF\",\n        \"amount\": 20000\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/kiosk/reservations",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations"
+							]
+						}
+					},
+					"status": "BAD REQUEST",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 12:41:03 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "106"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"VALIDATION_ERROR\",\n    \"status\": 400,\n    \"message\": \"파라미터 오류\"\n}"
+				}
+			]
+		},
+		{
+			"name": "예약 상태 변경",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{kioskToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\": \"COMPLETE\",\n    \"hipass_idx\": \"3\",\n    \"is_test\": \"Y\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/kiosk/reservations/:idx",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kiosk",
+						"reservations",
+						":idx"
+					],
+					"variable": [
+						{
+							"key": "idx",
+							"value": "ebfde02c-9fa1-4fb8-9dd5-50c965433def",
+							"description": "예약번호"
+						}
+					]
+				},
+				"description": "## 설명\n\n** PATCH 요청이 불가능한 브라우저로 인해 PUT 요청도 같은 동작을 합니다. **\n\n이 API는 부스터 키오스크에서 제공하는 세차 서비스 예약 상태를 변경하는 역할을 합니다. 사용자는 아래와 같은 정보를 Request Body에 포함하여 예약 상태를 변경할 수 있습니다.\n\n- `status`: 변경할 예약 상태 (예: \"COMPLETE\", \"CANCEL\")\n    \n- `hipass_idx`: 예약자 정보 업데이트를 위해 사용되는 하이패스 식별자\n    \n- `is_test`: 테스트 모드(Y, N) - 예약 상태가 COMPLETE 일 때에도 변경 적용 되도록\n    \n\n### Response 예시 (성공)\n\n``` json\n{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"idx\": \"b29fec6d-53d5-4ccc-8457-54046ab53836\",\n        \"status\": \"COMPLETE\"\n    }\n}\n\n ```\n\n### 응답 필드\n\n- `type`: 응답 타입 (\"SUCCESS\" 등)\n    \n- `status`: 응답 상태 코드 (200, 404 등)\n    \n- `message`: 응답 메시지 (\"SUCCESS\" 등)\n    \n- `item`: 변경된 예약 정보\n    - `idx`: 예약 식별자\n        \n    - `status`: 변경된 예약 상태"
+			},
+			"response": [
+				{
+					"name": "성공",
+					"originalRequest": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"COMPLETE\",\n    \"hipass_idx\": \"3\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/kiosk/reservations/:idx",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations",
+								":idx"
+							],
+							"variable": [
+								{
+									"key": "idx",
+									"value": "b29fec6d-53d5-4ccc-8457-54046ab53836",
+									"description": "예약번호"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 12:40:21 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "162"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\",\n    \"item\": {\n        \"idx\": \"b29fec6d-53d5-4ccc-8457-54046ab53836\",\n        \"status\": \"COMPLETE\"\n    }\n}"
+				},
+				{
+					"name": "이미 완료 처리된 예약일 때",
+					"originalRequest": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"COMPLETE\",\n    \"hipass_idx\": \"3\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/kiosk/reservations/:idx",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations",
+								":idx"
+							],
+							"variable": [
+								{
+									"key": "idx",
+									"value": "301fddbe-ddf5-4d54-bd35-ccfcba8f4844",
+									"description": "예약번호"
+								}
+							]
+						}
+					},
+					"status": "BAD REQUEST",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 12:37:28 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "131"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"VALIDATION_ERROR\",\n    \"status\": 400,\n    \"message\": \"이미 완료된 예약입니다\"\n}"
+				}
+			]
+		},
+		{
+			"name": "영수증 발급 요청",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{kioskToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tel\": \"01000000000\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/kiosk/receipt/:idx",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kiosk",
+						"receipt",
+						":idx"
+					],
+					"variable": [
+						{
+							"key": "idx",
+							"value": "ebfde02c-9fa1-4fb8-9dd5-50c965433def",
+							"description": "예약번호"
+						}
+					]
+				},
+				"description": "## 설명\n\n이 API는 부스터 키오스크에서 전자 영수증 발급하기 위해 사용됩니다. 사용자는 아래와 같은 정보를 Request Body에 포함하여 전자 영수증을 요청할수 있습니다.\n\n- `idx`: 예약 idx\n    \n- `tel`: 영수증 받을 전화번호\n    \n\n### Response 예시 (성공)\n\n``` json\n{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\"\n}\n\n ```\n\n### 응답 필드\n\n- `type`: 응답 타입 (\"SUCCESS\" 등)\n    \n- `status`: 응답 상태 코드 (200, 404 등)\n    \n- `message`: 응답 메시지 (\"SUCCESS\" 등)"
+			},
+			"response": [
+				{
+					"name": "성공",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"COMPLETE\",\n    \"hipass_idx\": \"3\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/kiosk/reservations/:idx",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"kiosk",
+								"reservations",
+								":idx"
+							],
+							"variable": [
+								{
+									"key": "idx",
+									"value": "b29fec6d-53d5-4ccc-8457-54046ab53836",
+									"description": "예약번호"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "Werkzeug/2.3.7 Python/3.8.17"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Aug 2023 12:40:21 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "162"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"type\": \"SUCCESS\",\n    \"status\": 200,\n    \"message\": \"SUCCESS\"\n}"
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,56 @@
+{
+  "name": "booster-car-wash-kiosk",
+  "version": "1.0.0",
+  "description": "부스터 세차 키오스크 애플리케이션",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "vite build && electron-builder",
+    "dev": "concurrently \"cross-env BROWSER=none npm run dev:vite\" \"wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .\"",
+    "dev:vite": "vite",
+    "web": "vite"
+  },
+  "author": "Booster Team",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "electron-log": "^5.1.1",
+    "serialport": "^12.0.0",
+    "vue": "^3.4.21",
+    "vue-qrcode-reader": "^5.5.10",
+    "vue-router": "^4.3.0",
+    "winston": "^3.12.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^29.1.1",
+    "electron-builder": "^24.13.3",
+    "vite": "^5.1.4",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.booster.carwashkiosk",
+    "productName": "Booster Car Wash Kiosk",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

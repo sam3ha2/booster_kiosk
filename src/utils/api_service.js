@@ -81,7 +81,8 @@ const ApiService = {
           card_company_number: data.payment.card_company_number,
           type: data.payment.type,
           amount: data.payment.amount
-        }
+        },
+        status: data.status
       });
       return response.data;
     } catch (error) {

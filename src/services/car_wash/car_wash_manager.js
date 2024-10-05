@@ -32,7 +32,17 @@ class CarWashManager {
     return { success: true, message: `${type} 세차기가 추가되었습니다.` };
   }
 
-  // ... 기존의 다른 메서드들 ...
+  // 세차기 제어 메서드
+  async controlCarWash(event, { action, machineId, mode }) {
+    const machine = this.machines.get(machineId);
+    if (!machine) {
+      throw new Error('Car wash machine not found');
+    }
+
+    if (action === 'start') {
+      await machine.start(mode);
+    }
+  }
 }
 
 module.exports = CarWashManager;

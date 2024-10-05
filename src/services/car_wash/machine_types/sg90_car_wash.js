@@ -23,10 +23,10 @@ class SG90CarWash extends AbstractCarWashMachine {
 
   async start(mode) {
     const commands = {
-      1: '3A 30 31 30 35 30 39 30 35 46 46 30 30 45 44 0D 0A',
-      2: '3A 30 31 30 35 30 39 30 36 46 46 30 30 45 43 0D 0A',
-      3: '3A 30 31 30 35 30 39 30 34 46 46 30 30 45 45 0D 0A',
-      4: '3A 30 31 30 35 30 39 30 38 46 46 30 30 45 41 0D 0A'
+      'MODE1': '3A 30 31 30 35 30 39 30 35 46 46 30 30 45 44 0D 0A',
+      'MODE2': '3A 30 31 30 35 30 39 30 36 46 46 30 30 45 43 0D 0A',
+      'MODE3': '3A 30 31 30 35 30 39 30 34 46 46 30 30 45 45 0D 0A',
+      'MODE4': '3A 30 31 30 35 30 39 30 38 46 46 30 30 45 41 0D 0A'
     };
     await this.sendCommand(commands[mode]);
     console.log(`SG90 세차기 모드 ${mode} 시작`);

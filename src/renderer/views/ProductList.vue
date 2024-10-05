@@ -95,10 +95,27 @@ const processPayment = async () => {
     const reservationResponse = await ApiService.createReservation({
       tel: '010-0000-0000', // TODO: 실제 사용자 전화번호 입력 받기
       product_idx: selectedProduct.value.idx,
-      payment: paymentInfo
+      payment: paymentInfo,
+      status: 'COMPLETE'
     })
 
     console.log('예약이 완료되었습니다:', reservationResponse)
+
+    // 세차기 동작 시작
+    try {
+      const { ipcRenderer } = require('electron');
+      await ipcRenderer.invoke('control-car-wash', {
+        action: 'start',
+        machineId: '0',
+        mode: selectedProduct.value.targetMode // 선택된 제품의 target_mode를 세차 모드로 사용
+      });
+      console.log('세차기가 성공적으로 시작되었습니다.');
+    } catch (error) {
+      console.error('세차기 시작 중 오류 발생:', error);
+      throw new Error('세차기를 시작할 수 없습니다. 관리자에게 문의해주세요.');
+    } finally {
+      loading.value = false
+    }
 
     // 예약 완료 페이지로 이동
     router.push({ 
@@ -127,7 +144,7 @@ const simulatePayment = () => {
         type: 'CARD',
         amount: selectedProduct.value.price
       })
-    }, 2000) // 2초 후 결제 완료 시뮬레이션
+    }, 1000) // 1초 후 결제 완료 시뮬레이션
   })
 }
 

@@ -22,7 +22,11 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
-  new CarWashManager(); // CarWashManager 인스턴스 생성
+  this.carWashManager = new CarWashManager(); // CarWashManager 인스턴스 생성
+  this.carWashManager.addMachine('addMachine', {
+    type: 'SG90',
+    config: { portName: '/dev/ttys018', id: '0' }
+  });
 });
 
 app.on('window-all-closed', () => {

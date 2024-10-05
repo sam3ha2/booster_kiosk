@@ -93,8 +93,63 @@ class SG90CarWash extends AbstractCarWashMachine {
 
   onDataReceived(data) {
     console.log('SG90 세차기로부터 데이터 수신:', data);
-    // 여기서 데이터를 파싱하고 필요한 작업을 수행합니다.
+    
+    // 16진수 문자열을 바이트 배열로 변환
+    const bytes = data.split(' ').map(hex => parseInt(hex, 16));
+    
+    // 응답 형식 확인
+    if (bytes.length < 7 || bytes[0] !== 0x3A || bytes[bytes.length - 2] !== 0x0D || bytes[bytes.length - 1] !== 0x0A) {
+      console.error('잘못된 응답 형식:', data);
+      return;
+    }
+    
+    const address = bytes[1].toString(16).padStart(2, '0');
+    const functionCode = bytes[2];
+    const dataLength = bytes[3];
+    const responseData = bytes.slice(4, -4);
+    
+    switch (functionCode) {
+      case 0x01: // 상태 확인 응답
+        this.handleStatusResponse(responseData);
+        break;
+      case 0x03: // 데이터 읽기 응답
+        this.handleDataReadResponse(responseData);
+        break;
+      case 0x05: // 명령 실행 응답
+        this.handleCommandResponse(responseData);
+        break;
+      default:
+        console.warn('알 수 없는 기능 코드:', functionCode);
+    }
+  }
+  
+  handleStatusResponse(data) {
+    const status = data[0];
+    const statusMap = {
+      0x00: '대기 중',
+      0x01: '작동 중',
+      0x02: '일시 정지',
+      0x03: '에러 발생'
+    };
+    console.log('세차기 상태:', statusMap[status] || '알 수 없는 상태');
+    // 여기에 상태에 따른 추가 로직을 구현할 수 있습니다.
+  }
+  
+  handleDataReadResponse(data) {
+    // 데이터 읽기 응답 처리 (예: 세차 횟수)
+    const value = data.reduce((acc, byte) => (acc << 8) | byte, 0);
+    console.log('읽은 데이터 값:', value);
+    // 여기에 읽은 데이터에 대한 추가 처리 로직을 구현할 수 있습니다.
+  }
+  
+  handleCommandResponse(data) {
+    const result = data[0];
+    if (result === 0x00) {
+      console.log('명령 실행 성공');
+    } else {
+      console.error('명령 실행 실패, 에러 코드:', result);
+    }
+    // 여기에 명령 실행 결과에 따른 추가 로직을 구현할 수 있습니다.
   }
 }
-
 module.exports = SG90CarWash;

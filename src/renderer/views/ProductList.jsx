@@ -174,9 +174,6 @@ const ProductList = () => {
 
   return (
     <div className="flex flex-col h-screen bg-black text-white">
-      <div className="flex-1 bg-black text-white flex items-center justify-center rounded-b-3xl overflow-hidden">
-        <img src="/path-to-your-image.jpg" alt="Car wash" className="w-full h-full object-cover" />
-      </div>
       <div className="flex-1 p-4">
         <div className="flex items-center mb-4">
           <button onClick={goBack} className="bg-white rounded-full p-2 mr-4">

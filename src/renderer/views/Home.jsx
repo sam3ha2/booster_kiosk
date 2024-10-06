@@ -67,37 +67,32 @@ const Home = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white">
-      <div className="flex-1 bg-black text-white flex items-center justify-center rounded-b-3xl overflow-hidden">
-        <p className="text-2xl">영상 광고 영역</p>
-      </div>
-      <div className="flex-1 p-8 flex flex-col items-center justify-center">
-        <div className="text-4xl font-bold text-green-500 mb-4">BOOSTER</div>
-        <h1 className="text-2xl font-semibold text-center mb-8">
-          안녕하세요. 고객님<br />씻자 진주점입니다.
-        </h1>
-        <div className="flex space-x-4 mb-8">
-          <button
-            onClick={startWash}
-            className="bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 hover:bg-gray-700"
-          >
-            <span>자동세차</span>
-            <span>현장결제</span>
-            <span className="mt-2 text-2xl">→</span>
-          </button>
-          <button
-            onClick={checkReservation}
-            className="bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 hover:bg-gray-700"
-          >
-            <span>자동세차</span>
-            <span>QR 확인</span>
-            <span className="mt-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">QR</span>
-          </button>
-        </div>
-        <button onClick={toggleUsageGuide} className="text-green-500 underline">
-          부스터 키오스크 사용 안내
+    <div className="flex-1 p-8 flex flex-col items-center justify-center">
+      <div className="text-4xl font-bold text-green-500 mb-4">BOOSTER</div>
+      <h1 className="text-2xl font-semibold text-center mb-8">
+        안녕하세요. 고객님<br />씻자 진주점입니다.
+      </h1>
+      <div className="flex space-x-4 mb-8">
+        <button
+          onClick={startWash}
+          className="bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 hover:bg-gray-700"
+        >
+          <span>자동세차</span>
+          <span>현장결제</span>
+          <span className="mt-2 text-2xl">→</span>
+        </button>
+        <button
+          onClick={checkReservation}
+          className="bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 hover:bg-gray-700"
+        >
+          <span>자동세차</span>
+          <span>QR 확인</span>
+          <span className="mt-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">QR</span>
         </button>
       </div>
+      <button onClick={toggleUsageGuide} className="text-green-500 underline">
+        부스터 키오스크 사용 안내
+      </button>
 
       {showQrScanner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -141,7 +136,7 @@ const Home = () => {
                 <p>QR확인은 모니터 왼쪽 하단에 30cm 거리 안에서 스캔하고 세차를 진행해 주세요.</p>
               </div>
               <div className="flex items-start">
-                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">2</div>
+                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">3</div>
                 <p>현장 결제는 원하는 상품을 누르고 전화번호 입력 후 모니터 오른쪽 하단 카드결제하고 세차를 진행해 주세요.</p>
               </div>
             </div>

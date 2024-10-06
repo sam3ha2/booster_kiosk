@@ -9,11 +9,28 @@ class CarWashManager {
   }
 
   registerHandlers() {
-    ipcMain.handle('control-car-wash', this.controlCarWash.bind(this));
-    ipcMain.handle('add-car-wash-machine', this.addMachine.bind(this));
+    ipcMain.handle('car-wash-command', this.handleCarWashCommand.bind(this));
   }
 
-  async addMachine(event, { type, config }) {
+  async handleCarWashCommand(event, { command, machineId, data }) {
+    try {
+      switch (command) {
+        case 'add-machine':
+          return await this.addMachine(data);
+        case 'start-wash':
+          return await this.startWash(machineId, data.mode);
+        case 'stop-wash':
+          return await this.stopWash(machineId);
+        // 다른 명령들을 여기에 추가할 수 있습니다.
+        default:
+          throw new Error('알 수 없는 명령입니다');
+      }
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async addMachine({ type, config }) {
     let machine;
     switch (type) {
       case 'TypeA':
@@ -23,7 +40,7 @@ class CarWashManager {
         machine = new SG90CarWash(config);
         break;
       default:
-        throw new Error('Unknown car wash machine type');
+        throw new Error('알 수 없는 세차기 유형입니다');
     }
 
     await machine.initialize();
@@ -32,16 +49,24 @@ class CarWashManager {
     return { success: true, message: `${type} 세차기가 추가되었습니다.` };
   }
 
-  // 세차기 제어 메서드
-  async controlCarWash(event, { action, machineId, mode }) {
+  async startWash(machineId, mode) {
+    const machine = this.getMachine(machineId);
+    await machine.start(mode);
+    return { success: true, message: '세차가 시작되었습니다.' };
+  }
+
+  async stopWash(machineId) {
+    const machine = this.getMachine(machineId);
+    await machine.stop();
+    return { success: true, message: '세차가 중지되었습니다.' };
+  }
+
+  getMachine(machineId) {
     const machine = this.machines.get(machineId);
     if (!machine) {
-      throw new Error('Car wash machine not found');
+      throw new Error('세차기를 찾을 수 없습니다');
     }
-
-    if (action === 'start') {
-      await machine.start(mode);
-    }
+    return machine;
   }
 }
 

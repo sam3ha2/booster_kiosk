@@ -60,14 +60,17 @@ const ProductList = () => {
 
       // 세차기 동작 시작
       try {
-        const { ipcRenderer } = window.require('electron');
-        await ipcRenderer.invoke('control-car-wash', {
-          action: 'start',
+        const result = await window.machineIPC.carWashCommand({
+          command: 'start-wash',
           machineId: '0',
-          mode: selectedProduct.targetMode // 선택된 제품의 target_mode를 세차 모드로 사용
+          data: { mode: selectedProduct.targetMode }
         });
-        console.log('세차기가 성공적으로 시작되었습니다.');
-        setPaymentStatus('success');
+        console.log('세차기 제어 결과:', result);
+        if (result.success) {
+          setPaymentStatus('success');
+        } else {
+          throw new Error(result.error || '세차기 시작 실패');
+        }
       } catch (error) {
         console.error('세차기 시작 중 오류 발생:', error);
         throw new Error('세차기를 시작할 수 없습니다. 관리자에게 문의해주세요.');

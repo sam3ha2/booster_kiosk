@@ -2,6 +2,7 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const dotenv = require('dotenv');
 const log = require('electron-log');
+const CarWashManager = require('../services/car_wash/car_wash_manager');
 
 // .env 파일 로드
 dotenv.config();
@@ -10,13 +11,16 @@ dotenv.config();
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
+const carWashManager = new CarWashManager();
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, '../preload.js'),
     },
   });
 
@@ -26,9 +30,12 @@ function createWindow() {
 
   if (process.env.NODE_ENV === 'development') {
     win.webContents.openDevTools();
+    console.log('Loading URL:', startUrl);
   }
 
   log.info('애플리케이션 창이 생성되었습니다.');
+
+  carWashManager.addMachine({ type: 'SG90', config: { id: '0', portName: '/dev/ttys018' } });
 }
 
 app.whenReady().then(createWindow);

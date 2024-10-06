@@ -1,6 +1,14 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const CarWashManager = require('../services/car_wash/car_wash_manager');
+const dotenv = require('dotenv');
+const log = require('electron-log');
+
+// .env 파일 로드
+dotenv.config();
+
+// 로그 설정
+log.transports.file.level = 'info';
+log.transports.console.level = 'debug';
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -12,22 +20,18 @@ function createWindow() {
     },
   });
 
-  if (process.env.ELECTRON_START_URL) {
-    win.loadURL(process.env.ELECTRON_START_URL);
+  const startUrl = process.env.ELECTRON_START_URL || `file://${path.join(__dirname, '../../dist/index.html')}`;
+  
+  win.loadURL(startUrl);
+
+  if (process.env.NODE_ENV === 'development') {
     win.webContents.openDevTools();
-  } else {
-    win.loadFile(path.join(__dirname, '../../dist/index.html'));
   }
+
+  log.info('애플리케이션 창이 생성되었습니다.');
 }
 
-app.whenReady().then(() => {
-  createWindow();
-  this.carWashManager = new CarWashManager(); // CarWashManager 인스턴스 생성
-  this.carWashManager.addMachine('addMachine', {
-    type: 'SG90',
-    config: { portName: '/dev/ttys018', id: '0' }
-  });
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -39,4 +43,9 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// 예외 처리
+process.on('uncaughtException', (error) => {
+  log.error('Uncaught Exception:', error);
 });

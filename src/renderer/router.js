@@ -1,41 +1,18 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
-import Home from './views/Home.vue'
-import ProductList from './views/ProductList.vue'
-import Reservation from './views/Reservation.vue'
-import Payment from './views/Payment.vue'
-import ReservationComplete from './views/ReservationComplete.vue'
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import Home from './views/Home';
+import ProductList from './views/ProductList';
 
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: Home
-  },
-  {
-    path: '/products',
-    name: 'products',
-    component: ProductList
-  },
-  {
-    path: '/reservation',
-    name: 'reservation',
-    component: Reservation
-  },
-  {
-    path: '/payment',
-    name: 'payment',
-    component: Payment
-  },
-  {
-    path: '/reservation-complete',
-    name: 'reservation-complete',
-    component: ReservationComplete
-  }
-]
+const AppRouter = () => {
+  return (
+    <Router>
+      <Switch>
+        <Route exact path="/" component={Home} />
+        <Route path="/products" component={ProductList} />
+        {/* 다른 라우트 추가 */}
+      </Switch>
+    </Router>
+  );
+};
 
-const router = createRouter({
-  history: createWebHashHistory(),
-  routes
-})
-
-export default router
+export default AppRouter;

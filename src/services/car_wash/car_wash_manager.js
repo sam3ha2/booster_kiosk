@@ -21,7 +21,8 @@ class CarWashManager {
           return await this.startWash(machineId, data.mode);
         case 'stop-wash':
           return await this.stopWash(machineId);
-        // 다른 명령들을 여기에 추가할 수 있습니다.
+        case 'get-status':
+          return await this.getStatus(machineId);
         default:
           throw new Error('알 수 없는 명령입니다');
       }
@@ -59,6 +60,12 @@ class CarWashManager {
     const machine = this.getMachine(machineId);
     await machine.stop();
     return { success: true, message: '세차가 중지되었습니다.' };
+  }
+
+  async getStatus(machineId) {
+    const machine = this.getMachine(machineId);
+    const status = await machine.status();
+    return { success: true, status };
   }
 
   getMachine(machineId) {

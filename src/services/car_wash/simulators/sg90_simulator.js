@@ -1,9 +1,6 @@
-const { SerialPort } = require('serialport')
-const { ReadlineParser } = require('@serialport/parser-readline');
+const ModbusRTU = require('modbus-serial');
 
 class SG90Simulator {
-  isNotifyChanged = true;
-
   constructor(portName) {
     this.portName = portName;
     this.status = 'idle';
@@ -12,154 +9,151 @@ class SG90Simulator {
     this.currentMode = null;
     this.errorStatus = false;
     this.carPresent = false;
+    this.client = new ModbusRTU();
+  }
 
-    this.serialPort = new SerialPort({
-      path: portName,
+  async initialize() {
+    await this.client.connectAsciiSerial(this.portName, {
       baudRate: 9600,
       dataBits: 7,
       stopBits: 1,
       parity: 'even'
     });
+    this.client.setID(1);
+    console.log("[Simulator] 시뮬레이터가 초기화되었습니다.");
 
-    this.parser = this.serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
+    // 데이터 수신 이벤트 리스너 추가
+    this.client._port.on('data', this.onDataReceived.bind(this));
 
-    this.serialPort.on('open', () => {
-      console.log('시리얼 포트가 열렸습니다.');
-    });
-
-    this.parser.on('data', (data) => {
-      this.handleCommand(data);
-    });
+    // 주기적으로 상태를 업데이트하는 로직
+    // setInterval(() => this.updateStatus(), 1000);
   }
 
-  handleCommand(command) {
-    console.log('받은 명령:', command);
-    if (command === '3A 30 31 30 35 30 39 30 35 46 46 30 30 45 44 0D 0A') {
-      this.startWash(1);
-    } else if (command === '3A 30 31 30 35 30 39 30 36 46 46 30 30 45 43 0D 0A') {
-      this.startWash(2);
-    } else if (command === '3A 30 31 30 35 30 39 30 34 46 46 30 30 45 45 0D 0A') {
-      this.startWash(3);
-    } else if (command === '3A 30 31 30 35 30 39 30 38 46 46 30 30 45 41 0D 0A') {
-      this.startWash(4);
-    } else if (command === '3A 30 31 30 35 30 38 33 43 46 46 30 30 42 37 0D 0A') {
-      this.stopWash();
-    } else if (command === '3A 30 31 30 35 30 38 34 37 46 46 30 30 41 43 0D 0A') {
-      this.pauseWash();
-    } else if (command === '3A 30 31 30 35 30 38 34 37 30 30 30 30 41 42 0D 0A') {
-      this.resumeWash();
-    } else if (command === '3A 30 31 30 35 30 38 32 30 46 46 30 30 44 33 0D 0A') {
-      this.resetWash();
-    } else if (command === '3A 30 31 30 31 30 41 46 30 30 30 30 31 30 33 0D 0A') {
-      this.checkCarPresence();
-    } else if (command === '3A 30 31 30 31 30 38 44 36 30 30 30 31 31 46 0D 0A') {
-      this.checkOperationStatus();
-    } else if (command === '3A 30 31 30 31 30 38 44 39 30 30 30 31 31 43 0D 0A') {
-      this.checkErrorStatus();
-    } else if (command === '3A 30 31 30 31 30 38 36 36 30 30 30 31 38 46 0D 0A') {
-      this.checkCarEntryStatus();
-    } else if (command === '3A 30 31 30 33 31 39 46 36 30 30 30 31 45 43 0D 0A') {
-      this.getTotalWashCount();
-    } else if (command === '3A 30 31 30 33 31 39 46 38 30 30 30 31 45 41 0D 0A') {
-      this.getDailyWashCount();
+  onDataReceived(data) {
+    console.log(`[Simulator] 원시 데이터 수신:`, data);
+    const hexData = data.toString('hex');
+    console.log(`[Simulator] 16진수 데이터: ${hexData}`);
+    
+    // ASCII 데이터로 변환
+    const asciiData = data.toString('ascii');
+    console.log(`[Simulator] ASCII 데이터: ${asciiData}`);
+
+    // 여기에서 수신된 데이터를 처리하는 로직을 추가할 수 있습니다.
+    this.processReceivedData(asciiData);
+  }
+
+  processReceivedData(data) {
+    // ':' 로 시작하고 CRLF로 끝나는 완전한 Modbus ASCII 프레임인지 확인
+    if (data.startsWith(':') && data.endsWith('\r\n')) {
+      const functionCode = data.substr(3, 2);
+      const address = parseInt(data.substr(5, 4), 16);
+      const value = parseInt(data.substr(9, 4), 16);
+
+      console.log(`[Simulator] 처리: 기능 코드 ${functionCode}, 주소 ${address}, 값 ${value}`);
+
+      // 여기에서 수신된 명령에 따라 적절한 동작을 수행합니다.
+      this.handleCommand(parseInt(functionCode, 16), address, value);
+    }
+  }
+
+  async updateStatus() {
+    // console.log(`[Simulator] updateStatus 호출됨: status=${this.status}`);
+    // 실제 장치의 동작을 모방하여 상태 업데이트
+    if (this.status === 'running') {
+      await this.client.writeCoil(0x08D6, true);
     } else {
-      console.log('지원하지 않는 명령:', command);
+      await this.client.writeCoil(0x08D6, false);
+    }
+    await this.client.writeRegister(0x19F6, this.totalWashCount);
+    await this.client.writeRegister(0x19F8, this.dailyWashCount);
+  }
+
+  async handleCommand(functionCode, address, value) {
+    console.log(`[Simulator] 명령 수신: 기능 코드 ${functionCode}, 주소 ${address}, 값 ${value}`);
+    switch (functionCode) {
+      case 5: // Write Single Coil
+        await this.handleWriteCoil(address, value);
+        break;
+      case 6: // Write Single Register
+        await this.handleWriteRegister(address, value);
+        break;
+      // 다른 기능 코드에 대한 처리를 추가할 수 있습니다.
+    }
+  }
+
+  async handleWriteCoil(address, value) {
+    switch (address) {
+      case 0x08D6:
+        this.status = value ? 'running' : 'idle';
+        break;
+      case 0x0AF0:
+        this.carPresent = value;
+        break;
+      case 0x08D9:
+        this.errorStatus = value;
+        break;
+      // 다른 코일 주소에 대한 처리를 추가할 수 있습니다.
+    }
+  }
+
+  async handleWriteRegister(address, value) {
+    switch (address) {
+      case 0x0905:
+      case 0x0906:
+      case 0x0904:
+      case 0x0908:
+        this.startWash(address);
+        break;
+      case 0x083C:
+        this.stopWash();
+        break;
+      case 0x0847:
+        value === 0xFF00 ? this.pauseWash() : this.resumeWash();
+        break;
+      case 0x0820:
+        this.resetWash();
+        break;
+      // 다른 레지스터 주소에 대한 처리를 추가�� 수 있습니다.
     }
   }
 
   startWash(mode) {
     this.status = 'running';
     this.currentMode = mode;
-    if (this.isNotifyChanged) {
-      this.sendResponse('3A 30 31 30 35 30 39 30 35 46 46 30 30 45 44 0D 0A');
-    }
+    console.log(`[Simulator] 세차 시작: 모드 ${mode.toString(16)}`);
 
     setTimeout(() => {
       this.status = 'idle';
       this.currentMode = null;
       this.totalWashCount++;
       this.dailyWashCount++;
+      console.log('[Simulator] 세차 완료');
     }, 5000);
   }
 
   stopWash() {
     this.status = 'idle';
     this.currentMode = null;
-    if (this.isNotifyChanged) {
-      this.sendResponse('3A 30 31 30 35 30 38 33 43 46 46 30 30 42 37 0D 0A');
-    }
+    console.log('[Simulator] 세차 정지');
   }
 
   pauseWash() {
     this.status = 'paused';
-    if (this.isNotifyChanged) {
-      this.sendResponse('3A 30 31 30 35 30 38 34 37 46 46 30 30 41 43 0D 0A');
-    }
+    console.log('[Simulator] 세차 일시 정지');
   }
 
   resumeWash() {
     this.status = 'running';
-    if (this.isNotifyChanged) {
-      this.sendResponse('3A 30 31 30 35 30 38 34 37 30 30 30 30 41 42 0D 0A');
-    }
+    console.log('[Simulator] 세차 재개');
   }
 
   resetWash() {
     this.status = 'idle';
     this.currentMode = null;
     this.errorStatus = false;
-    if (this.isNotifyChanged) {
-      this.sendResponse('3A 30 31 30 35 30 38 32 30 46 46 30 30 44 33 0D 0A');
-    }
+    console.log('[Simulator] 세차기 리셋');
   }
 
-  checkCarPresence() {
-    const response = this.carPresent ? '3A 30 31 30 31 30 31 46 31 30 43 0D 0A' : '3A 30 31 30 31 46 30 30 44 0D 0A';
-    this.sendResponse(response);
-  }
-
-  checkOperationStatus() {
-    const response = this.status === 'running' ? '3A 30 31 30 31 30 31 44 37 32 36 0D 0A' : '3A 30 31 30 31 30 31 44 36 32 37 0D 0A';
-    this.sendResponse(response);
-  }
-
-  checkErrorStatus() {
-    const response = this.errorStatus ? '3A 30 31 30 31 30 31 44 39 32 34 0D 0A' : '3A 30 31 30 31 30 31 44 38 32 35 0D 0A';
-    this.sendResponse(response);
-  }
-
-  checkCarEntryStatus() {
-    const response = this.carPresent ? '3A 30 31 30 31 30 31 36 37 39 36 0D 0A' : '3A 30 31 30 31 30 31 36 36 39 37 0D 0A';
-    this.sendResponse(response);
-  }
-
-  getTotalWashCount() {
-    const data1 = Math.floor(this.totalWashCount / 256);
-    const data2 = this.totalWashCount % 256;
-    const countHex = data1.toString(16).padStart(2, '0') + data2.toString(16).padStart(2, '0');
-    const response = `3A 30 31 30 33 30 32 ${countHex.substr(0, 2)} ${countHex.substr(2, 2)} 46 41 0D 0A`;
-    this.sendResponse(response);
-  }
-
-  getDailyWashCount() {
-    const data1 = Math.floor(this.dailyWashCount / 256);
-    const data2 = this.dailyWashCount % 256;
-    const countHex = data1.toString(16).padStart(2, '0') + data2.toString(16).padStart(2, '0');
-    const response = `3A 30 31 30 33 30 32 ${countHex.substr(0, 2)} ${countHex.substr(2, 2)} 46 41 0D 0A`;
-    this.sendResponse(response);
-  }
-
-  sendResponse(response) {
-    this.serialPort.write(response + '\r\n', (err) => {
-      if (err) {
-        console.error('응답 전송 오류:', err);
-      } else {
-        console.log('전송된 응답:', response);
-      }
-    });
-  }
-
-  // 시뮬레이터 제어를 위한 추가 메서드들
   setCarPresence(present) {
     this.carPresent = present;
   }
@@ -172,6 +166,20 @@ class SG90Simulator {
     this.totalWashCount = 0;
     this.dailyWashCount = 0;
   }
+
+  async close() {
+    await this.client.close();
+  }
 }
 
 module.exports = SG90Simulator;
+
+// 시뮬레이터를 독립적으로 실행할 수 있는 코드
+if (require.main === module) {
+  const simulator = new SG90Simulator('/dev/ttys002');
+  simulator.initialize().then(() => {
+    console.log('SG90 시뮬레이터가 실행되었습니다.');
+  }).catch((error) => {
+    console.error('SG90 시뮬레이터 실행 중 오류 발생:', error);
+  });
+}

@@ -113,7 +113,7 @@ class SG90Simulator {
       case 0x0820:
         this.resetWash();
         break;
-      // 다른 레지스터 주소에 대한 처리를 추가�� 수 있습니다.
+      // 다른 레지스터 주소에 대한 처리를 추가할 수 있습니다.
     }
   }
 

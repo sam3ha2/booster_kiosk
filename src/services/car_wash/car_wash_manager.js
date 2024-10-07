@@ -1,6 +1,7 @@
 const { ipcMain } = require('electron');
 const TypeACarWash = require('./machine_types/type_a_car_wash');
 const SG90CarWash = require('./machine_types/sg90_car_wash');
+const FL30CarWash = require('./machine_types/fl30_car_wash');
 
 class CarWashManager {
   constructor() {
@@ -39,6 +40,9 @@ class CarWashManager {
         break;
       case 'SG90':
         machine = new SG90CarWash(config);
+        break;
+      case 'FL30':
+        machine = new FL30CarWash(config);
         break;
       default:
         throw new Error('알 수 없는 세차기 유형입니다');

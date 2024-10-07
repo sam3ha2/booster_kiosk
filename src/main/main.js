@@ -35,7 +35,7 @@ function createWindow() {
 
   log.info('애플리케이션 창이 생성되었습니다.');
 
-  carWashManager.addMachine({ type: 'SG90', config: { id: '0', portName: '/dev/ttys018' } });
+  carWashManager.addMachine({ type: 'FL30', config: { id: '0', portName: '/dev/ttys018' } });
 }
 
 app.whenReady().then(createWindow);

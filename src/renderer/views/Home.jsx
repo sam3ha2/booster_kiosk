@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QrScanner } from '@yudiel/react-qr-scanner';
 import ApiService from '../../utils/api_service';
@@ -7,7 +7,45 @@ const Home = () => {
   const navigate = useNavigate();
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
+  const [carWashStatus, setCarWashStatus] = useState(null);
   const isDevelopment = process.env.NODE_ENV === 'development';
+
+  useEffect(() => {
+    const setupCarWashObservable = () => {
+      window.machineIPC.subscribeProcessUpdates('0', (process) => {
+        console.log('세차기 상태 조회 결과:', process);
+        setCarWashStatus((prevStatus) => ({
+          ...prevStatus,
+          currentProcess: process,
+        }));
+      });
+    };
+
+    const fetchInitialStatus = async () => {
+      try {
+        const result = await window.machineIPC.carWashCommand({
+          command: 'get-status',
+          machineId: '0',
+        });
+        if (result.success) {
+          setCarWashStatus(result.status);
+        } else {
+          console.error('세차기 상태 조회 실패:', result.error);
+          setCarWashStatus(null);
+        }
+      } catch (error) {
+        console.error('세차기 상태 조회 중 오류 발생:', error);
+        setCarWashStatus(null);
+      }
+    };
+
+    setupCarWashObservable();
+    fetchInitialStatus();
+
+    return () => {
+      window.machineIPC.unsubscribeProcessUpdates('0');
+    };
+  }, []);
 
   const startWash = () => {
     navigate('/products');
@@ -33,7 +71,7 @@ const Home = () => {
         const reservationResponse = await ApiService.getReservation({
           qr_idx: qrIdx,
           qr_created_at: qrCreatedAt,
-          qr_checksum: qrChecksum
+          qr_checksum: qrChecksum,
         });
         
         if (reservationResponse.item) {
@@ -66,6 +104,8 @@ const Home = () => {
     }
   };
 
+  const isWashing = carWashStatus && carWashStatus.running;
+
   return (
     <div className="flex-1 p-8 flex flex-col items-center justify-center">
       <div className="text-4xl font-bold text-green-500 mb-4">BOOSTER</div>
@@ -75,7 +115,8 @@ const Home = () => {
       <div className="flex space-x-4 mb-8">
         <button
           onClick={startWash}
-          className="bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 hover:bg-gray-700"
+          className={`bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 ${isWashing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'}`}
+          disabled={isWashing}
         >
           <span>자동세차</span>
           <span>현장결제</span>
@@ -83,16 +124,27 @@ const Home = () => {
         </button>
         <button
           onClick={checkReservation}
-          className="bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 hover:bg-gray-700"
+          className={`bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 ${isWashing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'}`}
+          disabled={isWashing}
         >
           <span>자동세차</span>
           <span>QR 확인</span>
           <span className="mt-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">QR</span>
         </button>
       </div>
-      <button onClick={toggleUsageGuide} className="text-green-500 underline">
+      <button onClick={toggleUsageGuide} className="text-green-500 underline mb-4">
         부스터 키오스크 사용 안내
       </button>
+
+      {carWashStatus && (
+        <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
+          <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
+          <p>상태: {carWashStatus.running ? '세차 중' : '대기 중'}</p>
+          <p>현재 프로세스: {carWashStatus.currentProcess}</p>
+          <p>차량 존재: {carWashStatus.carStopped ? '있음' : '없음'}</p>
+          <p>오류 상태: {carWashStatus.error ? '오류' : '정상'}</p>
+        </div>
+      )}
 
       {showQrScanner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

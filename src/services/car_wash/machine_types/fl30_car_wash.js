@@ -1,6 +1,20 @@
 const AbstractCarWashMachine = require('../abstract_car_wash_machine');
 const ModbusRTU = require('modbus-serial');
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1초
+
+async function retryOperation(operation) {
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (i === MAX_RETRIES - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+    }
+  }
+}
+
 class FL30CarWash extends AbstractCarWashMachine {
   constructor(config) {
     super(config);
@@ -42,23 +56,28 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   async status() {
-    const [statusCoils, runningCoils, processRegister] = await Promise.all([
-      this.client.readCoils(0x0015, 10),  // M21-M24, M13-M18
-      this.client.readCoils(0x0092, 2),   // M146, M147
-      this.client.readHoldingRegisters(0x000A, 1)  // D10
-    ]);
+    try {
+      const [statusCoils, runningCoils, processRegister] = await Promise.all([
+        this.client.readCoils(0x0015, 10),  // M21-M24, M13-M18
+        this.client.readCoils(0x0092, 2),   // M146, M147
+        this.client.readHoldingRegisters(0x000A, 1)  // D10
+      ]);
 
-    return {
-      origin: statusCoils.data[0] && statusCoils.data[1] && statusCoils.data[3],  // M21, M22, M24
-      initial: statusCoils.data[0] && statusCoils.data[1] && statusCoils.data[3] && !statusCoils.data[4] && !statusCoils.data[5],  // M21, M22, M24, !M13, !M14
-      running: runningCoils.data[0],  // M146
-      atOrigin: runningCoils.data[1],  // M147
-      carStopped: statusCoils.data[8],  // M17
-      carNotStopped: statusCoils.data[6],  // M15
-      carOverPosition: statusCoils.data[7],  // M16
-      error: statusCoils.data[9],  // M18
-      currentProcess: processRegister.data[0]  // D10
-    };
+      return {
+        origin: statusCoils.data[0] && statusCoils.data[1] && statusCoils.data[3],  // M21, M22, M24
+        initial: statusCoils.data[0] && statusCoils.data[1] && statusCoils.data[3] && !statusCoils.data[4] && !statusCoils.data[5],  // M21, M22, M24, !M13, !M14
+        running: runningCoils.data[0],  // M146
+        atOrigin: runningCoils.data[1],  // M147
+        carStopped: statusCoils.data[6],  // M17
+        carNotStopped: statusCoils.data[4],  // M15
+        carOverPosition: statusCoils.data[5],  // M16
+        error: statusCoils.data[7],  // M18
+        currentProcess: processRegister.data[0]  // D10
+      };
+    } catch (error) {
+      console.error('Error getting FL30 status:', error);
+      throw error;
+    }
   }
 
   async reset() {
@@ -107,16 +126,22 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   async getCurrentProcess() {
-    const result = await this.client.readHoldingRegisters(0x000A, 1); // D10
-    switch (result.data[0]) {
-      case 1: return '무세제 세차';
-      case 2: return '거품';
-      case 3: return '세척';
-      case 4: return '왁스';
-      case 5: return '건조';
-      case 0: return '대기 중';
-      default: return '알 수 없는 상태';
-    }
+    return retryOperation(async () => {
+      const result = await this.client.readHoldingRegisters(0x000A, 1); // D10
+      switch (result.data[0]) {
+        case 1: return '무세제 세차';
+        case 2: return '거품';
+        case 3: return '세척';
+        case 4: return '왁스';
+        case 5: return '건조';
+        case 0: return '대기 중';
+        default: return '알 수 없는 상태';
+      }
+    });
+  }
+
+  getLastProcess() {
+    return '건조';
   }
 }
 

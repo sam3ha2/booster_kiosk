@@ -15,6 +15,7 @@ class FL30CarWash extends AbstractCarWashMachine {
       stopBits: 1,
       parity: 'even'
     });
+    this.client.setTimeout(3000);
     this.client.setID(this.address);
     console.log('FL3.0 세차기 초기화 완료');
   }

@@ -299,7 +299,7 @@ module.exports = FL30Simulator;
 
 // 시뮬레이터를 독립적으로 실행할 수 있는 코드
 if (require.main === module) {
-  const simulator = new FL30Simulator('/dev/ttys002');
+  const simulator = new FL30Simulator(process.env.SIMULATOR_PORT_NAME || '/dev/ttys002');
   simulator.initialize();
   console.log('FL3.0 시뮬레이터가 실행되었습니다.');
 

@@ -11,7 +11,15 @@ class FL30Simulator {
     this.registers = new Array(256).fill(0);
     this.port = new SerialPort({ path: portName, baudRate: 9600 });
     this.washTimer = null;
-    this.washStatus = 'idle'; // 세차 상태 추가
+    this.washStatus = 'idle';
+    this.currentMode = null;
+    this.processes = {
+      MODE1: ['무세제 세차', '거품', '세척', '건조'],
+      MODE2: ['무세제 세차', '거품', '세척', '왁스', '건조']
+    };
+    this.currentProcessIndex = -1;
+    this.totalTime = 0;
+    this.remainingTime = 0;
   }
 
   initialize() {
@@ -241,48 +249,52 @@ class FL30Simulator {
   startWash(mode) {
     console.log(`[Simulator] 세차 시작: ${mode}`);
     this.washStatus = 'running';
+    this.currentMode = mode;
+    this.currentProcessIndex = 0;
     this.setCoil(0x0092, true); // M146 (running) 설정
     this.setCoil(0x0093, false); // M147 (at origin) 해제
     this.setRegister(0x000A, 1); // D10 초기화 (1: 무세제 세차 시작)
     this.startWashProcess();
   }
 
-  stopWash() {
-    console.log('[Simulator] 세차 정지');
-    this.washStatus = 'idle';
-    this.stopWashProcess();
-    this.finishWash();
-  }
-
   startWashProcess() {
     if (this.washTimer) return;
     console.log('[Simulator] 세차 프로세스 시작');
     this.washTimer = setInterval(() => {
-      this.currentProcess = (this.currentProcess % 5) + 1;
-      this.setRegister(0x000A, this.currentProcess);
-      console.log(`[Simulator] 세차 프로세스 진행: ${this.currentProcess}`);
-      if (this.currentProcess === 5) {
+      const processCount = this.processes[this.currentMode].length;
+      if (this.currentProcessIndex < processCount - 1) {
+        this.currentProcessIndex++;
+        this.setRegister(0x000A, this.currentProcessIndex + 1);
+        console.log(`[Simulator] 세차 프로세스 진행: ${this.processes[this.currentMode][this.currentProcessIndex]}`);
+      } else {
         this.stopWashProcess();
         this.finishWash();
       }
-    }, 2000); // 2초마다 프로세스 변경
+    }, 5000); // 5초마다 프로세스 변경 (테스트용, 실제로는 더 긴 시간으로 설정)
   }
 
   stopWashProcess() {
     if (this.washTimer) {
       clearInterval(this.washTimer);
       this.washTimer = null;
-      console.log('[Simulator] 세차 프로세스 중지');
     }
   }
 
   finishWash() {
     console.log('[Simulator] 세차 완료');
     this.washStatus = 'idle';
+    this.currentMode = null;
+    this.currentProcessIndex = -1;
     this.setCoil(0x0092, false); // M146 (running) 해제
     this.setCoil(0x0093, true);  // M147 (at origin) 설정
-    this.setRegister(0x000A, 0); // D10 초기화
+    this.setRegister(0x000A, 0); // D10 초기화 (0: 대기 중)
     this.status = 'idle';
+  }
+
+  stopWash() {
+    console.log('[Simulator] 세차 정지');
+    this.washStatus = 'idle';
+    this.finishWash();
   }
 
   close() {

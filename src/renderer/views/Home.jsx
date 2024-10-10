@@ -7,43 +7,17 @@ const Home = () => {
   const navigate = useNavigate();
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
-  const [carWashStatus, setCarWashStatus] = useState(null);
+  const [carWashState, setCarWashState] = useState(null);
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
-    const setupCarWashObservable = () => {
-      window.machineIPC.subscribeProcessUpdates('0', (process) => {
-        console.log('세차기 상태 조회 결과:', process);
-        setCarWashStatus((prevStatus) => ({
-          ...prevStatus,
-          currentProcess: process,
-        }));
-      });
-    };
-
-    const fetchInitialStatus = async () => {
-      try {
-        const result = await window.machineIPC.carWashCommand({
-          command: 'get-status',
-          machineId: '0',
-        });
-        if (result.success) {
-          setCarWashStatus(result.status);
-        } else {
-          console.error('세차기 상태 조회 실패:', result.error);
-          setCarWashStatus(null);
-        }
-      } catch (error) {
-        console.error('세차기 상태 조회 중 오류 발생:', error);
-        setCarWashStatus(null);
-      }
-    };
-
-    setupCarWashObservable();
-    fetchInitialStatus();
+    const unsubscribe = window.machineIPC.subscribeUpdates('0', (state) => {
+      console.log('세차기 상태 업데이트:', state);
+      setCarWashState(state);
+    });
 
     return () => {
-      window.machineIPC.unsubscribeProcessUpdates('0');
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 
@@ -104,7 +78,7 @@ const Home = () => {
     }
   };
 
-  const isWashing = carWashStatus && carWashStatus.running;
+  const isWashing = carWashState && carWashState.isWashing;
 
   return (
     <div className="flex-1 p-8 flex flex-col items-center justify-center">
@@ -136,13 +110,19 @@ const Home = () => {
         부스터 키오스크 사용 안내
       </button>
 
-      {carWashStatus && (
+      {carWashState && (
         <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
           <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
-          <p>상태: {carWashStatus.running ? '세차 중' : '대기 중'}</p>
-          <p>현재 프로세스: {carWashStatus.currentProcess}</p>
-          <p>차량 존재: {carWashStatus.carStopped ? '있음' : '없음'}</p>
-          <p>오류 상태: {carWashStatus.error ? '오류' : '정상'}</p>
+          <p>상태: {carWashState.isWashing ? '세차 중' : '대기 중'}</p>
+          {carWashState.remainingTime !== null && (
+            <>
+              <p>남은 시간: {Math.floor(carWashState.remainingTime / 60)}분 {carWashState.remainingTime % 60}초</p>
+              <p>진행률: {carWashState.remainingPercent}%</p>
+            </>
+          )}
+          <p>현재 프로세스: {carWashState.currentProcess}</p>
+          <p>차량 존재: {carWashState.carStopped ? '있음' : '없음'}</p>
+          <p>오류 상태: {carWashState.error ? '오류' : '정상'}</p>
         </div>
       )}
 

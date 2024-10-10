@@ -2,16 +2,17 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('machineIPC', {
   carWashCommand: (args) => ipcRenderer.invoke('car-wash-command', args),
-  subscribeProcessUpdates: (machineId, callback) => {
-    ipcRenderer.on('process-update', (event, data) => {
+  subscribeUpdates: (machineId, callback) => {
+    const listener = (event, data) => {
       if (data.machineId === machineId) {
-        callback(data.process);
+        callback(data.state);
       }
-    });
-    ipcRenderer.send('subscribe-process-updates', machineId);
-  },
-  unsubscribeProcessUpdates: (machineId) => {
-    ipcRenderer.removeAllListeners('process-update');
-    ipcRenderer.send('unsubscribe-process-updates', machineId);
+    };
+    ipcRenderer.on('state-update', listener);
+    ipcRenderer.send('subscribe-updates', machineId);
+    return () => {
+      ipcRenderer.removeListener('state-update', listener);
+      ipcRenderer.send('unsubscribe-updates', machineId);
+    };
   },
 });

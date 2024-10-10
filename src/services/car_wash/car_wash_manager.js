@@ -6,32 +6,30 @@ const FL30CarWash = require('./machine_types/fl30_car_wash');
 class CarWashManager {
   constructor() {
     this.machines = new Map();
-    this.currentProcesses = new Map();
+    this.machineStates = new Map();
     this.subscribers = new Map();
-    this.updateIntervals = new Map();
     this.registerHandlers();
   }
 
   registerHandlers() {
     ipcMain.handle('car-wash-command', this.handleCarWashCommand.bind(this));
-    ipcMain.on('subscribe-process-updates', this.handleSubscribeProcessUpdates.bind(this));
-    ipcMain.on('unsubscribe-process-updates', this.handleUnsubscribeProcessUpdates.bind(this));
+    ipcMain.on('subscribe-updates', this.handleSubscribeUpdates.bind(this));
+    ipcMain.on('unsubscribe-updates', this.handleUnsubscribeUpdates.bind(this));
   }
 
-  handleSubscribeProcessUpdates(event, machineId) {
+  handleSubscribeUpdates(event, machineId) {
     if (!this.subscribers.has(machineId)) {
       this.subscribers.set(machineId, new Set());
     }
     this.subscribers.get(machineId).add(event.sender);
     
-    // 현재 상태를 즉시 전송
-    const currentProcess = this.currentProcesses.get(machineId);
-    if (currentProcess) {
-      event.sender.send('process-update', { machineId, process: currentProcess });
+    const currentState = this.machineStates.get(machineId);
+    if (currentState) {
+      event.sender.send('state-update', { machineId, state: currentState });
     }
   }
 
-  handleUnsubscribeProcessUpdates(event, machineId) {
+  handleUnsubscribeUpdates(event, machineId) {
     const machineSubscribers = this.subscribers.get(machineId);
     if (machineSubscribers) {
       machineSubscribers.delete(event.sender);
@@ -76,6 +74,7 @@ class CarWashManager {
 
     await machine.initialize();
     this.machines.set(config.id, machine);
+    machine.on('stateUpdate', (state) => this.handleMachineStateUpdate(config.id, state));
 
     return { success: true, message: `${type} 세차기가 추가되었습니다.` };
   }
@@ -83,62 +82,34 @@ class CarWashManager {
   async startWash(machineId, mode) {
     const machine = this.getMachine(machineId);
     await machine.start(mode);
-    this.startProcessUpdates(machineId);
+    // 세차 시작 후 상태 업데이트를 즉시 요청
+    const initialState = await machine.getState();
+    this.handleMachineStateUpdate(machineId, initialState);
     return { success: true, message: '세차가 시작되었습니다.' };
   }
 
   async stopWash(machineId) {
     const machine = this.getMachine(machineId);
     await machine.stop();
-    this.stopProcessUpdates(machineId);
     return { success: true, message: '세차가 중지되었습니다.' };
   }
 
-  startProcessUpdates(machineId) {
-    const machine = this.getMachine(machineId);
-    if (typeof machine.getCurrentProcess !== 'function') {
-      return;
-    }
-
-    const updateProcess = async () => {
-      const process = await machine.getCurrentProcess();
-      this.updateCurrentProcess(machineId, process);
-
-      // 세차 마지막 프로세스이면 1초 단위로 상태 조회하여 종료 판단 빨리 할 수 있도록
-      if (process === machine.getLastProcess()) {
-        clearInterval(this.updateIntervals.get(machineId));
-        this.updateIntervals.set(machineId, setInterval(updateProcess, 1000));
-      }
-    };
-
-    this.updateIntervals.set(machineId, setInterval(updateProcess, 1000));
-    updateProcess();
+  handleMachineStateUpdate(machineId, state) {
+    this.machineStates.set(machineId, state);
+    this.notifySubscribers(machineId, state);
   }
 
-  stopProcessUpdates(machineId) {
-    clearInterval(this.updateIntervals.get(machineId));
-    this.updateIntervals.delete(machineId);
-    this.updateCurrentProcess(machineId, '대기 중');
-  }
-
-  updateCurrentProcess(machineId, process) {
-    this.currentProcesses.set(machineId, process);
-    this.notifySubscribers(machineId, process);
-  }
-
-  notifySubscribers(machineId, process) {
+  notifySubscribers(machineId, state) {
     const subscribers = this.subscribers.get(machineId);
     if (subscribers) {
       subscribers.forEach(subscriber => {
-        subscriber.send('process-update', { machineId, process });
+        subscriber.send('state-update', { machineId, state });
       });
     }
   }
 
   async getStatus(machineId) {
-    const machine = this.getMachine(machineId);
-    const status = await machine.getCurrentProcess();
-    return { success: true, status };
+    return this.machineStates.get(machineId) || { isAvailable: true, isWashing: false };
   }
 
   getMachine(machineId) {

@@ -15,10 +15,6 @@ class FL30CarWash extends AbstractCarWashMachine {
     this.currentMode = null;
     this.washTimer = null;
     this.washStartTime = null;
-    this.processes = {
-      MODE1: ['무세제 세차', '거품', '세척', '건조'],
-      MODE2: ['무세제 세차', '거품', '세척', '왁스', '건조']
-    };
   }
 
   async initialize() {
@@ -137,8 +133,8 @@ class FL30CarWash extends AbstractCarWashMachine {
     const remainingTime = Math.max(0, this.totalTime - elapsedTime);
     const progress = this.totalTime > 0 ? Math.min(100, Math.round((elapsedTime / this.totalTime) * 100)) : 0;
     
-    const currentProcess = this.interpretProcessStatus(status.processStatus);
-    const isWashing = currentProcess !== '대기 중';
+    const currentStep = this.interpretProcessStatus(status.processStatus);
+    const isWashing = currentStep !== '대기 중';
     const isAvailable = !isWashing && status.processStatus === 0;
     
     return {
@@ -150,15 +146,28 @@ class FL30CarWash extends AbstractCarWashMachine {
       remainingTime,
       remainingPercent: 100 - progress,
       progress,
-      currentProcess,
+      currentStep,
       currentMode: this.currentMode
     };
   }
 
   interpretProcessStatus(status) {
-    if (status === 0) return '대기 중';
-    const processes = this.processes[this.currentMode] || [];
-    return processes[status - 1] || '알 수 없는 상태';
+    switch (status) {
+      case 0:
+        return '대기 중';
+      case 1:
+        return '무세제 세차';
+      case 2:
+        return '거품';
+      case 3:
+        return '세척';
+      case 4:
+        return '왁스';
+      case 5:
+        return '건조';
+      default:
+        return '알 수 없는 상태';
+    }
   }
 
   async getCurrentProcess() {

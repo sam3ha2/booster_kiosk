@@ -47,6 +47,8 @@ class CarWashManager {
           return await this.stopWash(machineId);
         case 'get-status':
           return await this.getStatus(machineId);
+        case 'get-steps':
+          return await this.getSteps(machineId);
         default:
           throw new Error('알 수 없는 명령입니다');
       }
@@ -109,7 +111,22 @@ class CarWashManager {
   }
 
   async getStatus(machineId) {
-    return this.machineStates.get(machineId) || { isAvailable: true, isWashing: false };
+    const machine = this.getMachine(machineId);
+    const state = await machine.getState();
+    return {
+      success: true,
+      status: state
+    };
+  }
+
+  async getSteps(machineId) {
+    const machine = this.getMachine(machineId);
+    const state = await machine.getState();
+    return {
+      success: true,
+      steps: state.steps,
+      currentStep: state.currentStep
+    };
   }
 
   getMachine(machineId) {

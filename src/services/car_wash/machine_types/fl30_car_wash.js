@@ -6,8 +6,7 @@ class FL30CarWash extends AbstractCarWashMachine {
   constructor(config) {
     super(config);
     this.client = new ModbusRTU();
-    this.address = 0x0C; // FL3.0의 주소 (12)
-    this.hasDetailedState = true;
+    this.address = 0x01;
     this.eventEmitter = new EventEmitter();
     this.updateInterval = null;
     this.totalTime = 0;
@@ -18,16 +17,20 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   async initialize() {
-    await this.client.connectAsciiSerial(this.config.portName, {
-      baudRate: 9600,
-      dataBits: 7,
-      stopBits: 1,
-      parity: 'even'
-    });
-    this.client.setTimeout(3000);
-    this.client.setID(this.address);
-    console.log('FL3.0 세차기 초기화 완료');
-    this.startStateUpdates();
+    try {
+      await this.client.connectAsciiSerial(this.config.portName, {
+        baudRate: 9600,
+        dataBits: 8,
+        stopBits: 1,
+        parity: 'even'
+      });
+      this.client.setTimeout(5000);
+      this.client.setID(this.address);
+      console.log('FL3.0 세차기 초기화 완료');
+    } catch (error) {
+      console.error('FL3.0 세차기 초기화 중 오류:', error);
+      throw error;
+    }
   }
 
   on(event, listener) {
@@ -40,14 +43,19 @@ class FL30CarWash extends AbstractCarWashMachine {
         const state = await this.getState();
         this.eventEmitter.emit('stateUpdate', state);
         
-        // 세차 완료 확인 (하지만 업데이트는 계속 유지)
         if (state.isAvailable && !state.isWashing) {
           console.log('세차 완료.');
         }
       } catch (error) {
         console.error('상태 업데이트 중 오류:', error);
+        // 연결 재시도
+        try {
+          await this.reconnect();
+        } catch (reconnectError) {
+          console.error('재연결 실패:', reconnectError);
+        }
       }
-    }, 1000);
+    }, 2000); // 업데이트 간격을 2초로 늘림
   }
 
   stopStateUpdates() {
@@ -62,12 +70,12 @@ class FL30CarWash extends AbstractCarWashMachine {
     this.currentMode = mode;
     switch (mode) {
       case 'MODE1':
-        address = 0x012F; // 간단 세차
-        this.totalTime = 8 * 60; // 8분
+        address = 0x00D0; // M208 - 정밀 세차 모드
+        this.totalTime = 12 * 60; // 12분
         break;
       case 'MODE2':
-        address = 0x012E; // 정밀 세차
-        this.totalTime = 12 * 60; // 12분
+        address = 0x00D1; // M209 - 빠른 세차 모드
+        this.totalTime = 8 * 60; // 8분
         break;
       default:
         throw new Error('알 수 없는 세차 모드');
@@ -89,36 +97,49 @@ class FL30CarWash extends AbstractCarWashMachine {
       if (this.remainingTime === 0) {
         clearInterval(this.washTimer);
         this.washTimer = null;
-        this.stop();
       }
     }, 1000);
   }
 
+  async reset() {
+    try {
+      await this.client.writeCoil(0x00CF, true);
+      console.log('FL3.0 세차기 리셋 명령 전송');
+    } catch (error) {
+      console.error('리셋 명령 전송 중 오류:', error);
+      throw error;
+    }
+  }
+
   async stop() {
-    await this.client.writeCoil(0x0005, true);
-    console.log('FL3.0 세차기 정지(리셋) 명령 전송');
-    this.remainingTime = 0;
-    this.totalTime = 0;
-    this.currentMode = null;
-    this.washStartTime = null;
-    if (this.washTimer) {
-      clearInterval(this.washTimer);
-      this.washTimer = null;
+    try {
+      await this.client.writeCoil(0x00CE, true);
+      console.log('FL3.0 세차기 정지 명령 전송');
+      this.remainingTime = 0;
+      this.totalTime = 0;
+      this.currentMode = null;
+      this.washStartTime = null;
+      if (this.washTimer) {
+        clearInterval(this.washTimer);
+        this.washTimer = null;
+      }
+    } catch (error) {
+      console.error('정지 명령 전송 중 오류:', error);
+      throw error;
     }
   }
 
   async status() {
     try {
-      const result = await this.client.readHoldingRegisters(0x000A, 1); // D10
+      const result = await this.client.readHoldingRegisters(0x0064, 1); // D100 읽기
       const processStatus = result.data[0];
 
       const isRunning = processStatus !== 0;
-      const carStopped = await this.checkCarStoppedStatus();
+      const isError = await this.checkErrorStatus();
 
       return {
         running: isRunning,
-        carStopped,
-        error: processStatus === 99, // 예: 99를 오류 상태로 가정
+        error: isError,
         processStatus,
       };
     } catch (error) {
@@ -128,7 +149,9 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   async getState() {
+    console.log('getState 시작');
     const status = await this.status();
+    console.log('status 완료:', status);
     const elapsedTime = this.washStartTime ? Math.floor((Date.now() - this.washStartTime) / 1000) : 0;
     const remainingTime = Math.max(0, this.totalTime - elapsedTime);
     const progress = this.totalTime > 0 ? Math.min(100, Math.round((elapsedTime / this.totalTime) * 100)) : 0;
@@ -137,36 +160,35 @@ class FL30CarWash extends AbstractCarWashMachine {
     const isWashing = currentStep !== '대기 중';
     const isAvailable = !isWashing && status.processStatus === 0;
     
+    console.log('getState 완료');
     return {
       isAvailable,
       isWashing,
       running: status.running,
-      carStopped: status.carStopped,
       error: status.error,
       remainingTime,
       remainingPercent: 100 - progress,
       progress,
       currentStep,
-      currentMode: this.currentMode
+      currentMode: this.currentMode,
+      errorDetails: await this.getErrorDetails()
     };
   }
 
   interpretProcessStatus(status) {
     switch (status) {
-      case 0:
-        return '대기 중';
-      case 1:
-        return '무세제 세차';
-      case 2:
-        return '거품';
-      case 3:
-        return '세척';
-      case 4:
-        return '왁스';
-      case 5:
-        return '건조';
-      default:
-        return '알 수 없는 상태';
+      case 0: return '기계 대기 중';
+      case 1: return '세차 종료';
+      case 2: return '무브러시 세차 중';
+      case 3: return '거품 분사 중';
+      case 4: return '왁스 분사 중';
+      case 5: return '건조 중';
+      case 6: return '고압 물 분사 중';
+      case 7: return '하부 분사 중';
+      case 8: return '무브러시 세차 완료, 대기 중';
+      case 9: return '거품 분사 완료, 브러시 대기 중';
+      case 10: return '결제 성공';
+      default: return '알 수 없는 상태';
     }
   }
 
@@ -176,52 +198,55 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   getLastProcess() {
-    return '건조'; // 항상 마지막 프로세스는 '건조'입니다.
-  }
-
-  async reset() {
-    await this.client.writeCoil(0x0005, true);
-    console.log('FL3.0 세차기 리셋 명령 전송');
-  }
-
-  async checkOriginStatus() {
-    const result = await this.client.readCoils(0x0015, 4); // M21, M22, M24 읽기
-    return result.data[0] && result.data[1] && result.data[3]; // M21, M22, M24 확인
-  }
-
-  async checkInitialStatus() {
-    const result = await this.client.readCoils(0x0015, 10); // M21-M24, M13-M18 읽기
-    return result.data[0] && result.data[1] && result.data[3] && !result.data[4] && !result.data[5]; // M21, M22, M24, !M13, !M14
-  }
-
-  async checkRunningStatus() {
-    const result = await this.client.readCoils(0x0092, 1); // M146
-    return result.data[0];
-  }
-
-  async checkAtOriginStatus() {
-    const result = await this.client.readCoils(0x0093, 1); // M147
-    return result.data[0];
-  }
-
-  async checkCarStoppedStatus() {
-    const result = await this.client.readCoils(0x0011, 1); // M17
-    return result.data[0];
-  }
-
-  async checkCarNotStoppedStatus() {
-    const result = await this.client.readCoils(0x000F, 1); // M15
-    return result.data[0];
-  }
-
-  async checkCarOverPositionStatus() {
-    const result = await this.client.readCoils(0x0010, 1); // M16
-    return result.data[0];
+    return '건조 중';
   }
 
   async checkErrorStatus() {
-    const result = await this.client.readCoils(0x0012, 1); // M18
+    try {
+      const result = await this.client.readCoils(0x011D, 1); // M285 읽기
+      return result.data[0];
+    } catch (error) {
+      console.error('에러 상태 확인 중 오류:', error);
+      throw error;
+    }
+  }
+
+  async isWashingComplete() {
+    const result = await this.client.readCoils(0x0088, 1); // M136 읽기
     return result.data[0];
+  }
+
+  async isRunning() {
+    const result = await this.client.readCoils(0x0025, 1); // M37 읽기
+    return result.data[0];
+  }
+
+  async reconnect() {
+    console.log('연결 재시도 중...');
+    try {
+      await this.client.close();
+      await this.initialize();
+      console.log('재연결 성공');
+    } catch (error) {
+      console.error('재연결 실패:', error);
+      throw error;
+    }
+  }
+
+  async getErrorDetails() {
+    try {
+      const isError = await this.checkErrorStatus();
+      if (isError) {
+        // 여기에 추가적인 에러 세부 정보를 읽는 로직을 구현할 수 있습니다.
+        // 예를 들어, 다른 레지스터를 읽어 구체적인 에러 코드를 확인할 수 있습니다.
+        return "기계 이상 상태 발생";
+      } else {
+        return "정상 상태";
+      }
+    } catch (error) {
+      console.error('에러 세부 정보 확인 중 오류:', error);
+      throw error;
+    }
   }
 }
 

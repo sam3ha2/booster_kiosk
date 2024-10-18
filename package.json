@@ -9,7 +9,8 @@
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
     "dev:electron": "wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .",
-    "web": "vite"
+    "web": "vite",
+    "deploy": "electron-builder build --win --publish always"
   },
   "author": "Booster Team",
   "license": "ISC",
@@ -17,6 +18,7 @@
     "axios": "^1.3.5",
     "dotenv": "^16.0.3",
     "electron-log": "^4.4.8",
+    "electron-updater": "^6.3.9",
     "modbus-serial": "^8.0.17",
     "node-hid": "^3.1.1",
     "react": "^18.2.0",
@@ -37,5 +39,35 @@
     "tailwindcss": "^3.4.13",
     "vite": "^5.1.4",
     "wait-on": "^8.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sam3ha2/booster_kiosk.git"
+  },
+  "build": {
+    "appId": "kr.co.boosteron.kiosk",
+    "productName": "Booster Car Wash Kiosk",
+    "files": [
+      "dist/**/*",
+      "src/**/*"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    }
   }
 }

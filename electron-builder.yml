@@ -1,1 +1,27 @@
- 
+appId: kr.co.boosteron.kiosk
+productName: Booster Car Wash Kiosk
+directories:
+  output: dist
+  buildResources: build
+files:
+  - "dist/**/*"
+  - "package.json"
+extraResources:
+  - from: "dist"
+    to: "app/dist"
+asar: true
+asarUnpack: [
+  "dist",
+  "build"
+]
+publish:
+  provider: github
+  releaseType: release
+  token: ${GH_TOKEN}
+win:
+  target:
+    - nsis
+  icon: public/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

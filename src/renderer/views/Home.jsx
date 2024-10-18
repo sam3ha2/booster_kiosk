@@ -113,15 +113,15 @@ const Home = () => {
       {carWashState && (
         <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
           <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
-          <p>상태: {carWashState.isWashing ? '세차 중' : '대기 중'}</p>
-          {carWashState.remainingTime !== null && (
+          <p>상태: {carWashState.machineStatus === 'washing' ? '세차 중' : '대기 중'}</p>
+          <p>현재 단계: {carWashState.currentStep || '없음'}</p>
+          {carWashState.remainingTime !== undefined && (
             <>
               <p>남은 시간: {Math.floor(carWashState.remainingTime / 60)}분 {carWashState.remainingTime % 60}초</p>
-              <p>진행률: {carWashState.remainingPercent}%</p>
+              <p>진행률: {100 - carWashState.remainingPercent}%</p>
             </>
           )}
-          <p>현재 프로세스: {carWashState.currentProcess}</p>
-          <p>차량 존재: {carWashState.carStopped ? '있음' : '없음'}</p>
+          <p>입력 상태: {carWashState.inputStatus}</p>
           <p>오류 상태: {carWashState.error ? '오류' : '정상'}</p>
         </div>
       )}

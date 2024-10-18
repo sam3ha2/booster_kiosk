@@ -1,32 +1,56 @@
 const AbstractCarWashMachine = require('../abstract_car_wash_machine');
-const ModbusRTU = require('modbus-serial');
+const { SerialPort } = require('serialport');
 const EventEmitter = require('events');
 
 class FL30CarWash extends AbstractCarWashMachine {
   constructor(config) {
     super(config);
-    this.client = new ModbusRTU();
-    this.address = 0x01;
+    this.port = null;
     this.eventEmitter = new EventEmitter();
-    this.updateInterval = null;
-    this.totalTime = 0;
-    this.remainingTime = 0;
-    this.currentMode = null;
-    this.washTimer = null;
-    this.washStartTime = null;
+    this.address = 0x01;
+    this.startCommandInterval = null;
+    this.startCommandAttempts = 0;
+    this.MAX_START_ATTEMPTS = 30; // 최대 시도 횟수
+    this.START_COMMAND_INTERVAL = 1000; // 1초마다 시도
+    this.statusCheckInterval = null;
+    this.STATUS_CHECK_INTERVAL = 5000; // 5초마다 상태 확인
+    this.isWashing = false;
+    this.currentStep = '';
   }
 
   async initialize() {
     try {
-      await this.client.connectAsciiSerial(this.config.portName, {
+      this.port = new SerialPort({
+        path: this.config.portName,
         baudRate: 9600,
         dataBits: 8,
         stopBits: 1,
         parity: 'even'
       });
-      this.client.setTimeout(5000);
-      this.client.setID(this.address);
-      console.log('FL3.0 세차기 초기화 완료');
+
+      this.port.on('error', (err) => {
+        console.error('시리얼 포트 오류:', err);
+        this.eventEmitter.emit('error', err);
+      });
+
+      this.port.on('data', (data) => {
+        // check validate
+        if (data[0] == 0x3A) {
+          data = data.slice(1);
+        }
+        console.log('data', data.slice(0, -4).toString('ascii'));
+        if (data[0] == this.address) {
+          const ascii = data.toString('ascii');
+          this.interpretData(data.toString('ascii'));
+        }
+      });
+
+      await new Promise((resolve) => {
+        this.port.on('open', () => {
+          console.log('FL3.0 세차기 초기화 완료');
+          resolve();
+        });
+      });
     } catch (error) {
       console.error('FL3.0 세차기 초기화 중 오류:', error);
       throw error;
@@ -37,214 +61,154 @@ class FL30CarWash extends AbstractCarWashMachine {
     this.eventEmitter.on(event, listener);
   }
 
-  startStateUpdates() {
-    this.updateInterval = setInterval(async () => {
-      try {
-        const state = await this.getState();
-        this.eventEmitter.emit('stateUpdate', state);
-        
-        if (state.isAvailable && !state.isWashing) {
-          console.log('세차 완료.');
-        }
-      } catch (error) {
-        console.error('상태 업데이트 중 오류:', error);
-        // 연결 재시도
-        try {
-          await this.reconnect();
-        } catch (reconnectError) {
-          console.error('재연결 실패:', reconnectError);
-        }
+  parseModbusASCII(data) {
+    console.log("파싱된 요청:", data);
+    if (data.toUpperCase().startsWith('3A')) {
+      const content = data.slice(2, -4); // LRC와 CRLF 제거
+      const bytes = [];
+      for (let i = 0; i < content.length; i += 2) {
+        bytes.push(parseInt(content.substr(i, 2), 16));
       }
-    }, 2000); // 업데이트 간격을 2초로 늘림
-  }
-
-  stopStateUpdates() {
-    if (this.updateInterval) {
-      clearInterval(this.updateInterval);
-      this.updateInterval = null;
+      return bytes;
     }
+    return null;
   }
 
   async start(mode) {
-    let address;
-    this.currentMode = mode;
+    let command;
     switch (mode) {
       case 'MODE1':
-        address = 0x00D0; // M208 - 정밀 세차 모드
-        this.totalTime = 12 * 60; // 12분
+        command = '01 05 00 D0 FF 00 8D C3'; // 정밀 세차 모드
         break;
       case 'MODE2':
-        address = 0x00D1; // M209 - 빠른 세차 모드
-        this.totalTime = 8 * 60; // 8분
+        command = '01 05 00 D1 FF 00 DC 03'; // 빠른 세차 모드
         break;
       default:
         throw new Error('알 수 없는 세차 모드');
     }
-    this.remainingTime = this.totalTime;
-    this.washStartTime = Date.now();
-    await this.client.writeCoil(address, true);
-    console.log(`FL3.0 세차기 ${mode} 모드 시작 명령 전송`);
-    this.startWashTimer();
-  }
-
-  startWashTimer() {
-    if (this.washTimer) {
-      clearInterval(this.washTimer);
-    }
-    this.washTimer = setInterval(() => {
-      const elapsedTime = Math.floor((Date.now() - this.washStartTime) / 1000);
-      this.remainingTime = Math.max(0, this.totalTime - elapsedTime);
-      if (this.remainingTime === 0) {
-        clearInterval(this.washTimer);
-        this.washTimer = null;
+    
+    this.startCommandAttempts = 0;
+    this.startCommandInterval = setInterval(() => {
+      if (this.startCommandAttempts >= this.MAX_START_ATTEMPTS) {
+        clearInterval(this.startCommandInterval);
+        this.eventEmitter.emit('startFailed');
+        return;
       }
-    }, 1000);
-  }
-
-  async reset() {
-    try {
-      await this.client.writeCoil(0x00CF, true);
-      console.log('FL3.0 세차기 리셋 명령 전송');
-    } catch (error) {
-      console.error('리셋 명령 전송 중 오류:', error);
-      throw error;
-    }
+      this.sendCommand(command);
+      this.startCommandAttempts++;
+    }, this.START_COMMAND_INTERVAL);
   }
 
   async stop() {
-    try {
-      await this.client.writeCoil(0x00CE, true);
-      console.log('FL3.0 세차기 정지 명령 전송');
-      this.remainingTime = 0;
-      this.totalTime = 0;
-      this.currentMode = null;
-      this.washStartTime = null;
-      if (this.washTimer) {
-        clearInterval(this.washTimer);
-        this.washTimer = null;
+    if (this.startCommandInterval) {
+      clearInterval(this.startCommandInterval);
+    }
+    if (this.statusCheckInterval) {
+      clearInterval(this.statusCheckInterval);
+    }
+    await this.sendCommand('01 05 00 CE FF 00 ED C5');
+    this.isWashing = false;
+    this.eventEmitter.emit('stopped');
+  }
+
+  async reset() {
+    await this.sendCommand('01 05 00 CF FF 00 BC 05');
+    this.eventEmitter.emit('reset');
+  }
+
+  interpretData(data) {
+    console.log('data', data);
+    if (data.startsWith(`:${this.address}`)) {
+      data = data.slice(1);
+    } else {
+      console.log('이 기기로 수신된 메세지가 아닙니다.')
+      return;
+    }
+    console.log('수신된 데이터 (HEX):', data);
+
+    if (data.startsWith('0101') && data.length === 10) {
+      // M285 읽기 응답
+      const status = parseInt(data.slice(6, 8), 16);
+      this.eventEmitter.emit('errorStatusUpdate', status === 1);
+    } else if (data.startsWith('0101')) {
+      // M136 읽기 응답
+      const status = parseInt(data.slice(6, 8), 16);
+      this.eventEmitter.emit('washingComplete', status === 1);
+    } else if (data.startsWith('0105')) {
+      // M208 또는 M209 쓰기 응답 (세차 시작 명령 성공)
+      if (this.startCommandInterval) {
+        clearInterval(this.startCommandInterval);
+        this.startCommandInterval = null;
       }
-    } catch (error) {
-      console.error('정지 명령 전송 중 오류:', error);
-      throw error;
+      this.isWashing = true;
+      this.startStatusCheck();
+      this.eventEmitter.emit('started');
+    } else if (data.startsWith('0103')) {
+      // D100 읽기 응답
+      const status = parseInt(data.slice(6, 10), 16);
+      this.currentStep = this.interpretStep(status);
+      this.eventEmitter.emit('statusUpdate', {
+        status: status,
+        currentStep: this.currentStep
+      });
     }
   }
 
-  async status() {
-    try {
-      const result = await this.client.readHoldingRegisters(0x0064, 1); // D100 읽기
-      const processStatus = result.data[0];
-
-      const isRunning = processStatus !== 0;
-      const isError = await this.checkErrorStatus();
-
-      return {
-        running: isRunning,
-        error: isError,
-        processStatus,
-      };
-    } catch (error) {
-      console.error('Error getting FL30 status:', error);
-      throw error;
-    }
-  }
-
-  async getState() {
-    console.log('getState 시작');
-    const status = await this.status();
-    console.log('status 완료:', status);
-    const elapsedTime = this.washStartTime ? Math.floor((Date.now() - this.washStartTime) / 1000) : 0;
-    const remainingTime = Math.max(0, this.totalTime - elapsedTime);
-    const progress = this.totalTime > 0 ? Math.min(100, Math.round((elapsedTime / this.totalTime) * 100)) : 0;
-    
-    const currentStep = this.interpretProcessStatus(status.processStatus);
-    const isWashing = currentStep !== '대기 중';
-    const isAvailable = !isWashing && status.processStatus === 0;
-    
-    console.log('getState 완료');
-    return {
-      isAvailable,
-      isWashing,
-      running: status.running,
-      error: status.error,
-      remainingTime,
-      remainingPercent: 100 - progress,
-      progress,
-      currentStep,
-      currentMode: this.currentMode,
-      errorDetails: await this.getErrorDetails()
+  interpretStep(status) {
+    const statusMap = {
+      0: '기계 대기 중',
+      1: '세차 종료',
+      2: '무브러시 세차 중',
+      3: '거품 분사 중',
+      4: '왁스 분사 중',
+      5: '건조 중',
+      6: '고압 물 분사 중',
+      7: '하부 분사 중',
+      8: '무브러시 세차 완료, 대기 중',
+      9: '거품 분사 완료, 브러시 대기 중',
+      10: '결제 성공'
     };
+    return statusMap[status] || this.currentStep;
   }
 
-  interpretProcessStatus(status) {
-    switch (status) {
-      case 0: return '기계 대기 중';
-      case 1: return '세차 종료';
-      case 2: return '무브러시 세차 중';
-      case 3: return '거품 분사 중';
-      case 4: return '왁스 분사 중';
-      case 5: return '건조 중';
-      case 6: return '고압 물 분사 중';
-      case 7: return '하부 분사 중';
-      case 8: return '무브러시 세차 완료, 대기 중';
-      case 9: return '거품 분사 완료, 브러시 대기 중';
-      case 10: return '결제 성공';
-      default: return '알 수 없는 상태';
+  async sendCommand(command) {
+    return new Promise((resolve, reject) => {
+      const buffer = Buffer.from(`3A ${command}`.replace(/\s/g, ''), 'hex');
+      this.port.write(buffer, (err) => {
+        if (err) {
+          console.error('명령어 전송 중 오류:', err);
+          reject(err);
+        } else {
+          console.log(`명령어 전송: ${command}`);
+          resolve();
+        }
+      });
+    });
+  }
+
+  startStatusCheck() {
+    if (this.statusCheckInterval) {
+      clearInterval(this.statusCheckInterval);
     }
-  }
-
-  async getCurrentProcess() {
-    const status = await this.status();
-    return this.interpretProcessStatus(status.processStatus);
-  }
-
-  getLastProcess() {
-    return '건조 중';
-  }
-
-  async checkErrorStatus() {
-    try {
-      const result = await this.client.readCoils(0x011D, 1); // M285 읽기
-      return result.data[0];
-    } catch (error) {
-      console.error('에러 상태 확인 중 오류:', error);
-      throw error;
-    }
-  }
-
-  async isWashingComplete() {
-    const result = await this.client.readCoils(0x0088, 1); // M136 읽기
-    return result.data[0];
-  }
-
-  async isRunning() {
-    const result = await this.client.readCoils(0x0025, 1); // M37 읽기
-    return result.data[0];
+    this.statusCheckInterval = setInterval(() => {
+      if (this.isWashing) {
+        this.sendCommand('01 03 00 64 00 01 C5 D5'); // D100 읽기
+      } else {
+        clearInterval(this.statusCheckInterval);
+      }
+    }, this.STATUS_CHECK_INTERVAL);
   }
 
   async reconnect() {
     console.log('연결 재시도 중...');
     try {
-      await this.client.close();
+      if (this.port) {
+        await new Promise((resolve) => this.port.close(resolve));
+      }
       await this.initialize();
       console.log('재연결 성공');
     } catch (error) {
       console.error('재연결 실패:', error);
-      throw error;
-    }
-  }
-
-  async getErrorDetails() {
-    try {
-      const isError = await this.checkErrorStatus();
-      if (isError) {
-        // 여기에 추가적인 에러 세부 정보를 읽는 로직을 구현할 수 있습니다.
-        // 예를 들어, 다른 레지스터를 읽어 구체적인 에러 코드를 확인할 수 있습니다.
-        return "기계 이상 상태 발생";
-      } else {
-        return "정상 상태";
-      }
-    } catch (error) {
-      console.error('에러 세부 정보 확인 중 오류:', error);
       throw error;
     }
   }

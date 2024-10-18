@@ -7,19 +7,23 @@ class FL30Simulator {
     this.currentProcess = 0;
     this.errorStatus = false;
     this.carPresent = false;
-    this.coils = new Array(256).fill(false);
-    this.registers = new Array(256).fill(0);
-    this.port = new SerialPort({ path: portName, baudRate: 9600 });
+    this.coils = new Array(286).fill(false);
+    this.registers = new Array(101).fill(0);
+    this.port = new SerialPort({ path: portName, baudRate: 9600, parity: 'even', stopBits: 1, dataBits: 8 });
     this.washTimer = null;
     this.washStatus = 'idle';
     this.currentMode = null;
-    this.processes = {
-      MODE1: ['무세제 세차', '거품', '세척', '건조'],
-      MODE2: ['무세제 세차', '거품', '세척', '왁스', '건조']
-    };
-    this.currentProcessIndex = -1;
-    this.totalTime = 0;
-    this.remainingTime = 0;
+    this.washSteps = [
+      { step: 10, description: '결제 성공' },
+      { step: 2, description: '무브러시 세차 중' },
+      { step: 3, description: '거품 분사 중' },
+      { step: 6, description: '고압 물 분사 중' },
+      { step: 7, description: '하부 분사 중' },
+      { step: 4, description: '왁스 분사 중' },
+      { step: 5, description: '건조 중' },
+      { step: 1, description: '세차 종료' }
+    ];
+    this.currentStepIndex = 0;
   }
 
   initialize() {
@@ -27,40 +31,38 @@ class FL30Simulator {
       console.log("[Simulator] FL3.0 시뮬레이터가 초기화되었습니다.");
     });
 
-    this.port.on('data', (data) => this.onDataReceived(data));
+    this.port.on('data', (data) => {
+      // 50% 확률로 데이터 누락 시뮬레이션
+      if (Math.random() < 0.5) {
+        this.onDataReceived(data);
+      } else {
+        console.log("[Simulator] 데이터 누락 시뮬레이션");
+      }
+    });
 
     this.port.on('error', (err) => {
       console.error(`[Simulator] 포트 오류 발생: ${err.message}`);
     });
 
     // 초기 상태 설정
-    this.setCoil(0x0015, true); // M21
-    this.setCoil(0x0016, true); // M22
-    this.setCoil(0x0018, true); // M24
-    this.setCoil(0x0093, true); // M147 (at origin)
-    this.setRegister(0x000A, 0); // D10 (current process)
+    this.setCoil(37, false); // M37 (기계 작동 중이 아님)
+    this.setCoil(285, false); // M285 (기계 정상 상태)
+    this.setRegister(100, 0); // D100 (기계 대기 중)
     console.log("[Simulator] 초기 상태 설정 완료");
   }
 
   onDataReceived(data) {
-    console.log("[Simulator] 원시 데이터 수신:", data.toString('ascii'));
-    const requests = this.splitRequests(data.toString('ascii'));
-    requests.forEach(request => {
-      const parsedRequest = this.parseModbusASCII(request);
-      if (parsedRequest) {
-        console.log("[Simulator] 파싱된 요청:", parsedRequest);
-        this.handleRequest(parsedRequest);
-      }
-    });
-  }
-
-  splitRequests(data) {
-    return data.split('\r\n').filter(req => req.startsWith(':') && req.length > 0);
+    console.log("[Simulator] 원시 데이터 수신:", data.toString('hex'));
+    const request = this.parseModbusASCII(data.toString('hex'));
+    console.log("[Simulator] 파싱된 요청:", request);
+    if (request) {
+      this.handleRequest(request);
+    }
   }
 
   parseModbusASCII(data) {
-    if (data.startsWith(':')) {
-      const content = data.slice(1);
+    if (data.toUpperCase().startsWith('3A')) {
+      const content = data.slice(2, -4); // LRC와 CRLF 제거
       const bytes = [];
       for (let i = 0; i < content.length; i += 2) {
         bytes.push(parseInt(content.substr(i, 2), 16));
@@ -81,16 +83,13 @@ class FL30Simulator {
     let response;
     switch (functionCode) {
       case 1: // Read Coils
-        response = this.handleReadCoils(startAddress, quantity);
+        response = this.handleReadCoils(slaveId, startAddress, quantity);
         break;
       case 3: // Read Holding Registers
-        response = this.handleReadHoldingRegisters(startAddress, quantity);
+        response = this.handleReadHoldingRegisters(slaveId, startAddress, quantity);
         break;
       case 5: // Write Single Coil
-        response = this.handleWriteCoil(startAddress, request[4] === 0xFF);
-        break;
-      case 6: // Write Single Register
-        response = this.handleWriteRegister(startAddress, (request[4] << 8) | request[5]);
+        response = this.handleWriteCoil(slaveId, startAddress, request[4] === 0xFF);
         break;
       default:
         console.log("[Simulator] 지원하지 않는 기능 코드:", functionCode);
@@ -100,7 +99,7 @@ class FL30Simulator {
     this.sendResponse(response);
   }
 
-  handleReadCoils(startAddress, quantity) {
+  handleReadCoils(slaveId, startAddress, quantity) {
     const coilValues = this.coils.slice(startAddress, startAddress + quantity);
     const byteCount = Math.ceil(quantity / 8);
     const responseData = new Array(byteCount).fill(0);
@@ -111,12 +110,12 @@ class FL30Simulator {
       }
     });
 
-    return [0x0C, 0x01, byteCount, ...responseData];
+    return [slaveId, 0x01, byteCount, ...responseData];
   }
 
-  handleReadHoldingRegisters(startAddress, quantity) {
+  handleReadHoldingRegisters(slaveId, startAddress, quantity) {
     const registerValues = this.registers.slice(startAddress, startAddress + quantity);
-    const responseData = [0x0C, 0x03, quantity * 2];
+    const responseData = [slaveId, 0x03, quantity * 2];
     registerValues.forEach(value => {
       responseData.push((value >> 8) & 0xFF);
       responseData.push(value & 0xFF);
@@ -124,29 +123,28 @@ class FL30Simulator {
     return responseData;
   }
 
-  handleWriteCoil(address, value) {
+  handleWriteCoil(slaveId, address, value) {
     this.setCoil(address, value);
     
     // 세차 시작 신호 처리
-    if ((address === 0x012E || address === 0x012F) && value) {
-      if (this.washStatus === 'idle') {
-        this.startWash(address === 0x012E ? 'MODE2' : 'MODE1');
+    if ((address === 208 || address === 209) && value) {
+      if (this.registers[100] === 0 || this.registers[100] === 1) {
+        this.startWash(address === 208 ? '정밀' : '빠른');
       } else {
-        console.log('[Simulator] 세차가 이미 진행 중입니다. 새로운 세차 요청을 무시합니다.');
+        console.log("[Simulator] 세차 시작 무시: 대기 중이나 종료 상태가 아님");
       }
     }
     
-    // 세차 정지(리셋) 신호 처리
-    if (address === 0x0005 && value) {
-      this.stopWash();
+    // 복위(Reset) 또는 정지 명령 처리
+    if ((address === 207 || address === 206) && value) {
+      if (this.registers[100] === 0 || this.registers[100] === 1) {
+        this.stopWash();
+      } else {
+        console.log("[Simulator] 복위/정지 명령 무시: 대기 중이나 종료 상태가 아님");
+      }
     }
 
-    return [0x0C, 0x05, (address >> 8) & 0xFF, address & 0xFF, value ? 0xFF : 0x00, 0x00];
-  }
-
-  handleWriteRegister(address, value) {
-    this.setRegister(address, value);
-    return [0x0C, 0x06, (address >> 8) & 0xFF, address & 0xFF, (value >> 8) & 0xFF, value & 0xFF];
+    return [slaveId, 0x05, (address >> 8) & 0xFF, address & 0xFF, value ? 0xFF : 0x00, 0x00];
   }
 
   sendResponse(response) {
@@ -172,7 +170,7 @@ class FL30Simulator {
     const prevValue = this.coils[address];
     this.coils[address] = value;
     if (prevValue !== value) {
-      console.log(`[Simulator] 코일 ${address.toString(16)} 변경: ${prevValue} -> ${value}`);
+      console.log(`[Simulator] 코일 M${address} 변경: ${prevValue} -> ${value}`);
     }
     this.updateStatus();
   }
@@ -181,59 +179,32 @@ class FL30Simulator {
     const prevValue = this.registers[address];
     this.registers[address] = value;
     if (prevValue !== value) {
-      console.log(`[Simulator] 레지스터 ${address.toString(16)} 변경: ${prevValue} -> ${value}`);
+      console.log(`[Simulator] 레지스터 D${address} 변경: ${prevValue} -> ${value}`);
     }
     this.updateStatus();
   }
 
   updateStatus() {
     const prevStatus = this.status;
-    const prevCarPresent = this.carPresent;
     const prevErrorStatus = this.errorStatus;
     const prevCurrentProcess = this.currentProcess;
-    const prevWashStatus = this.washStatus;
 
-    const m21 = this.coils[0x0015];
-    const m22 = this.coils[0x0016];
-    const m24 = this.coils[0x0018];
-    const m13 = this.coils[0x000D];
-    const m14 = this.coils[0x000E];
-    const m146 = this.coils[0x0092];
-    const m147 = this.coils[0x0093];
-    const m17 = this.coils[0x0011];
-    const m15 = this.coils[0x000F];
-    const m16 = this.coils[0x0010];
-    const m18 = this.coils[0x0012];
+    const m37 = this.coils[37];
+    const m285 = this.coils[285];
+    const d100 = this.registers[100];
 
-    if (m21 && m22 && m24) {
-      if (!m13 && !m14) {
-        this.status = 'initial';
-      } else {
-        this.status = 'origin';
-      }
-    }
-
-    if (m146) {
+    if (m37) {
       this.status = 'running';
-      this.startWashProcess();
-    } else if (this.status === 'running') {
-      this.stopWashProcess();
+    } else {
+      this.status = 'idle';
     }
-    
-    if (m147) this.status = 'at_origin';
-    if (m17) this.carPresent = true;
-    if (m15) this.carPresent = false;
-    if (m16) console.log('[Simulator] 차량이 정지 위치를 초과했습니다.');
-    if (m18) this.errorStatus = true;
 
-    this.currentProcess = this.registers[0x000A]; // D10 레지스터
+    this.errorStatus = m285;
+    this.currentProcess = d100;
 
     // 상태 변화 출력
     if (this.status !== prevStatus) {
       console.log(`[Simulator] 상태 변경: ${prevStatus} -> ${this.status}`);
-    }
-    if (this.carPresent !== prevCarPresent) {
-      console.log(`[Simulator] 차량 존재 여부 변경: ${prevCarPresent} -> ${this.carPresent}`);
     }
     if (this.errorStatus !== prevErrorStatus) {
       console.log(`[Simulator] 오류 상태 변경: ${prevErrorStatus} -> ${this.errorStatus}`);
@@ -241,19 +212,15 @@ class FL30Simulator {
     if (this.currentProcess !== prevCurrentProcess) {
       console.log(`[Simulator] 현재 프로세스 변경: ${prevCurrentProcess} -> ${this.currentProcess}`);
     }
-    if (this.washStatus !== prevWashStatus) {
-      console.log(`[Simulator] 세차 상태 변경: ${prevWashStatus} -> ${this.washStatus}`);
-    }
   }
 
   startWash(mode) {
-    console.log(`[Simulator] 세차 시작: ${mode}`);
+    console.log(`[Simulator] 세차 시작: ${mode} 모드`);
     this.washStatus = 'running';
     this.currentMode = mode;
-    this.currentProcessIndex = 0;
-    this.setCoil(0x0092, true); // M146 (running) 설정
-    this.setCoil(0x0093, false); // M147 (at origin) 해제
-    this.setRegister(0x000A, 1); // D10 초기화 (1: 무세제 세차 시작)
+    this.setCoil(37, true); // M37 (기계 작동 중)
+    this.currentStepIndex = 0;
+    this.setRegister(100, this.washSteps[this.currentStepIndex].step); // D100 (결제 성공)
     this.startWashProcess();
   }
 
@@ -261,11 +228,11 @@ class FL30Simulator {
     if (this.washTimer) return;
     console.log('[Simulator] 세차 프로세스 시작');
     this.washTimer = setInterval(() => {
-      const processCount = this.processes[this.currentMode].length;
-      if (this.currentProcessIndex < processCount - 1) {
-        this.currentProcessIndex++;
-        this.setRegister(0x000A, this.currentProcessIndex + 1);
-        console.log(`[Simulator] 세차 프로세스 진행: ${this.processes[this.currentMode][this.currentProcessIndex]}`);
+      this.currentStepIndex++;
+      if (this.currentStepIndex < this.washSteps.length) {
+        const currentStep = this.washSteps[this.currentStepIndex];
+        this.setRegister(100, currentStep.step);
+        console.log(`[Simulator] 현재 단계: ${currentStep.description}`);
       } else {
         this.stopWashProcess();
         this.finishWash();
@@ -284,17 +251,27 @@ class FL30Simulator {
     console.log('[Simulator] 세차 완료');
     this.washStatus = 'idle';
     this.currentMode = null;
-    this.currentProcessIndex = -1;
-    this.setCoil(0x0092, false); // M146 (running) 해제
-    this.setCoil(0x0093, true);  // M147 (at origin) 설정
-    this.setRegister(0x000A, 0); // D10 초기화 (0: 대기 중)
+    this.setCoil(37, false); // M37 (기계 작동 중이 아님)
+    this.setCoil(136, true); // M136 (세차 종료)
+    this.setRegister(100, 1); // D100 (세차 종료)
+    
     this.status = 'idle';
+
+    setTimeout(() => {
+      if (this.registers[100] === 1) {
+        console.log('[Simulator] 5초 후 자동 리셋');
+        this.setRegister(100, 0); // D100 (기계 대기 중)
+      }
+    }, 5000);
   }
 
   stopWash() {
     console.log('[Simulator] 세차 정지');
     this.washStatus = 'idle';
-    this.finishWash();
+    this.stopWashProcess();
+    this.setCoil(37, false); // M37 (기계 작동 중이 아님)
+    this.setRegister(100, 0); // D100 (기계 대기 중)
+    this.status = 'idle';
   }
 
   close() {
@@ -311,7 +288,7 @@ module.exports = FL30Simulator;
 
 // 시뮬레이터를 독립적으로 실행할 수 있는 코드
 if (require.main === module) {
-  const simulator = new FL30Simulator(process.env.SIMULATOR_PORT_NAME || '/dev/ttys002');
+  const simulator = new FL30Simulator(process.env.SIMULATOR_PORT_NAME || '/dev/ttys013');
   simulator.initialize();
   console.log('FL3.0 시뮬레이터가 실행되었습니다.');
 

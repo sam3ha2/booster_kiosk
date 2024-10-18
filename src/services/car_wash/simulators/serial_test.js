@@ -22,13 +22,13 @@ function hexToBuffer(hex) {
 
 // 명령어 정의
 const commands = {
-  readM136: '01 01 00 88 00 01 7D E0',
-  startPreciseWash: '01 05 00 D0 FF 00 8D C3',
-  startQuickWash: '01 05 00 D1 FF 00 DC 03',
-  readD100: '01 03 00 64 00 01 C5 D5',
-  reset: '01 05 00 CF FF 00 BC 05',
-  stop: '01 05 00 CE FF 00 ED C5',
-  readM285: '01 01 01 1D 00 01 AC 14' // M285 읽기 명령 추가
+  readM136: '3A 01 01 00 88 00 01 7D E0',
+  startPreciseWash: '3A 01 05 00 D0 FF 00 8D C3',
+  startQuickWash: '3A 01 05 00 D1 FF 00 DC 03',
+  readD100: '3A 01 03 00 64 00 01 C5 D5',
+  reset: '3A 01 05 00 CF FF 00 BC 05',
+  stop: '3A 01 05 00 CE FF 00 ED C5',
+  readM285: '3A 01 01 01 1D 00 01 AC 14' // M285 읽기 명령 추가
 };
 
 // 명령어 전송 함수

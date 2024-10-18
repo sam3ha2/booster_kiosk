@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const log = require('electron-log');
 const CarWashManager = require('../services/car_wash/car_wash_manager');
 const ScannerManager = require('../services/scanner/scanner_manager');
+const setupAutoUpdater = require('./autoUpdater');
 
 // .env 파일 로드
 dotenv.config();
@@ -65,7 +66,7 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+// app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -77,6 +78,11 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+app.on('ready', () => {
+  createWindow();
+  setupAutoUpdater();
 });
 
 // 예외 처리

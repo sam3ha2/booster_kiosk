@@ -8,9 +8,14 @@ export default defineConfig(({ command, mode }) => {
     plugins: [react()],
     base: './',
     build: {
-      outDir: 'dist',
+      outDir: path.resolve(__dirname, 'dist'), // 빌드 출력 경로 수정
       assetsDir: 'assets',
       emptyOutDir: true,
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'src/renderer/index.html')
+        }
+      }
     },
     resolve: {
       alias: {

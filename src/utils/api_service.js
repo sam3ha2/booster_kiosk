@@ -61,9 +61,9 @@ const ApiService = {
     }
   },
 
-  async updateReservationStatus(idx, status, hipassIdx) {
+  async updateReservationStatus(idx, params) {
     try {
-      const response = await api.patch(`/kiosk/reservations/${idx}`, { status, hipass_idx: hipassIdx })
+      const response = await api.patch(`/kiosk/reservations/${idx}`, params)
       return response.data
     } catch (error) {
       throw error

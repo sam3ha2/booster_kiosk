@@ -1,8 +1,9 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const dotenv = require('dotenv');
 const log = require('electron-log');
 const CarWashManager = require('../services/car_wash/car_wash_manager');
+const ScannerManager = require('../services/scanner/scanner_manager');
 
 // .env 파일 로드
 dotenv.config();
@@ -12,9 +13,12 @@ log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
 const carWashManager = new CarWashManager();
+const scannerManager = new ScannerManager();
+
+let mainWindow;
 
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
@@ -26,16 +30,47 @@ function createWindow() {
 
   const startUrl = process.env.ELECTRON_START_URL || `file://${path.join(__dirname, '../../dist/index.html')}`;
   
-  win.loadURL(startUrl);
+  mainWindow.loadURL(startUrl);
 
   if (process.env.NODE_ENV === 'development') {
-    win.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
     console.log('Loading URL:', startUrl);
   }
 
   log.info('애플리케이션 창이 생성되었습니다.');
 
   carWashManager.addMachine({ type: 'FL30', config: { id: '0', portName: process.env.PORT_NAME || '/dev/ttys018' } });
+
+  // 스캐너 초기화
+  scannerManager.initialize();
+
+  // 스캐너 이벤트 리스너 설정
+  scannerManager.on('data', (data) => {
+    mainWindow.webContents.send('qrCodeScanned', data);
+  });
+
+  scannerManager.on('error', (error) => {
+    mainWindow.webContents.send('scannerError', error.message);
+  });
+
+  scannerManager.on('initFailed', (message) => {
+    mainWindow.webContents.send('scannerInitFailed', message);
+  });
+
+  // QR 스캐너 관련 IPC 핸들러
+  ipcMain.handle('getInitialScannerState', () => {
+    return { isInitialized: scannerManager.isInitialized() };
+  });
+
+  ipcMain.handle('beep', () => {
+    scannerManager.beep();
+    return true;
+  });
+
+  ipcMain.handle('toggleLight', (event, isOn) => {
+    scannerManager.toggleLight(isOn);
+    return true;
+  });
 }
 
 app.whenReady().then(createWindow);

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrScanner } from '@yudiel/react-qr-scanner';
 import ApiService from '../../utils/api_service';
 
 const Home = () => {
@@ -8,7 +7,9 @@ const Home = () => {
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
   const [carWashState, setCarWashState] = useState(null);
+  const [scanner, setScanner] = useState(null);
   const isDevelopment = process.env.NODE_ENV === 'development';
+  const [scannerInitError, setScannerInitError] = useState(null);
 
   useEffect(() => {
     const unsubscribe = window.machineIPC.subscribeUpdates('0', (state) => {
@@ -16,8 +17,40 @@ const Home = () => {
       setCarWashState(state);
     });
 
+    const qrCodeListener = (data) => {
+      console.log("QR 코드 스캔 데이터:", data);
+      window.scannerAPI.beep();
+      window.scannerAPI.toggleLight(false);
+      processQrCode(data);
+    };
+
+    const scannerErrorListener = (error) => {
+      console.error("스캐너 오류:", error);
+      alert('QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.');
+    };
+
+    const scannerInitFailedListener = (error) => {
+      console.error("스캐너 초기화 실패:", error);
+      setScannerInitError(error);
+    };
+
+    window.scannerAPI.onQrCodeScanned(qrCodeListener);
+    window.scannerAPI.onScannerError(scannerErrorListener);
+    window.scannerAPI.onScannerInitFailed(scannerInitFailedListener);
+    
+    // 초기 스캐너 상태 확인
+    window.scannerAPI.getInitialScannerState().then(({ isInitialized }) => {
+      if (!isInitialized) {
+        console.error('스캐너가 초기화되지 않았습니다.');
+        setScannerInitError('스캐너 초기화 실패');
+      }
+    });
+
     return () => {
-      if (unsubscribe) unsubscribe();
+      unsubscribe();
+      window.scannerAPI.offQrCodeScanned(qrCodeListener);
+      window.scannerAPI.offScannerError(scannerErrorListener);
+      window.scannerAPI.offScannerInitFailed(scannerInitFailedListener);
     };
   }, []);
 
@@ -33,49 +66,56 @@ const Home = () => {
     setShowQrScanner(false);
   };
 
-  const toggleUsageGuide = () => {
-    setShowUsageGuide(!showUsageGuide);
-  };
+  const processQrCode = async (qrData) => {
+    try {
+      const qrCodeData = JSON.parse(qrData);
 
-  const onDecode = async (result) => {
-    if (result) {
-      try {
-        const [qrIdx, qrCreatedAt, qrChecksum] = result.split('|');
+      console.log(qrCodeData);
+      const reservationResponse = await ApiService.getReservation({
+        qr_idx: qrCodeData.qr_idx,
+        qr_created_at: qrCodeData.qr_created_at,
+        qr_checksum: qrCodeData.qr_checksum,
+        is_test: isDevelopment ? 'Y' : null,
+      });
+      
+      if (reservationResponse.item) {
+        const updateResponse = await ApiService.updateReservationStatus(
+          reservationResponse.item.idx,
+          {
+            status: 'COMPLETE',
+            hipass_idx: null,
+            is_test: isDevelopment ? 'Y' : null,
+          }
+        );
         
-        const reservationResponse = await ApiService.getReservation({
-          qr_idx: qrIdx,
-          qr_created_at: qrCreatedAt,
-          qr_checksum: qrChecksum,
-        });
-        
-        if (reservationResponse.item) {
-          const updateResponse = await ApiService.updateReservationStatus(
-            reservationResponse.item.idx,
-            'COMPLETE',
-            null
-          );
+        if (updateResponse.type === 'SUCCESS') {
+          const controlResponse = await window.machineIPC.carWashCommand({
+            command: 'start-wash',
+            machineId: '0',
+            data: { mode: reservationResponse.item.product.target_mode }
+          });
           
-          if (updateResponse.type === 'SUCCESS') {
-            const controlResponse = await ApiService.controlCarWash('START');
-            
-            if (controlResponse.success) {
-              alert('예약이 확인되었습니다. 세차를 시작합니다.');
-            } else {
-              alert('세차기 시작에 실패했습니다. 관리자에게 문의해주세요.');
-            }
+          if (controlResponse.success) {
+            alert('예약이 확인되었습니다. 세차를 시작합니다.');
           } else {
-            alert('예약 상태 업데이트에 실패했습니다. 다시 시도해주세요.');
+            alert('세차기 시작에 실패했습니다. 관리자에게 문의해주세요.');
           }
         } else {
-          alert('유효하지 않은 QR 코드입니다.');
+          alert('예약 상태 업데이트에 실패했습니다. 다시 시도해주세요.');
         }
-        
-        closeQrScanner();
-      } catch (error) {
-        console.error('예약 확인 중 오류가 발생했습니다:', error);
-        alert('예약 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      } else {
+        alert('유효하지 않은 QR 코드입니다.');
       }
+    } catch (error) {
+      console.error('예약 확인 중 오류가 발생했습니다:', error);
+      alert('예약 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      closeQrScanner();
     }
+  };
+
+  const toggleUsageGuide = () => {
+    setShowUsageGuide(!showUsageGuide);
   };
 
   const isWashing = carWashState && carWashState.isWashing;
@@ -135,18 +175,10 @@ const Home = () => {
                 <span className="text-2xl">&times;</span>
               </button>
             </div>
-            <p className="mb-4">예약 확인을 위해 QR 코드를 카메라에 보여주세요.</p>
-            {isDevelopment ? (
-              <QrScanner
-                onDecode={onDecode}
-                onError={(error) => console.log(error?.message)}
-                className="w-full h-64"
-              />
-            ) : (
-              <div className="bg-gray-200 w-full h-64 flex items-center justify-center">
-                <p>카메라가 활성화되었습니다. QR 코드를 스캔해주세요.</p>
-              </div>
-            )}
+            <p className="mb-4">예약 확인을 위해 QR 코드를 스캐너에 보여주세요.</p>
+            <div className="bg-gray-200 w-full h-64 flex items-center justify-center">
+              <p>스캐너가 활성화되었습니다. QR 코드를 스캔해주세요.</p>
+            </div>
           </div>
         </div>
       )}
@@ -179,6 +211,13 @@ const Home = () => {
               <p className="text-sm mt-2">앱에서 구독을 확인하세요.</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {scannerInitError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">스캐너 오류:</strong>
+          <span className="block sm:inline"> {scannerInitError}</span>
         </div>
       )}
     </div>

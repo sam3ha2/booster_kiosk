@@ -1,7 +1,6 @@
 import axios from 'axios'
 
-// const API_BASE_URL = 'https://api.boosteron.co.kr/api'
-const API_BASE_URL = 'http://127.0.0.1:5000'
+const API_BASE_URL = process.env.API_BASE_URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,7 +10,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // const token = localStorage.getItem('token') // 토큰을 로컬 스토리지에서 가져옵니다.
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiZGV2aWNlIiwiaWR4IjoiVWRkczJMeDlUV1M3VDFud2I3bWRMdyIsImlhdCI6MTcyMTkwNjU0Mn0.9eTYxhO5Sh6C7qCNWpZGpqCXIhgf2_9g7LOXRxNJiYU'
+    const token = process.env.SHOP_TOKEN
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
@@ -48,7 +47,7 @@ const ApiService = {
       const response = await api.get('/kiosk/products')
       return response.data
     } catch (error) {
-      throw error // 이제 error 객체에 code와 message가 포함됩니다.
+      throw error
     }
   },
 

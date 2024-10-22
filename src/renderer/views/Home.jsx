@@ -2,14 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../utils/api_service';
 
+// 새로운 HomeButton 컴포넌트
+const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
+  <button
+    onClick={onClick}
+    className={`bg-gray-800 text-white px-8 py-6 rounded-full flex flex-col items-center transition duration-300 w-40 h-64 justify-center ${
+      disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
+    }`}
+    disabled={disabled}
+  >
+    <span className="text-lg font-semibold">{text}</span>
+    <span className="text-sm">{subText}</span>
+    <span className="mt-2 text-2xl">{icon}</span>
+  </button>
+);
+
 const Home = () => {
   const navigate = useNavigate();
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
   const [carWashState, setCarWashState] = useState(null);
-  const [scanner, setScanner] = useState(null);
-  const isDevelopment = process.env.NODE_ENV === 'development';
   const [scannerInitError, setScannerInitError] = useState(null);
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     const unsubscribe = window.machineIPC.subscribeUpdates('0', (state) => {
@@ -126,25 +140,14 @@ const Home = () => {
       <h1 className="text-2xl font-semibold text-center mb-8">
         안녕하세요. 고객님<br />씻자 진주점입니다.
       </h1>
-      <div className="flex space-x-4 mb-8">
-        <button
+      <div className="flex space-x-8 mb-8">
+        <HomeButton
           onClick={startWash}
-          className={`bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 ${isWashing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'}`}
           disabled={isWashing}
-        >
-          <span>자동세차</span>
-          <span>현장결제</span>
-          <span className="mt-2 text-2xl">→</span>
-        </button>
-        <button
-          onClick={checkReservation}
-          className={`bg-gray-800 text-white px-6 py-4 rounded-2xl flex flex-col items-center transition duration-300 ${isWashing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'}`}
-          disabled={isWashing}
-        >
-          <span>자동세차</span>
-          <span>QR 확인</span>
-          <span className="mt-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">QR</span>
-        </button>
+          text="자동세차"
+          subText="현장결제"
+          icon="→"
+        />
       </div>
       <button onClick={toggleUsageGuide} className="text-green-500 underline mb-4">
         부스터 키오스크 사용 안내
@@ -153,7 +156,7 @@ const Home = () => {
       {carWashState && (
         <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
           <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
-          <p>상태: {carWashState.machineStatus === 'washing' ? '세차 중' : '대기 중'}</p>
+          <p>상태: {carWashState.machineStatus}</p>
           <p>현재 단계: {carWashState.currentStep || '없음'}</p>
           {carWashState.remainingTime !== undefined && (
             <>
@@ -211,6 +214,7 @@ const Home = () => {
               <p className="text-sm mt-2">앱에서 구독을 확인하세요.</p>
             </div>
           </div>
+          {carWashState.error && <p className="text-red-500">오류: {carWashState.error}</p>}
         </div>
       )}
 

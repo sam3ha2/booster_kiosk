@@ -3,6 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Product } from '../../models/models';
 import ApiService from '../../utils/api_service';
 
+const ServiceOption = ({ product, onSelect }) => (
+  <div className="bg-gray-800 rounded-lg p-4 mb-4 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
+    <div>
+      <h3 className="text-white font-bold">{product.name} ({product.duration}분)</h3>
+      <p className="text-gray-400 text-sm">{product.description}</p>
+    </div>
+    <div className="flex items-center">
+      <span className="text-green-400 font-bold mr-2">{product.price.toLocaleString()}원</span>
+      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </div>
+  </div>
+);
+
 const ProductList = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -11,7 +26,7 @@ const ProductList = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [paymentMessage, setPaymentMessage] = useState('');
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -96,67 +111,71 @@ const ProductList = () => {
     });
   };
 
-  const renderPaymentModal = () => {
-    switch (paymentStatus) {
-      case 'waiting':
-        return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
-              <h2 className="text-2xl font-bold mb-4">신용카드를 넣어주세요.</h2>
-              <p className="mb-4">모니터 오른쪽 하단에 카드를 삽입 또는 터치해주세요.</p>
-              <div className="flex justify-center">
-                <img src="/path-to-card-icon.png" alt="Card Icon" className="w-24 h-24" />
-              </div>
-              <button onClick={processPayment} className="mt-6 bg-green-500 text-white px-6 py-2 rounded-full w-full">
-                결제 시작하기
-              </button>
-            </div>
-          </div>
-        );
-      case 'processing':
-        return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
-              <h2 className="text-2xl font-bold mb-4">{paymentMessage}</h2>
-              <div className="flex justify-center">
-                <img src="/path-to-loading-icon.png" alt="Loading" className="w-24 h-24 animate-spin" />
-              </div>
-            </div>
-          </div>
-        );
-      case 'success':
-        return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
-              <h2 className="text-2xl font-bold mb-4">결제가 완료되었습니다.</h2>
-              <p className="mb-4">모니터 오른쪽 하단에 카드를 회수해 주세요.</p>
-              <div className="flex justify-center">
-                <img src="/path-to-success-icon.png" alt="Success Icon" className="w-24 h-24" />
-              </div>
-              <button onClick={() => navigate('/')} className="mt-6 bg-green-500 text-white px-6 py-2 rounded-full w-full">
-                5초 후 자동으로 닫힙니다.
-              </button>
-            </div>
-          </div>
-        );
-      case 'failed':
-        return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
-              <h2 className="text-2xl font-bold mb-4">결제가 실패했습니다.</h2>
-              <p className="mb-4">{paymentMessage}</p>
-              <div className="flex justify-center">
-                <img src="/path-to-error-icon.png" alt="Error Icon" className="w-24 h-24" />
-              </div>
-              <button onClick={() => setPaymentStatus('waiting')} className="mt-6 bg-green-500 text-white px-6 py-2 rounded-full w-full">
-                결제 재시도하기
-              </button>
-            </div>
-          </div>
-        );
-      default:
-        return null;
+  useEffect(() => {
+    let timer;
+    if (paymentStatus === 'success') {
+      timer = setInterval(() => {
+        setCountdown((prevCount) => {
+          if (prevCount === 1) {
+            clearInterval(timer);
+            setPaymentStatus(null);
+            return 5;
+          }
+          return prevCount - 1;
+        });
+      }, 1000);
     }
+    return () => clearInterval(timer);
+  }, [paymentStatus]);
+
+  const handleClose = () => {
+    setPaymentStatus(null);
+    setCountdown(5);
+  };
+
+  const handlePrintReceipt = () => {
+    // 영수증 출력 로직
+    handleClose();
+  };
+
+  const renderPaymentModal = () => {
+    if (paymentStatus === 'waiting') {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
+            <h2 className="text-2xl font-bold mb-4">결제 대기 중</h2>
+            <p>카드를 투입해 주세요.</p>
+            <button onClick={processPayment} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
+              결제 시뮬레이션
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (paymentStatus === 'processing') {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
+            <h2 className="text-2xl font-bold mb-4">결제 처리 중</h2>
+            <p>{paymentMessage}</p>
+          </div>
+        </div>
+      );
+    }
+    if (paymentStatus === 'failed') {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
+            <h2 className="text-2xl font-bold mb-4">결제 실패</h2>
+            <p>{paymentMessage}</p>
+            <button onClick={() => setPaymentStatus(null)} className="mt-4 bg-red-500 text-white px-4 py-2 rounded">
+              닫기
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   if (error) {
@@ -176,34 +195,41 @@ const ProductList = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
-      <div className="flex-1 p-4">
-        <div className="flex items-center mb-4">
-          <button onClick={goBack} className="bg-white rounded-full p-2 mr-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="bg-black min-h-screen p-4">
+      <div className="max-w-md mx-auto">
+        <div className="relative mb-6">
+          <img src="/path-to-your-image.jpg" alt="Car wash" className="w-full rounded-lg" />
+          <button onClick={goBack} className="absolute top-4 left-4 bg-white rounded-full p-2">
+            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h2 className="text-2xl font-bold">상품 선택</h2>
         </div>
-        <div className="space-y-4">
-          {products.map((product) => (
-            <div key={product.idx} className="bg-gray-800 rounded-xl p-4 flex justify-between items-center" onClick={() => selectProduct(product)}>
-              <div>
-                <h3 className="text-xl font-bold">{product.name}</h3>
-                <p className="text-sm text-gray-400">{product.description}</p>
-              </div>
-              <div className="flex items-center">
-                <span className="text-green-500 text-xl font-bold mr-2">{product.price.toLocaleString()}원</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          ))}
-        </div>
+        <h2 className="text-white text-2xl font-bold mb-6">상품 선택</h2>
+        {products.map((product) => (
+          <ServiceOption key={product.idx} product={product} onSelect={selectProduct} />
+        ))}
       </div>
       {renderPaymentModal()}
+      {paymentStatus === 'success' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
+            <h2 className="text-2xl font-bold mb-4 text-center">결제가 완료되었습니다.</h2>
+            <p className="mb-4 text-center">모니터 오른쪽 하단에 카드를 회수해 주세요.</p>
+            <div className="flex justify-center mb-6">
+              <img src="/path-to-success-icon.png" alt="Success Icon" className="w-24 h-24" />
+            </div>
+            <div className="flex justify-between mt-6">
+              <button onClick={handleClose} className="bg-red-500 text-white px-6 py-2 rounded-full w-[48%]">
+                닫기 ({countdown})
+              </button>
+              <button onClick={handlePrintReceipt} className="bg-green-500 text-white px-6 py-2 rounded-full w-[48%]">
+                영수증 출력
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

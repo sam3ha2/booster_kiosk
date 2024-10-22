@@ -26,10 +26,12 @@ const Home = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
-    const unsubscribe = window.machineIPC.subscribeUpdates('0', (state) => {
-      console.log('세차기 상태 업데이트:', state);
-      setCarWashState(state);
-    });
+    const statusUpdateListener = (data) => {
+      console.log('세차기 상태 업데이트:', data);
+      setCarWashState(data.state);
+    };
+
+    window.machineIPC.onStatusUpdate(statusUpdateListener);
 
     const qrCodeListener = (data) => {
       console.log("QR 코드 스캔 데이터:", data);
@@ -61,7 +63,7 @@ const Home = () => {
     });
 
     return () => {
-      unsubscribe();
+      window.machineIPC.offStatusUpdate(statusUpdateListener);
       window.scannerAPI.offQrCodeScanned(qrCodeListener);
       window.scannerAPI.offScannerError(scannerErrorListener);
       window.scannerAPI.offScannerInitFailed(scannerInitFailedListener);
@@ -103,11 +105,7 @@ const Home = () => {
         );
         
         if (updateResponse.type === 'SUCCESS') {
-          const controlResponse = await window.machineIPC.carWashCommand({
-            command: 'start-wash',
-            machineId: '0',
-            data: { mode: reservationResponse.item.product.target_mode }
-          });
+          const controlResponse = await window.machineIPC.startWash('0', reservationResponse.item.product.target_mode);
           
           if (controlResponse.success) {
             alert('예약이 확인되었습니다. 세차를 시작합니다.');

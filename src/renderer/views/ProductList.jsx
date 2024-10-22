@@ -75,11 +75,7 @@ const ProductList = () => {
 
       // 세차기 동작 시작
       try {
-        const result = await window.machineIPC.carWashCommand({
-          command: 'start-wash',
-          machineId: '0',
-          data: { mode: selectedProduct.targetMode }
-        });
+        const result = await window.machineIPC.startWash('0', selectedProduct.targetMode);
         console.log('세차기 제어 결과:', result);
         if (result.success) {
           setPaymentStatus('success');

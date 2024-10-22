@@ -39,10 +39,7 @@ class FL30CarWash extends AbstractCarWashMachine {
           data = data.slice(1);
         }
         console.log('data', data.slice(0, -4).toString('ascii'));
-        if (data[0] == this.address) {
-          const ascii = data.toString('ascii');
-          this.interpretData(data.toString('ascii'));
-        }
+        this.interpretData(data.slice(0, -4).toString('ascii'));
       });
 
       await new Promise((resolve) => {
@@ -75,28 +72,46 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   async start(mode) {
-    let command;
-    switch (mode) {
-      case 'MODE1':
-        command = '01 05 00 D0 FF 00 8D C3'; // 정밀 세차 모드
-        break;
-      case 'MODE2':
-        command = '01 05 00 D1 FF 00 DC 03'; // 빠른 세차 모드
-        break;
-      default:
-        throw new Error('알 수 없는 세차 모드');
-    }
-    
-    this.startCommandAttempts = 0;
-    this.startCommandInterval = setInterval(() => {
-      if (this.startCommandAttempts >= this.MAX_START_ATTEMPTS) {
-        clearInterval(this.startCommandInterval);
-        this.eventEmitter.emit('startFailed');
-        return;
+    return new Promise((resolve, reject) => {
+      let command;
+      switch (mode) {
+        case 'MODE1':
+          command = '01 05 00 D0 FF 00 8D C3'; // 정밀 세차 모드
+          break;
+        case 'MODE2':
+          command = '01 05 00 D1 FF 00 DC 03'; // 빠른 세차 모드
+          break;
+        default:
+          reject(new Error('알 수 없는 세차 모드'));
+          return;
       }
-      this.sendCommand(command);
-      this.startCommandAttempts++;
-    }, this.START_COMMAND_INTERVAL);
+      
+      this.startCommandAttempts = 0;
+      this.startCommandInterval = setInterval(() => {
+        if (this.startCommandAttempts >= this.MAX_START_ATTEMPTS) {
+          clearInterval(this.startCommandInterval);
+          this.eventEmitter.emit('startFailed');
+          return;
+        }
+        this.sendCommand(command);
+        this.startCommandAttempts++;
+      }, this.START_COMMAND_INTERVAL);
+
+      const successListener = () => {
+        clearInterval(this.startCommandInterval);
+        this.eventEmitter.removeListener('startFailed', failureListener);
+        resolve({ success: true, message: '세차가 시작되었습니다.' });
+      };
+
+      const failureListener = () => {
+        clearInterval(this.startCommandInterval);
+        this.eventEmitter.removeListener('startSuccess', successListener);
+        reject(new Error('세차 시작 실패'));
+      };
+
+      this.eventEmitter.once('startSuccess', successListener);
+      this.eventEmitter.once('startFailed', failureListener);
+    });
   }
 
   async stop() {
@@ -117,13 +132,6 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   interpretData(data) {
-    console.log('data', data);
-    if (data.startsWith(`:${this.address}`)) {
-      data = data.slice(1);
-    } else {
-      console.log('이 기기로 수신된 메세지가 아닙니다.')
-      return;
-    }
     console.log('수신된 데이터 (HEX):', data);
 
     if (data.startsWith('0101') && data.length === 10) {
@@ -142,7 +150,7 @@ class FL30CarWash extends AbstractCarWashMachine {
       }
       this.isWashing = true;
       this.startStatusCheck();
-      this.eventEmitter.emit('started');
+      this.eventEmitter.emit('startSuccess');  // 'started' 대신 'startSuccess' 이벤트 발생
     } else if (data.startsWith('0103')) {
       // D100 읽기 응답
       const status = parseInt(data.slice(6, 10), 16);

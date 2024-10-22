@@ -1,5 +1,6 @@
 const VguangScanner = require('./vguang/VguangScanner');
 const EventEmitter = require('events');
+const { ipcMain } = require('electron');
 
 class ScannerManager extends EventEmitter {
   constructor() {
@@ -8,6 +9,23 @@ class ScannerManager extends EventEmitter {
     this.initRetries = 0;
     this.MAX_INIT_RETRIES = 3;
     this.INIT_RETRY_DELAY = 2000; // 2초
+    this.setupIpcHandlers();
+  }
+
+  setupIpcHandlers() {
+    ipcMain.handle('getInitialScannerState', () => {
+      return { isInitialized: this.isInitialized() };
+    });
+
+    ipcMain.handle('beep', () => {
+      this.beep();
+      return true;
+    });
+
+    ipcMain.handle('toggleLight', (event, isOn) => {
+      this.toggleLight(isOn);
+      return true;
+    });
   }
 
   initialize() {

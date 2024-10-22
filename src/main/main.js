@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const dotenv = require('dotenv');
 const log = require('electron-log');
@@ -55,21 +55,6 @@ function createWindow() {
 
   scannerManager.on('initFailed', (message) => {
     mainWindow.webContents.send('scannerInitFailed', message);
-  });
-
-  // QR 스캐너 관련 IPC 핸들러
-  ipcMain.handle('getInitialScannerState', () => {
-    return { isInitialized: scannerManager.isInitialized() };
-  });
-
-  ipcMain.handle('beep', () => {
-    scannerManager.beep();
-    return true;
-  });
-
-  ipcMain.handle('toggleLight', (event, isOn) => {
-    scannerManager.toggleLight(isOn);
-    return true;
   });
 }
 

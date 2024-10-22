@@ -27,6 +27,7 @@ const ProductList = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [paymentMessage, setPaymentMessage] = useState('');
   const [countdown, setCountdown] = useState(5);
+  const [shouldNavigateHome, setShouldNavigateHome] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -44,6 +45,29 @@ const ProductList = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    if (shouldNavigateHome) {
+      navigate('/');
+    }
+  }, [shouldNavigateHome, navigate]);
+
+  useEffect(() => {
+    let timer;
+    if (paymentStatus === 'success') {
+      timer = setInterval(() => {
+        setCountdown((prevCount) => {
+          if (prevCount === 1) {
+            clearInterval(timer);
+            handleClose();
+            return 5;
+          }
+          return prevCount - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [paymentStatus]);
+
   const goBack = () => {
     navigate(-1);
   };
@@ -58,21 +82,12 @@ const ProductList = () => {
       setPaymentStatus('processing');
       setPaymentMessage('결제 처리 중...');
 
-      // 실제 환경에서는 여기에 카드 결제 시퀀스 로직을 구현합니다.
-      // 개발 환경에서는 시뮬레이션된 결제 정보를 사용합니다.
       const paymentInfo = await simulatePayment();
 
       setPaymentMessage('예약 생성 중...');
-      // 예약 요청
-      const reservationResponse = await ApiService.createReservation({
-        tel: '010-0000-0000', // TODO: 실제 사용자 전화번호 입력 받기
-        product_idx: selectedProduct.idx,
-        payment: paymentInfo,
-        status: 'COMPLETE'
-      });
+      // 예약 로직 (주석 처리된 부분)
 
-      console.log('예약이 완료되었습니다:', reservationResponse);
-
+      console.log('selectedProduct : ', selectedProduct)
       // 세차기 동작 시작
       try {
         const result = await window.machineIPC.startWash('0', selectedProduct.targetMode);
@@ -107,26 +122,10 @@ const ProductList = () => {
     });
   };
 
-  useEffect(() => {
-    let timer;
-    if (paymentStatus === 'success') {
-      timer = setInterval(() => {
-        setCountdown((prevCount) => {
-          if (prevCount === 1) {
-            clearInterval(timer);
-            setPaymentStatus(null);
-            return 5;
-          }
-          return prevCount - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [paymentStatus]);
-
   const handleClose = () => {
     setPaymentStatus(null);
     setCountdown(5);
+    setShouldNavigateHome(true);
   };
 
   const handlePrintReceipt = () => {

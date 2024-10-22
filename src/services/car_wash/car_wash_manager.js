@@ -1,4 +1,4 @@
-const { ipcMain } = require('electron');
+const { ipcMain, BrowserWindow } = require('electron');
 const SG90CarWash = require('./machine_types/sg90_car_wash');
 const FL30CarWash = require('./machine_types/fl30_car_wash');
 const EventEmitter = require('events');
@@ -13,6 +13,7 @@ class CarWashManager extends EventEmitter {
   registerHandlers() {
     ipcMain.handle('start-wash', this.startWash.bind(this));
     ipcMain.handle('stop-wash', this.stopWash.bind(this));
+    ipcMain.on('request-status', this.requestStatus.bind(this));
   }
 
   async addMachine({ type, config }) {
@@ -41,11 +42,18 @@ class CarWashManager extends EventEmitter {
   }
 
   setupMachineEventListeners(machineId, machine) {
-    machine.on('stateChanged', (state) => {
-      console.log(`세차기 ${machineId} 상태 변경:`, state);  // 로그 추가
-      this.emit('status-update', { machineId, state });
+    machine.on('statusUpdate', (state) => {
+      console.log(`세차기 ${machineId} 상태 변경:`, state);
+      this.sendStatusUpdate(machineId, state);
     });
     machine.on('error', (error) => this.handleMachineError(machineId, error));
+  }
+
+  sendStatusUpdate(machineId, state) {
+    const windows = BrowserWindow.getAllWindows();
+    windows.forEach(window => {
+      window.webContents.send('status-update', { machineId, state });
+    });
   }
 
   async startWash(event, machineId, mode) {
@@ -65,16 +73,18 @@ class CarWashManager extends EventEmitter {
       await machine.stop();
       return { success: true, message: '세차가 중지되었습니다.' };
     } catch (error) {
+      console.error('세차 중지 중 오류 발생:', error);
       return { success: false, error: error.message };
     }
   }
 
-  async getStatus(machineId) {
+  requestStatus(event, machineId, turnOn) {
     const machine = this.getMachine(machineId);
-    return {
-      success: true,
-      status: machine.getState()
-    };
+    if (turnOn) {
+      machine.startStatusCheck();
+    } else {
+      machine.stopStatusCheck();
+    }
   }
 
   getMachine(machineId) {
@@ -87,7 +97,7 @@ class CarWashManager extends EventEmitter {
 
   handleMachineError(machineId, error) {
     console.error(`세차기 ${machineId} 오류:`, error);
-    this.emit('status-update', { machineId, error: error.message });
+    this.sendStatusUpdate(machineId, { error: error.message });
   }
 }
 

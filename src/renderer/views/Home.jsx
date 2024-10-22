@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../utils/api_service';
 
@@ -25,13 +25,16 @@ const Home = () => {
   const [scannerInitError, setScannerInitError] = useState(null);
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  useEffect(() => {
-    const statusUpdateListener = (data) => {
-      console.log('세차기 상태 업데이트:', data);
-      setCarWashState(data.state);
-    };
+  const statusUpdateListener = useCallback((data) => {
+    console.log('세차기 상태 업데이트:', data);
+    setCarWashState(data);
+  }, []);
 
+  useEffect(() => {
     window.machineIPC.onStatusUpdate(statusUpdateListener);
+
+    // 화면 진입 시 requestStatus 호출 (turnOn)
+    window.machineIPC.requestStatus('0', true);
 
     const qrCodeListener = (data) => {
       console.log("QR 코드 스캔 데이터:", data);
@@ -62,13 +65,29 @@ const Home = () => {
       }
     });
 
+    // 개발 환경에서 초기 상태 설정
+    if (isDevelopment && !carWashState) {
+      setCarWashState({
+        machineId: '0',
+        state: {
+          currentStep: '없음',
+          remainingTime: 0,
+          progress: 0,
+          error: false
+        }
+      });
+    }
+
     return () => {
+      // 화면을 빠져나갈 때 requestStatus 호출 (turnOff)
+      window.machineIPC.requestStatus('0', false);
+      
       window.machineIPC.offStatusUpdate(statusUpdateListener);
       window.scannerAPI.offQrCodeScanned(qrCodeListener);
       window.scannerAPI.offScannerError(scannerErrorListener);
       window.scannerAPI.offScannerInitFailed(scannerInitFailedListener);
     };
-  }, []);
+  }, [statusUpdateListener]);
 
   const startWash = () => {
     navigate('/products');
@@ -132,6 +151,29 @@ const Home = () => {
 
   const isWashing = carWashState && carWashState.isWashing;
 
+  const renderCarWashStatus = () => {
+    if (!carWashState && !isDevelopment) return null;
+
+    return (
+      <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
+        <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
+        <p>기기 ID: {carWashState?.machineId || '0'}</p>
+        {carWashState?.state && (
+          <>
+            <p>현재 단계: {carWashState.state.currentStep || '없음'}</p>
+            {carWashState.state.remainingTime !== undefined && (
+              <>
+                <p>남은 시간: {Math.floor(carWashState.state.remainingTime / 60)}분 {carWashState.state.remainingTime % 60}초</p>
+                <p>진행률: {carWashState.state.progress}%</p>
+              </>
+            )}
+            <p>오류 상태: {carWashState.state.error ? '오류' : '정상'}</p>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 p-8 flex flex-col items-center justify-center">
       <div className="text-4xl font-bold text-green-500 mb-4">BOOSTER</div>
@@ -151,21 +193,7 @@ const Home = () => {
         부스터 키오스크 사용 안내
       </button>
 
-      {carWashState && (
-        <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
-          <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
-          <p>상태: {carWashState.machineStatus}</p>
-          <p>현재 단계: {carWashState.currentStep || '없음'}</p>
-          {carWashState.remainingTime !== undefined && (
-            <>
-              <p>남은 시간: {Math.floor(carWashState.remainingTime / 60)}분 {carWashState.remainingTime % 60}초</p>
-              <p>진행률: {100 - carWashState.remainingPercent}%</p>
-            </>
-          )}
-          <p>입력 상태: {carWashState.inputStatus}</p>
-          <p>오류 상태: {carWashState.error ? '오류' : '정상'}</p>
-        </div>
-      )}
+      {renderCarWashStatus()}
 
       {showQrScanner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

@@ -13,7 +13,7 @@ class FL30CarWash extends AbstractCarWashMachine {
     this.MAX_START_ATTEMPTS = 30; // 최대 시도 횟수
     this.START_COMMAND_INTERVAL = 1000; // 1초마다 시도
     this.statusCheckInterval = null;
-    this.STATUS_CHECK_INTERVAL = 5000; // 5초마다 상태 확인
+    this.STATUS_CHECK_INTERVAL = 1000; // 1초마다 상태 확인
     this.isWashing = false;
     this.currentStep = '';
   }
@@ -149,7 +149,6 @@ class FL30CarWash extends AbstractCarWashMachine {
         this.startCommandInterval = null;
       }
       this.isWashing = true;
-      this.startStatusCheck();
       this.eventEmitter.emit('startSuccess');  // 'started' 대신 'startSuccess' 이벤트 발생
     } else if (data.startsWith('0103')) {
       // D100 읽기 응답
@@ -195,16 +194,17 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   startStatusCheck() {
+    this.stopStatusCheck();
+    this.sendCommand('01 03 00 64 00 01 C5 D5'); // D100 읽기
+    this.statusCheckInterval = setInterval(() => {
+      this.sendCommand('01 03 00 64 00 01 C5 D5'); // D100 읽기
+    }, this.STATUS_CHECK_INTERVAL);
+  }
+
+  stopStatusCheck() {
     if (this.statusCheckInterval) {
       clearInterval(this.statusCheckInterval);
     }
-    this.statusCheckInterval = setInterval(() => {
-      if (this.isWashing) {
-        this.sendCommand('01 03 00 64 00 01 C5 D5'); // D100 읽기
-      } else {
-        clearInterval(this.statusCheckInterval);
-      }
-    }, this.STATUS_CHECK_INTERVAL);
   }
 
   async reconnect() {

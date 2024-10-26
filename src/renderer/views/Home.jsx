@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../utils/api_service';
+import CarWashStatus from '../components/CarWashStatus';
 
 // 새로운 HomeButton 컴포넌트
 const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
@@ -151,27 +152,6 @@ const Home = () => {
 
   const isWashing = carWashState && carWashState.isWashing;
 
-  const renderCarWashStatus = () => {
-    if (!carWashState && !isDevelopment) return null;
-
-    return (
-      <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
-        <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
-        <p>기기 ID: {carWashState?.machineId || '0'}</p>
-        {carWashState?.state && (
-          <>
-            <p>현재 단계: {carWashState.state.currentStep || '없음'}</p>
-            {carWashState.state.remainingTime !== undefined && (
-              <>
-                <p>남은 시간: {Math.floor(carWashState.state.remainingTime / 60)}분 {carWashState.state.remainingTime % 60}초</p>
-                <p>진행률: {carWashState.state.progress}%</p>
-              </>
-            )}
-            <p>오류 상태: {carWashState.state.error ? '오류' : '정상'}</p>
-          </>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -193,7 +173,8 @@ const Home = () => {
         부스터 키오스크 사용 안내
       </button>
 
-      {renderCarWashStatus()}
+      {/* 상태 표시 컴포넌트 사용 */}
+      <CarWashStatus carWashState={carWashState} isDevelopment={isDevelopment} />
 
       {showQrScanner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

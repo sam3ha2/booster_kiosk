@@ -152,6 +152,8 @@ const Home = () => {
 
   const isWashing = carWashState && carWashState.isWashing;
 
+  const goToSettings = () => {
+    navigate('/admin'); // 관리자 페이지로 이동
   };
 
   return (
@@ -203,7 +205,7 @@ const Home = () => {
             <div className="space-y-6">
               <div className="flex items-start">
                 <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">1</div>
-                <p>앱 예약, 구독은 '자동세차 QR확인' 버튼으로 현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
+                <p>앱 예약, 구독은 '자동세차 QR확인' 버튼으��� 현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
               </div>
               <div className="flex items-start">
                 <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">2</div>
@@ -231,6 +233,11 @@ const Home = () => {
           <span className="block sm:inline"> {scannerInitError}</span>
         </div>
       )}
+
+      {/* 설정 아이콘 추가 */}
+      <button onClick={goToSettings} style={{ position: 'absolute', top: 10, right: 10 }}>
+        ⚙️ {/* 설정 아이콘 */}
+      </button>
     </div>
   );
 };

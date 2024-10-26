@@ -3,7 +3,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('machineIPC', {
   startWash: (machineId, mode) => ipcRenderer.invoke('start-wash', machineId, mode),
   stopWash: (machineId) => ipcRenderer.invoke('stop-wash', machineId),
-  requestStatus: (machineId, turnOn) => ipcRenderer.send('request-status', machineId, turnOn),
   onStatusUpdate: (callback) => ipcRenderer.on('status-update', (event, data) => callback(data)),
   offStatusUpdate: (callback) => ipcRenderer.removeListener('status-update', callback),
 });

@@ -34,9 +34,6 @@ const Home = () => {
   useEffect(() => {
     window.machineIPC.onStatusUpdate(statusUpdateListener);
 
-    // 화면 진입 시 requestStatus 호출 (turnOn)
-    window.machineIPC.requestStatus('0', true);
-
     const qrCodeListener = (data) => {
       console.log("QR 코드 스캔 데이터:", data);
       window.scannerAPI.beep();
@@ -80,9 +77,6 @@ const Home = () => {
     }
 
     return () => {
-      // 화면을 빠져나갈 때 requestStatus 호출 (turnOff)
-      window.machineIPC.requestStatus('0', false);
-      
       window.machineIPC.offStatusUpdate(statusUpdateListener);
       window.scannerAPI.offQrCodeScanned(qrCodeListener);
       window.scannerAPI.offScannerError(scannerErrorListener);

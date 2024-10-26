@@ -13,7 +13,6 @@ class CarWashManager extends EventEmitter {
   registerHandlers() {
     ipcMain.handle('start-wash', this.startWash.bind(this));
     ipcMain.handle('stop-wash', this.stopWash.bind(this));
-    ipcMain.on('request-status', this.requestStatus.bind(this));
   }
 
   async addMachine({ type, config }) {
@@ -33,6 +32,7 @@ class CarWashManager extends EventEmitter {
       await machine.initialize();
       this.machines.set(config.id, machine);
       this.setupMachineEventListeners(config.id, machine);
+      this.startPeriodicStatusCheck(config.id, true);
 
       return { success: true, message: `${type} 세차기가 추가되었습니다.` };
     } catch (error) {
@@ -78,7 +78,7 @@ class CarWashManager extends EventEmitter {
     }
   }
 
-  requestStatus(event, machineId, turnOn) {
+  startPeriodicStatusCheck(machineId, turnOn) {
     const machine = this.getMachine(machineId);
     if (turnOn) {
       machine.startStatusCheck();

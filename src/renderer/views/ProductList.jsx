@@ -173,9 +173,31 @@ const ProductList = () => {
     setShouldNavigateHome(true);
   };
 
-  const handlePrintReceipt = () => {
-    // 영수증 출력 로직
-    handleClose();
+  const handlePrintReceipt = async () => {
+    try {
+      const lastPayment = JSON.parse(localStorage.getItem('lastPayment'));
+      if (!lastPayment) {
+        console.error('결제 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      const paymentInfo = {
+        card_number: lastPayment.cardNo || '************',
+        approval_number: lastPayment.authNo,
+        auth_datetime: lastPayment.authDate
+      };
+
+      await window.printerIPC.printReceipt({
+        product: selectedProduct,
+        payment: paymentInfo
+      });
+
+      console.log('영수증 출력 완료');
+    } catch (error) {
+      console.error('영수증 출력 실패:', error);
+    } finally {
+      handleClose();
+    }
   };
 
   const renderPaymentModal = () => {

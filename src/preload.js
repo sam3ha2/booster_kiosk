@@ -18,3 +18,7 @@ contextBridge.exposeInMainWorld('scannerAPI', {
   onScannerInitFailed: (callback) => ipcRenderer.on('scannerInitFailed', (event, message) => callback(message)),
   offScannerInitFailed: (callback) => ipcRenderer.removeListener('scannerInitFailed', callback),
 });
+
+contextBridge.exposeInMainWorld('printerIPC', {
+  printReceipt: (data) => ipcRenderer.invoke('printer:print', data),
+});

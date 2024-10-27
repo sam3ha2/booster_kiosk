@@ -1,10 +1,11 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const dotenv = require('dotenv');
 const log = require('electron-log');
 const CarWashManager = require('../services/car_wash/car_wash_manager');
 const ScannerManager = require('../services/scanner/scanner_manager');
 const setupAutoUpdater = require('./autoUpdater');
+const PrinterManager = require('../services/printer/printer_manager');
 
 // .env 파일 로드
 dotenv.config();
@@ -15,6 +16,7 @@ log.transports.console.level = 'debug';
 
 const carWashManager = new CarWashManager();
 const scannerManager = new ScannerManager();
+const printerManager = new PrinterManager();
 
 let mainWindow;
 
@@ -92,4 +94,17 @@ app.on('ready', () => {
 // 예외 처리
 process.on('uncaughtException', (error) => {
   log.error('Uncaught Exception:', error);
+});
+
+// ipc 설정
+ipcMain.handle('printer:print', async (event, data) => {
+  try {
+    if (!printerManager) {
+      throw new Error('프린터가 초기화되지 않았습니다.');
+    }
+    return await printerManager.printReceipt(data);
+  } catch (error) {
+    log.error('영수증 출력 실패:', error);
+    throw error;
+  }
 });

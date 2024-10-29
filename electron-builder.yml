@@ -1,19 +1,18 @@
 appId: kr.co.boosteron.kiosk
 productName: Booster Car Wash Kiosk
 directories:
-  output: dist
+  output: release
   buildResources: build
 files:
   - "dist/**/*"
+  - "src/**/*"
   - "package.json"
+  - "!dist/**/*.map"
 extraResources:
   - from: "dist"
-    to: "app/dist"
+    to: "."
 asar: true
-asarUnpack: [
-  "dist",
-  "build"
-]
+asarUnpack: []
 publish:
   provider: github
   releaseType: release

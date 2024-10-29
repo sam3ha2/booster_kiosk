@@ -25,7 +25,21 @@ jobs:
           $decodedText = [System.Text.Encoding]::UTF8.GetString($decodedBytes)
           $decodedText | Out-File -FilePath .env -Encoding UTF8
           echo ".env file created"
+
+          echo "Decoding and creating .env.development file..."
+          $encodedDevContent = "${{ secrets.ENV_DEV_FILE }}"
+          $decodedDevBytes = [System.Convert]::FromBase64String($encodedDevContent)
+          $decodedDevText = [System.Text.Encoding]::UTF8.GetString($decodedDevBytes)
+          $decodedDevText | Out-File -FilePath .env.development -Encoding UTF8
+          echo ".env.development file created"
           
+          echo "Decoding and creating .env.production file..."
+          $encodedProdContent = "${{ secrets.ENV_PROD_FILE }}"
+          $decodedProdBytes = [System.Convert]::FromBase64String($encodedProdContent)
+          $decodedProdText = [System.Text.Encoding]::UTF8.GetString($decodedProdBytes)
+          $decodedProdText | Out-File -FilePath .env.production -Encoding UTF8
+          echo ".env.production file created"
+
           echo "Reading GH_TOKEN..."
           $envContent = Get-Content .env
           $GH_TOKEN = ($envContent | Select-String "GH_TOKEN=(.*)").Matches.Groups[1].Value

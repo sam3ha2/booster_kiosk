@@ -151,7 +151,12 @@ const Home = () => {
   };
 
   return (
-    <div className="flex-1 p-8 flex flex-col items-center justify-center">
+    <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
+      {/* APP_VERSION 표시 */}
+      <div className="absolute top-2 left-2 bg-gray-200 text-gray-700 px-2 py-1 rounded text-sm">
+        v{APP_VERSION}
+      </div>
+
       <div className="text-4xl font-bold text-green-500 mb-4">BOOSTER</div>
       <h1 className="text-2xl font-semibold text-center mb-8">
         안녕하세요. 고객님<br />씻자 진주점입니다.
@@ -199,7 +204,7 @@ const Home = () => {
             <div className="space-y-6">
               <div className="flex items-start">
                 <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">1</div>
-                <p>앱 예약, 구독은 '자동세차 QR확인' 버튼으��� 현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
+                <p>앱 예약, 구독은 '자동세차 QR확인' 버튼을 현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
               </div>
               <div className="flex items-start">
                 <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">2</div>
@@ -228,9 +233,9 @@ const Home = () => {
         </div>
       )}
 
-      {/* 설정 아이콘 추가 */}
-      <button onClick={goToSettings} style={{ position: 'absolute', top: 10, right: 10 }}>
-        ⚙️ {/* 설정 아이콘 */}
+      {/* 설정 아이콘 */}
+      <button onClick={goToSettings} className="absolute top-2 right-2">
+        ⚙️
       </button>
     </div>
   );

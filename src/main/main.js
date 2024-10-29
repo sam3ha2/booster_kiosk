@@ -29,13 +29,16 @@ function createWindow() {
     },
   });
 
-  const startUrl = process.env.ELECTRON_START_URL || `file://${path.join(__dirname, '../../dist/index.html')}`;
-  
-  mainWindow.loadURL(startUrl);
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.loadURL('http://localhost:5173');
+  } else {
+    const indexPath = path.join(process.resourcesPath, 'dist', 'index.html');
+    mainWindow.loadFile(indexPath);
+  }
 
   if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
-    console.log('Loading URL:', startUrl);
+    console.log('Loading URL:', mainWindow.getURL());
   }
 
   log.info('애플리케이션 창이 생성되었습니다.');

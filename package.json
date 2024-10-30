@@ -1,6 +1,6 @@
 {
   "name": "booster-car-wash-kiosk",
-  "version": "0.1.2",
+  "version": "0.1.5",
   "description": "부스터 세차 키오스크 애플리케이션",
   "main": "src/main/main.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "electron:build": "npm run build && electron-builder",
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
-    "dev:electron": "wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .",
+    "dev:electron": "cross-env NODE_ENV=development ELECTRON_START_URL=http://localhost:5173 wait-on http://localhost:5173 && electron .",
     "web": "vite",
     "deploy": "electron-builder build --win --publish always"
   },

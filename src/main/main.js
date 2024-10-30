@@ -27,6 +27,7 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, '../preload.js'),
     },
+    icon: path.join(__dirname, '../../assets/images/icon.png'),
   });
 
   if (process.env.NODE_ENV === 'development') {

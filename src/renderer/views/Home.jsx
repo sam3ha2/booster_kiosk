@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../utils/api_service';
+import AppBar from '../components/AppBar';
 import CarWashStatus from '../components/CarWashStatus';
+import boosterIcon from '../../assets/images/ic_booster_logo.png';
 
 // 새로운 HomeButton 컴포넌트
 const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
@@ -157,9 +159,12 @@ const Home = () => {
         v{APP_VERSION}
       </div>
 
-      <div className="text-4xl font-bold text-green-500 mb-4">BOOSTER</div>
+      <AppBar 
+        image={boosterIcon}
+      />
+
       <h1 className="text-2xl font-semibold text-center mb-8">
-        안녕하세요. 고객님<br />씻자 진주점입니다.
+        안녕하세요. 고객님<br />{ localStorage.getItem('shop_name') || '씻자'}입니다.
       </h1>
       <div className="flex space-x-8 mb-8">
         <HomeButton

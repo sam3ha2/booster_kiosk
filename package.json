@@ -68,7 +68,13 @@
       "target": [
         "nsis"
       ],
-      "icon": "public/icon.ico"
+      "icon": "assets/images/icon.png"
+    },
+    "mac": {
+      "icon": "assets/images/icon.png"
+    },
+    "linux": {
+      "icon": "assets/images/icon.png"
     },
     "nsis": {
       "oneClick": true,

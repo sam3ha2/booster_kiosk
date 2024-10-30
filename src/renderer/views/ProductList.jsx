@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../../models/models';
 import ApiService from '../../utils/api_service';
+import AppBar from '../components/AppBar';
 
 const ServiceOption = ({ product, onSelect }) => (
   <div className="bg-gray-800 rounded-lg p-4 mb-4 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
@@ -16,6 +17,54 @@ const ServiceOption = ({ product, onSelect }) => (
       </svg>
     </div>
   </div>
+);
+
+const Body = ({ loading, error, products, onSelect }) => {
+  if (error) {
+    return (
+      <div className="text-white text-center p-8">
+        <p>에러 발생: {error.message}</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="text-white text-center p-8">
+        <p>상품 목록을 불러오는 중...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-md mx-auto p-4">
+      {products.map((product) => (
+        <ServiceOption key={product.idx} product={product} onSelect={onSelect} />
+      ))}
+    </div>
+  );
+};
+
+const CloseButton = ({ onClick }) => (
+  <button 
+    onClick={onClick}
+    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+  >
+    <svg 
+      className="w-6 h-6" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24" 
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        strokeWidth={2} 
+        d="M6 18L18 6M6 6l12 12" 
+      />
+    </svg>
+  </button>
 );
 
 const ProductList = () => {
@@ -67,10 +116,6 @@ const ProductList = () => {
     }
     return () => clearInterval(timer);
   }, [paymentStatus]);
-
-  const goBack = () => {
-    navigate(-1);
-  };
 
   const selectProduct = (product) => {
     setSelectedProduct(product);
@@ -137,7 +182,8 @@ const ProductList = () => {
     if (paymentStatus === 'waiting') {
       return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
+            <CloseButton onClick={() => setPaymentStatus(null)} />
             <h2 className="text-2xl font-bold mb-4">결제 대기 중</h2>
             <p>카드를 투입해 주세요.</p>
             <button onClick={processPayment} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
@@ -150,7 +196,7 @@ const ProductList = () => {
     if (paymentStatus === 'processing') {
       return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
             <h2 className="text-2xl font-bold mb-4">결제 처리 중</h2>
             <p>{paymentMessage}</p>
           </div>
@@ -160,7 +206,8 @@ const ProductList = () => {
     if (paymentStatus === 'failed') {
       return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
+            <CloseButton onClick={() => setPaymentStatus(null)} />
             <h2 className="text-2xl font-bold mb-4">결제 실패</h2>
             <p>{paymentMessage}</p>
             <button onClick={() => setPaymentStatus(null)} className="mt-4 bg-red-500 text-white px-4 py-2 rounded">
@@ -173,42 +220,28 @@ const ProductList = () => {
     return null;
   };
 
-  if (error) {
-    return (
-      <div className="text-white text-center p-4">
-        <p>에러 발생: {error.message}</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="text-white text-center p-4">
-        <p>상품 목록을 불러오는 중...</p>
-      </div>
-    );
-  }
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   return (
-    <div className="bg-black min-h-screen p-4">
-      <div className="max-w-md mx-auto">
-        <div className="relative mb-6">
-          <img src="/path-to-your-image.jpg" alt="Car wash" className="w-full rounded-lg" />
-          <button onClick={goBack} className="absolute top-4 left-4 bg-white rounded-full p-2">
-            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        </div>
-        <h2 className="text-white text-2xl font-bold mb-6">상품 선택</h2>
-        {products.map((product) => (
-          <ServiceOption key={product.idx} product={product} onSelect={selectProduct} />
-        ))}
-      </div>
+    <div className="bg-black min-h-screen flex flex-col">
+      <AppBar 
+        label="상품 선택"
+        showBack={true}
+        onBack={handleBack}
+      />
+      <Body 
+        loading={loading}
+        error={error}
+        products={products}
+        onSelect={selectProduct}
+      />
       {renderPaymentModal()}
       {paymentStatus === 'success' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
+            <CloseButton onClick={handleClose} />
             <h2 className="text-2xl font-bold mb-4 text-center">결제가 완료되었습니다.</h2>
             <p className="mb-4 text-center">모니터 오른쪽 하단에 카드를 회수해 주세요.</p>
             <div className="flex justify-center mb-6">

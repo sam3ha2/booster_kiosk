@@ -5,7 +5,8 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "build": "vite build && electron-builder",
+    "build": "vite build",
+    "electron:build": "npm run build && electron-builder",
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
     "dev:electron": "wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .",
@@ -49,12 +50,20 @@
     "productName": "Booster Car Wash Kiosk",
     "files": [
       "dist/**/*",
-      "src/**/*"
+      "src/**/*",
+      "package.json"
     ],
     "directories": {
       "output": "release",
-      "buildResources": "assets"
+      "buildResources": "build"
     },
+    "extraResources": [
+      {
+        "from": "dist",
+        "to": "dist",
+        "filter": ["**/*"]
+      }
+    ],
     "win": {
       "target": [
         "nsis"

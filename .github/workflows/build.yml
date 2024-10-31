@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Create config files and set env
         run: |
@@ -48,16 +49,14 @@ jobs:
           echo "Environment variables set"
         shell: pwsh
 
-      - name: Check env file
-        run: |
-          echo "Checking .env file content:"
-          Get-Content .env
-        shell: pwsh
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and publish
+      - name: Build Vite
+        run: npm run build
+        
+      - name: Build and publish Electron
         env:
           GH_TOKEN: ${{ env.GH_TOKEN }}
+          NODE_ENV: production
         run: npm run deploy

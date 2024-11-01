@@ -4,6 +4,8 @@ import { Product } from '../../models/models';
 import ApiService from '../../utils/api_service';
 import AppBar from '../components/AppBar';
 
+const TEST_MODE = false; // 실제 배포 시 false로 변경
+
 const ServiceOption = ({ product, onSelect }) => (
   <div className="bg-gray-800 rounded-lg p-4 mb-4 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
     <div>
@@ -127,7 +129,31 @@ const ProductList = () => {
       setPaymentStatus('processing');
       setPaymentMessage('결제 처리 중...');
 
-      const paymentInfo = await simulatePayment();
+      let paymentInfo;
+      
+      if (TEST_MODE) {
+        // 테스트 모드: 기존 시뮬레이션 결제 사용
+        paymentInfo = await simulatePayment();
+      } else {
+        // IPC를 통한 실제 결제 처리
+        const result = await window.paymentIPC.processApproval({
+          tranAmt: selectedProduct.price.toString(),
+          vatAmt: Math.floor(selectedProduct.price / 11).toString(),
+          svcAmt: '0',
+          installment: '0'
+        });
+        if (result.isSuccess) {
+          paymentInfo = {
+            approval_number: result.outAuthNo,
+            card_number: result.outCardNo,
+            card_company_number: result.outCatId,
+            type: 'CARD',
+            amount: selectedProduct.price
+          };
+        } else {
+          throw new Error(result.outReplyMsg1 || '결제 실패');
+        }
+      }
 
       setPaymentMessage('예약 생성 중...');
       // 예약 로직 (주석 처리된 부분)
@@ -140,6 +166,17 @@ const ProductList = () => {
         if (result.success) {
           setPaymentStatus('success');
         } else {
+          // 세차기 실패 시 결제 취소 처리
+          if (!TEST_MODE) {
+            await window.paymentIPC.processCancel({
+              tranAmt: selectedProduct.price.toString(),
+              vatAmt: Math.floor(selectedProduct.price / 11).toString(),
+              svcAmt: '0',
+              installment: '0',
+              orgAuthNo: paymentInfo.approval_number,
+              orgAuthDate: new Date().toISOString().slice(2,8)
+            });
+          }
           throw new Error(result.error || '세차기 시작 실패');
         }
       } catch (error) {
@@ -202,6 +239,10 @@ const ProductList = () => {
 
   const renderPaymentModal = () => {
     if (paymentStatus === 'waiting') {
+      if (!TEST_MODE) {
+        processPayment();
+        return null;
+      }
       return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
@@ -216,6 +257,13 @@ const ProductList = () => {
       );
     }
     if (paymentStatus === 'processing') {
+      if (!TEST_MODE) {
+        return (
+          <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 pointer-events-auto">
+            <div className="absolute inset-0" style={{ pointerEvents: 'auto' }}></div>
+          </div>
+        );
+      }
       return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">

@@ -29,7 +29,8 @@
     "react-router-dom": "^6.10.0",
     "rxjs": "^7.8.1",
     "serialport": "^10.5.0",
-    "usb": "^1.8.8"
+    "usb": "^1.8.8",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.2",
@@ -54,7 +55,8 @@
     "files": [
       "dist/**/*",
       "src/**/*",
-      "package.json"
+      "package.json",
+      "!**/node_modules/*"
     ],
     "directories": {
       "output": "release",

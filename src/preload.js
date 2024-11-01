@@ -22,3 +22,8 @@ contextBridge.exposeInMainWorld('scannerAPI', {
 contextBridge.exposeInMainWorld('printerIPC', {
   printReceipt: (data) => ipcRenderer.invoke('printer:print', data),
 });
+
+contextBridge.exposeInMainWorld('paymentIPC', {
+  processApproval: (params) => ipcRenderer.invoke('payment:approval', params),
+  processCancel: (params) => ipcRenderer.invoke('payment:cancel', params),
+});

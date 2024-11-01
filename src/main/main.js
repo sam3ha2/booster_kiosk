@@ -5,6 +5,7 @@ const log = require('electron-log');
 const CarWashManager = require('../services/car_wash/car_wash_manager');
 const ScannerManager = require('../services/scanner/scanner_manager');
 const setupAutoUpdater = require('./autoUpdater');
+const PaymentManager = require('../services/payment/payment_manager');
 const PrinterManager = require('../services/printer/printer_manager');
 
 // .env 파일 로드
@@ -17,6 +18,7 @@ log.transports.console.level = 'debug';
 const carWashManager = new CarWashManager();
 const scannerManager = new ScannerManager();
 const printerManager = new PrinterManager();
+const paymentManager = new PaymentManager();
 
 let mainWindow;
 
@@ -76,6 +78,7 @@ function createWindow() {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    paymentManager.terminate();
     app.quit();
   }
 });
@@ -107,4 +110,18 @@ ipcMain.handle('printer:print', async (event, data) => {
     log.error('영수증 출력 실패:', error);
     throw error;
   }
+});
+
+ipcMain.handle('payment:approval', async (event, params) => {
+  try {
+    const result = await paymentManager.requestPayment(params);
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+});
+
+ipcMain.handle('payment:cancel', async (event, params) => {
+  const result = await paymentManager.requestCancel(params);
+  return result;
 });

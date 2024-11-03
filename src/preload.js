@@ -27,3 +27,11 @@ contextBridge.exposeInMainWorld('paymentIPC', {
   processApproval: (params) => ipcRenderer.invoke('payment:approval', params),
   processCancel: (params) => ipcRenderer.invoke('payment:cancel', params),
 });
+
+contextBridge.exposeInMainWorld('databaseIPC', {
+  getPaymentsByDate: (date) => ipcRenderer.invoke('db:payment:get-payments-by-date', date),
+  registerPayment: (params) => ipcRenderer.invoke('db:payment:register', params),
+  updatePaymentSuccess: (id, date, result) => ipcRenderer.invoke('db:payment:update', id, date, 'APPROVED', result),
+  updatePaymentFailure: (id, date, error) => ipcRenderer.invoke('db:payment:update', id, date, 'FAILED', error),
+  updatePaymentCancel: (id, date, result) => ipcRenderer.invoke('db:payment:update', id, date, 'CANCELED', result),
+}); 

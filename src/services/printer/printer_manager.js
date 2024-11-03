@@ -4,39 +4,54 @@ escpos.USB = require('escpos-usb');
 class PrinterManager {
   constructor({ encoding = 'EUC-KR' } = {}) {
     this.options = { encoding };
-    // USB 장치 목록 확인 및 초기화
     const devices = escpos.USB.findPrinter();
     if (devices.length === 0) {
       return;
-      // throw new Error('연결된 프린터를 찾을 수 없습니다.');
     }
-    
-    // 첫 번째 발견된 프린터 사용
     this.device = new escpos.USB(devices[0].deviceDescriptor.idVendor, devices[0].deviceDescriptor.idProduct);
   }
 
   async printReceipt({ product, payment }) {
     try {
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('ko-KR');
-      const timeStr = now.toLocaleTimeString('ko-KR');
-
       return await this.print({
         text: [
-          { content: '==================\n', encoding: 'EUC-KR' },
-          { content: '   부스터 세차장   \n', encoding: 'EUC-KR' },
-          { content: '==================\n', encoding: 'EUC-KR' },
-          { content: `일시: ${dateStr} ${timeStr}\n`, encoding: 'EUC-KR' },
-          { content: `상품: ${product.name}\n`, encoding: 'EUC-KR' },
-          { content: `금액: ${product.price.toLocaleString()}원\n`, encoding: 'EUC-KR' },
-          { content: '------------------\n', encoding: 'EUC-KR' },
-          { content: '결제 정보\n', encoding: 'EUC-KR' },
-          { content: `카드번호: ${payment.card_number}\n`, encoding: 'EUC-KR' },
-          { content: `승인번호: ${payment.approval_number}\n`, encoding: 'EUC-KR' },
-          { content: `승인일시: ${payment.auth_datetime}\n`, encoding: 'EUC-KR' },
-          { content: '==================\n', encoding: 'EUC-KR' },
-          { content: '이용해 주셔서 감사합니다\n', encoding: 'EUC-KR' },
-          { content: '\n\n\n', encoding: 'EUC-KR' }
+          { content: '-----------------------------------\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '예약 상품\n', encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `${product.name}\n\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: '-----------------------------------\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '가맹점명      씻자 익스프레스 서울 강서직영점\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '사업자번호                    ###-##-#####\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '대표자명 : 윤영현         Tel : 1899-6090\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '주소 : 서울시 강서구 공항대로 432, 1층\n\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '-----------------------------------\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '상품 금액 정보\n\n', encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `상품 : ${product.name}\n\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: '옵션 : [하부세차] + 고압세척 + [프리워시]\n', encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: '+ 세제 + 찌든때 녹이기 + [스노우폼]\n', encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: '+ 고압세척 + 왁스코팅 + 드라이\n\n', encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `금액 : ${product.price.toLocaleString()}원\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `부가세 : ${Math.floor(product.price / 11).toLocaleString()}원\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `합계 : ${product.price.toLocaleString()}원\n\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: '-----------------------------------\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '카드 정보\n\n', encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `카드번호: ${payment.card_number}\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `승인 금액: ${product.price.toLocaleString()}원\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `승인번호: ${payment.approval_number}\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `매입사: ${payment.card_company || ''}\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `가맹번호: ${payment.merchant_number || ''}\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: `거래번호: ${payment.transaction_id || ''}\n\n`, encoding: 'EUC-KR', align: 'CT', size: [1, 2] },
+          { content: '-----------------------------------\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '      영수증 리뷰 또는 리뷰 이벤트 참여로\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: ' 영수증을 찍어서 올리실 분들은 하단 내용을\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '       빼고 찍거나 접어서 촬영해 주세요.\n\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '            네이버 리뷰 바로가기 QR\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '                      QR 이미지\n\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '-----------------------------------\n', encoding: 'EUC-KR', align: 'CT' },
+          { content: '본사                      페르소네 주식회사\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '사업자번호                    631-88-02907\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '대표자명 : 윤영현         문의 : 1899-6090\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '주소 : 서울시 강남구 영동대로 602, 6층\n', encoding: 'EUC-KR', align: 'LT' },
+          { content: '\n\n\n', encoding: 'EUC-KR', align: 'LT' }
         ]
       });
     } catch (error) {
@@ -60,12 +75,13 @@ class PrinterManager {
 
             printer
               .font('a')
-              .align('ct')
-              .style('normal')
-              .size(1, 1);
+              .style('normal');
 
-            text.forEach(({ content, encoding }) => {
-              printer.text(content, encoding);
+            text.forEach(({ content, encoding, align = 'LT', size = [1, 1] }) => {
+              printer
+                .align(align)
+                .size(size[0], size[1])
+                .text(content, encoding);
             });
 
             printer

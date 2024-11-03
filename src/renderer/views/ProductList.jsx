@@ -4,7 +4,7 @@ import { Product } from '../../models/models';
 import ApiService from '../../utils/api_service';
 import AppBar from '../components/AppBar';
 
-const TEST_MODE = false; // 실제 배포 시 false로 변경
+const TEST_MODE = process.env.NODE_ENV === 'development'; // 실제 배포 시 false로 변경
 
 const ServiceOption = ({ product, onSelect }) => (
   <div className="bg-gray-800 rounded-lg p-4 mb-4 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
@@ -129,20 +129,34 @@ const ProductList = () => {
       setPaymentStatus('processing');
       setPaymentMessage('결제 처리 중...');
 
+      const paymentParams = {
+        tranAmt: selectedProduct.price.toString(),
+        vatAmt: Math.floor(selectedProduct.price / 11).toString(),
+        svcAmt: '0',
+        installment: '0'
+      };
+
+      // 결제 요청 등록
+      const paymentRecord = await window.databaseIPC.registerPayment(paymentParams);
+
       let paymentInfo;
-      
       if (TEST_MODE) {
-        // 테스트 모드: 기존 시뮬레이션 결제 사용
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
         paymentInfo = await simulatePayment();
-      } else {
-        // IPC를 통한 실제 결제 처리
-        const result = await window.paymentIPC.processApproval({
-          tranAmt: selectedProduct.price.toString(),
-          vatAmt: Math.floor(selectedProduct.price / 11).toString(),
-          svcAmt: '0',
-          installment: '0'
+        // 테스트 모드에서도 결제 성공 기록
+        await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }), {
+          outCardNo: paymentInfo.card_number,
+          outAuthNo: paymentInfo.approval_number,
+          outAuthDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
+          ontTradReqTime: new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\D/g, ''),
+          outReplyMsg1: '테스트 결제 성공'
         });
+      } else {
+        // 실제 결제 처리
+        const result = await window.paymentIPC.processApproval(paymentParams);
         if (result.isSuccess) {
+          // 결제 성공 업데이트
+          await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, result.outAuthDate, result);
           paymentInfo = {
             approval_number: result.outAuthNo,
             card_number: result.outCardNo,
@@ -151,6 +165,10 @@ const ProductList = () => {
             amount: selectedProduct.price
           };
         } else {
+          // 결제 실패 업데이트
+          await window.databaseIPC.updatePaymentFailure(paymentRecord.id, result.outAuthDate, {
+            message: result.outReplyMsg1 || '결제 실패'
+          });
           throw new Error(result.outReplyMsg1 || '결제 실패');
         }
       }
@@ -195,7 +213,7 @@ const ProductList = () => {
       setTimeout(() => {
         resolve({
           approval_number: 'SIM' + Math.random().toString(36).substr(2, 9),
-          card_number: '**** **** **** ' + Math.floor(1000 + Math.random() * 9000),
+          card_number: Math.floor(100000 + Math.random() * 900000),
           card_company_number: '01',
           type: 'CARD',
           amount: selectedProduct.price

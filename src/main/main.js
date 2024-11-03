@@ -7,6 +7,7 @@ const ScannerManager = require('../services/scanner/scanner_manager');
 const setupAutoUpdater = require('./autoUpdater');
 const PaymentManager = require('../services/payment/payment_manager');
 const PrinterManager = require('../services/printer/printer_manager');
+const PaymentStore = require('../services/database/payment_store');
 
 // .env 파일 로드
 dotenv.config();
@@ -19,6 +20,7 @@ const carWashManager = new CarWashManager();
 const scannerManager = new ScannerManager();
 const printerManager = new PrinterManager();
 const paymentManager = new PaymentManager();
+const paymentStore = new PaymentStore();
 
 let mainWindow;
 
@@ -124,4 +126,16 @@ ipcMain.handle('payment:approval', async (event, params) => {
 ipcMain.handle('payment:cancel', async (event, params) => {
   const result = await paymentManager.requestCancel(params);
   return result;
+});
+
+ipcMain.handle('db:payment:get-payments-by-date', async (event, date) => {
+  return await paymentStore.getPaymentsByDate(date);
+});
+
+ipcMain.handle('db:payment:register', async (event, params) => {
+  return await paymentStore.registerPayment(params);
+});
+
+ipcMain.handle('db:payment:update', async (event, id, date, status, result) => {
+  return await paymentStore.updatePayment(id, date, status, result);
 });

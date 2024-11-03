@@ -22,12 +22,18 @@ const printerManager = new PrinterManager();
 const paymentManager = new PaymentManager();
 const paymentStore = new PaymentStore();
 
+const isKiosk = process.env.NODE_ENV === 'production';
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 let mainWindow;
 
 function createWindow() {
+  const devToolWidth = isDevelopment ? 600 : 0;
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: isKiosk ? 1080 : (1080 + devToolWidth) * 0.4,
+    height: isKiosk ? 1920 : 1920 * 0.4,
+    fullscreen: isKiosk,
+    kiosk: isKiosk,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -36,14 +42,14 @@ function createWindow() {
     icon: path.join(__dirname, '../../assets/images/icon.png'),
   });
 
-  if (process.env.NODE_ENV === 'development') {
+  if (isDevelopment) {
     mainWindow.loadURL('http://localhost:5173');
   } else {
     const indexPath = path.join(process.resourcesPath, 'dist', 'index.html');
     mainWindow.loadFile(indexPath);
   }
 
-  if (process.env.NODE_ENV === 'development') {
+  if (isDevelopment) {
     mainWindow.webContents.openDevTools();
     console.log('Loading URL:', mainWindow.getURL());
   }

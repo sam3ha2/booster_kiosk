@@ -114,7 +114,7 @@ const PaymentAdmin = () => {
                   <td className="px-4 py-2">
                     {payment.trade_req_time ? 
                       payment.trade_req_time.replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5:$6') 
-                      : ''}
+                      : new Date(payment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                   </td>
                   <td className="px-4 py-2">{payment.card_no ? `${payment.card_no}********` : ''}</td>
                   <td className="px-4 py-2">{parseInt(payment.tran_amt).toLocaleString()}원</td>

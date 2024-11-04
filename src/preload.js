@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('printerIPC', {
 });
 
 contextBridge.exposeInMainWorld('paymentIPC', {
+  connect: () => ipcRenderer.invoke('payment:connect'),
+  disconnect: () => ipcRenderer.invoke('payment:disconnect'),
+  getStatus: () => ipcRenderer.invoke('payment:getStatus'),
   processApproval: (params) => ipcRenderer.invoke('payment:approval', params),
   processCancel: (params) => ipcRenderer.invoke('payment:cancel', params),
 });

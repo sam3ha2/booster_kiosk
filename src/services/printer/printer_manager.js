@@ -2,13 +2,29 @@ const escpos = require('escpos');
 escpos.USB = require('escpos-usb');
 
 class PrinterManager {
-  constructor({ encoding = 'EUC-KR' } = {}) {
+  constructor() {
+    this.device = null;
+  }
+
+  initialize({ encoding = 'EUC-KR' } = {}) {
     this.options = { encoding };
     const devices = escpos.USB.findPrinter();
     if (devices.length === 0) {
-      return;
+      console.error('프린터를 찾을 수 없습니다.');
+      throw new Error('프린터를 찾을 수 없습니다.');
     }
     this.device = new escpos.USB(devices[0].deviceDescriptor.idVendor, devices[0].deviceDescriptor.idProduct);
+  }
+
+  disconnect() {
+    this.device.close();
+    this.device = null;
+  }
+
+  getDeviceStatus() {
+    return {
+      connected: this.device !== null
+    };
   }
 
   async printReceipt({ product, payment }) {

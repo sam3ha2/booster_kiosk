@@ -23,6 +23,9 @@ contextBridge.exposeInMainWorld('scannerAPI', {
 });
 
 contextBridge.exposeInMainWorld('printerIPC', {
+  connect: () => ipcRenderer.invoke('printer:connect'),
+  disconnect: () => ipcRenderer.invoke('printer:disconnect'),
+  getStatus: () => ipcRenderer.invoke('printer:getStatus'),
   printReceipt: (data) => ipcRenderer.invoke('printer:print', data),
 });
 

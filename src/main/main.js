@@ -56,7 +56,11 @@ function createWindow() {
 
   log.info('애플리케이션 창이 생성되었습니다.');
 
-  // 세차기 초기화
+  initDevices();
+}
+
+function initDevices() {
+  setMachineHandlers();
   carWashManager.initialize();
 
   // 스캐너 초기화
@@ -101,7 +105,15 @@ process.on('uncaughtException', (error) => {
   log.error('Uncaught Exception:', error);
 });
 
-// ipc 설정
+// IPC handlers
+function setMachineHandlers() {
+    ipcMain.handle('machine:start-wash', carWashManager.startWash.bind(this));
+    ipcMain.handle('machine:stop-wash', carWashManager.stopWash.bind(this));
+    ipcMain.handle('machine:getStatus', carWashManager.getMachineStatus.bind(this));
+    ipcMain.handle('machine:connect', carWashManager.connectDevice.bind(this));
+    ipcMain.handle('machine:disconnect', carWashManager.disconnectDevice.bind(this));
+}
+
 ipcMain.handle('printer:print', async (event, data) => {
   try {
     if (!printerManager) {

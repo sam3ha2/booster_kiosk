@@ -1,8 +1,8 @@
-const { ipcMain, BrowserWindow } = require('electron');
+const { BrowserWindow } = require('electron');
+const { SerialPort } = require('serialport');
 const SG90CarWash = require('./machine_types/sg90_car_wash');
 const FL30CarWash = require('./machine_types/fl30_car_wash');
 const EventEmitter = require('events');
-const SerialPort = require('serialport');
 
 class CarWashManager extends EventEmitter {
   constructor() {
@@ -11,12 +11,6 @@ class CarWashManager extends EventEmitter {
     this.lastStatusReceived = null; // 마지막 상태 수신 시간
     this.statusCheckInterval = null;
     this.hasConnectionIssue = false; // 연결 문제 상태
-    this.registerHandlers();
-  }
-
-  registerHandlers() {
-    ipcMain.handle('start-wash', this.startWash.bind(this));
-    ipcMain.handle('stop-wash', this.stopWash.bind(this));
   }
 
   initialize() {
@@ -25,18 +19,30 @@ class CarWashManager extends EventEmitter {
 
   // 자동 검색을 위한 함수
   async connectDevice() {
-    if (this.machine) {
-      console.log('이미 연결된 세차기가 있습니다.');
-      return;
-    }
+    try {
+      if (this.machine) {
+        return { 
+          success: false, 
+          message: '이미 연결된 세차기가 있습니다.',
+          status: this.getMachineStatus()
+        };
+      }
 
-    const ports = await SerialPort.list();
-    const fl30Port = ports.find((port) =>
-      port.vendorId === '1234' && port.productId === 'abcd'
-    );
+      const ports = await SerialPort.list();
+      console.log('사용 가능한 포트:', ports);
+      const fl30Port = ports.find((port) =>
+        port.vendorId === '1234' && port.productId === 'abcd'
+      );
 
-    if (fl30Port) {
-      await this.addMachine({
+      if (!fl30Port) {
+        return { 
+          success: false, 
+          message: '연결 가능한 세차기를 찾을 수 없습니다.',
+          status: this.getMachineStatus()
+        };
+      }
+
+      const result = await this.addMachine({
         type: 'FL30',
         config: {
           id: fl30Port.path,
@@ -44,13 +50,50 @@ class CarWashManager extends EventEmitter {
           address: 0x01
         }
       });
+
+      return {
+        ...result,
+        status: this.getMachineStatus()
+      };
+    } catch (error) {
+      console.error('세차기 연결 중 오류:', error);
+      return {
+        success: false,
+        error: error.message,
+        status: this.getMachineStatus()
+      };
     }
   }
 
-  disconnectDevice() {
-    this.clearStatusCheck();
-    this.machine.disconnect();
-    this.machine = null;
+  async disconnectDevice() {
+    try {
+      if (!this.machine) {
+        return {
+          success: false,
+          message: '연결된 세차기가 없습니다.',
+          status: this.getMachineStatus()
+        };
+      }
+
+      this.clearStatusCheck();
+      await this.machine.disconnect();
+      this.machine = null;
+      this.lastStatusReceived = null;
+      this.hasConnectionIssue = false;
+
+      return {
+        success: true,
+        message: '세차기 연결이 해제되었습니다.',
+        status: this.getMachineStatus()
+      };
+    } catch (error) {
+      console.error('세차기 연결 해제 중 오류:', error);
+      return {
+        success: false,
+        error: error.message,
+        status: this.getMachineStatus()
+      };
+    }
   }
 
   async addMachine({ type, config }) {
@@ -113,7 +156,7 @@ class CarWashManager extends EventEmitter {
       return result;
     } catch (error) {
       console.error('세차 시작 중 오류 발생:', error);
-      return { success: false, error: error.message };
+      throw error;
     }
   }
 
@@ -126,7 +169,7 @@ class CarWashManager extends EventEmitter {
       return { success: true, message: '세차가 중지되었습니다.' };
     } catch (error) {
       console.error('세차 중지 중 오류 발생:', error);
-      return { success: false, error: error.message };
+      throw error;
     }
   }
 
@@ -178,6 +221,20 @@ class CarWashManager extends EventEmitter {
   handleMachineError(error) {
     console.error(`세차기 오류:`, error);
     this.sendStatusUpdate({ error: error.message });
+  }
+
+  // 연결 상태 및 정보를 반환하는 메서드
+  getMachineStatus() {
+    return {
+      connected: !!this.machine,
+      hasConnectionIssue: this.hasConnectionIssue,
+      lastStatusReceived: this.lastStatusReceived,
+      machineInfo: this.machine ? {
+        type: this.machine.constructor.name,
+        port: this.machine.config?.portName,
+        status: this.machine.status
+      } : null
+    };
   }
 }
 

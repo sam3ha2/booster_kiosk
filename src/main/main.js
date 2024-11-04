@@ -78,6 +78,13 @@ function initDevices() {
   scannerManager.on('initFailed', (message) => {
     mainWindow.webContents.send('scannerInitFailed', message);
   });
+
+  setPrinterHandlers();
+  try {
+    printerManager.initialize();
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 // app.whenReady().then(createWindow);
@@ -114,17 +121,33 @@ function setMachineHandlers() {
     ipcMain.handle('machine:disconnect', carWashManager.disconnectDevice.bind(this));
 }
 
-ipcMain.handle('printer:print', async (event, data) => {
-  try {
-    if (!printerManager) {
-      throw new Error('프린터가 초기화되지 않았습니다.');
+function setPrinterHandlers() {
+  ipcMain.handle('printer:connect', async (event) => {
+    printerManager.initialize();
+    return printerManager.getDeviceStatus();
+  });
+
+  ipcMain.handle('printer:disconnect', async (event) => {
+    printerManager.disconnect();
+    return printerManager.getDeviceStatus();
+  });
+
+  ipcMain.handle('printer:getStatus', async (event) => {
+    return printerManager.getDeviceStatus();
+  });
+
+  ipcMain.handle('printer:print', async (event, data) => {
+    try {
+      if (!printerManager) {
+        throw new Error('프린터가 초기화되지 않았습니다.');
+      }
+      return await printerManager.printReceipt(data);
+    } catch (error) {
+      log.error('영수증 출력 실패:', error);
+      throw error;
     }
-    return await printerManager.printReceipt(data);
-  } catch (error) {
-    log.error('영수증 출력 실패:', error);
-    throw error;
-  }
-});
+  });
+}
 
 ipcMain.handle('payment:approval', async (event, params) => {
   try {

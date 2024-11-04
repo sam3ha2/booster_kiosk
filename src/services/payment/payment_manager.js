@@ -85,6 +85,12 @@ class PaymentManager {
       return false;
     }
   }
+
+  getDeviceStatus() {
+    return {
+      connected: this.van.webSocket.readyState == WebSocket.OPEN
+    };
+  }
 }
 
 module.exports = PaymentManager;

@@ -85,6 +85,11 @@ function initDevices() {
   } catch (error) {
     console.error(error);
   }
+
+  setPaymentHandlers();
+  paymentManager.initialize();
+
+  setDatabaseHandlers();
 }
 
 // app.whenReady().then(createWindow);
@@ -149,28 +154,50 @@ function setPrinterHandlers() {
   });
 }
 
-ipcMain.handle('payment:approval', async (event, params) => {
-  try {
-    const result = await paymentManager.requestPayment(params);
-    return result;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-});
+function setPaymentHandlers() {
+  ipcMain.handle('payment:connect', async (event) => {
+    paymentManager.initialize();
+    return paymentManager.getDeviceStatus();
+  });
 
-ipcMain.handle('payment:cancel', async (event, params) => {
-  const result = await paymentManager.requestCancel(params);
-  return result;
-});
+  ipcMain.handle('payment:disconnect', async (event) => {
+    paymentManager.terminate();
+    return paymentManager.getDeviceStatus();
+  });
 
-ipcMain.handle('db:payment:get-payments-by-date', async (event, date) => {
-  return await paymentStore.getPaymentsByDate(date);
-});
+  ipcMain.handle('payment:getStatus', async (event) => {
+    return paymentManager.getDeviceStatus();
+  });
 
-ipcMain.handle('db:payment:register', async (event, params) => {
-  return await paymentStore.registerPayment(params);
-});
+  ipcMain.handle('payment:approval', async (event, params) => {
+    try {
+      const result = await paymentManager.requestPayment(params);
+      return result;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  });
 
-ipcMain.handle('db:payment:update', async (event, id, date, status, result) => {
-  return await paymentStore.updatePayment(id, date, status, result);
-});
+  ipcMain.handle('payment:cancel', async (event, params) => {
+    try {
+      const result = await paymentManager.requestCancel(params);
+      return result;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  });
+}
+
+function setDatabaseHandlers() {
+  ipcMain.handle('db:payment:get-payments-by-date', async (event, date) => {
+    return await paymentStore.getPaymentsByDate(date);
+  });
+
+  ipcMain.handle('db:payment:register', async (event, params) => {
+    return await paymentStore.registerPayment(params);
+  });
+
+  ipcMain.handle('db:payment:update', async (event, id, date, status, result) => {
+    return await paymentStore.updatePayment(id, date, status, result);
+  });
+}

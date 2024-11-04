@@ -6,7 +6,6 @@ const CarWashStatus = ({ carWashState, isDevelopment }) => {
   return (
     <div className="bg-gray-800 p-4 rounded-xl text-white mb-4">
       <h3 className="text-lg font-semibold mb-2">세차기 상태</h3>
-      <p>기기 ID: {carWashState?.machineId || '0'}</p>
       {carWashState?.state && (
         <>
           <p>현재 단계: {carWashState.state.currentStep || '없음'}</p>

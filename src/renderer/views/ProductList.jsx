@@ -179,7 +179,7 @@ const ProductList = () => {
       console.log('selectedProduct : ', selectedProduct)
       // 세차기 동작 시작
       try {
-        const result = await window.machineIPC.startWash('0', selectedProduct.targetMode);
+        const result = await window.machineIPC.startWash(selectedProduct.targetMode);
         console.log('세차기 제어 결과:', result);
         if (result.success) {
           setPaymentStatus('success');

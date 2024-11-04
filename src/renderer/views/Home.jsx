@@ -68,7 +68,6 @@ const Home = () => {
     // 개발 환경에서 초기 상태 설정
     if (isDevelopment && !carWashState) {
       setCarWashState({
-        machineId: '0',
         state: {
           currentStep: '없음',
           remainingTime: 0,
@@ -121,7 +120,7 @@ const Home = () => {
         );
         
         if (updateResponse.type === 'SUCCESS') {
-          const controlResponse = await window.machineIPC.startWash('0', reservationResponse.item.product.target_mode);
+          const controlResponse = await window.machineIPC.startWash(reservationResponse.item.product.target_mode);
           
           if (controlResponse.success) {
             alert('예약이 확인되었습니다. 세차를 시작합니다.');

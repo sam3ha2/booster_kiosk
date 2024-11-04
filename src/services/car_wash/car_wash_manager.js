@@ -2,14 +2,15 @@ const { ipcMain, BrowserWindow } = require('electron');
 const SG90CarWash = require('./machine_types/sg90_car_wash');
 const FL30CarWash = require('./machine_types/fl30_car_wash');
 const EventEmitter = require('events');
+const SerialPort = require('serialport');
 
 class CarWashManager extends EventEmitter {
   constructor() {
     super();
-    this.machines = new Map();
-    this.lastStatusReceived = new Map(); // 마지막 상태 수신 시간 저장
-    this.statusCheckInterval = null; // 상태 체크 인터벌
-    this.connectionIssues = new Set(); // 연결 문제 발생한 세차기 ID 저장
+    this.machine = null; // 단일 머신 저장
+    this.lastStatusReceived = null; // 마지막 상태 수신 시간
+    this.statusCheckInterval = null;
+    this.hasConnectionIssue = false; // 연결 문제 상태
     this.registerHandlers();
   }
 
@@ -18,8 +19,46 @@ class CarWashManager extends EventEmitter {
     ipcMain.handle('stop-wash', this.stopWash.bind(this));
   }
 
+  initialize() {
+    this.connectDevice();
+  }
+
+  // 자동 검색을 위한 함수
+  async connectDevice() {
+    if (this.machine) {
+      console.log('이미 연결된 세차기가 있습니다.');
+      return;
+    }
+
+    const ports = await SerialPort.list();
+    const fl30Port = ports.find((port) =>
+      port.vendorId === '1234' && port.productId === 'abcd'
+    );
+
+    if (fl30Port) {
+      await this.addMachine({
+        type: 'FL30',
+        config: {
+          id: fl30Port.path,
+          portName: fl30Port.path,
+          address: 0x01
+        }
+      });
+    }
+  }
+
+  disconnectDevice() {
+    this.clearStatusCheck();
+    this.machine.disconnect();
+    this.machine = null;
+  }
+
   async addMachine({ type, config }) {
     try {
+      if (this.machine) {
+        return { success: false, message: '이미 연결된 세차기가 있습니다.' };
+      }
+
       let machine;
       switch (type) {
         case 'SG90':
@@ -33,11 +72,10 @@ class CarWashManager extends EventEmitter {
       }
 
       await machine.initialize();
-      this.machines.set(config.id, machine);
-      this.setupMachineEventListeners(config.id, machine);
-      this.startPeriodicStatusCheck(config.id, true);
+      this.machine = machine;
+      this.setupMachineEventListeners(machine);
+      this.startPeriodicStatusCheck(true);
 
-      // 상태 체크 시작
       if (!this.statusCheckInterval) {
         this.startStatusCheck();
       }
@@ -49,27 +87,29 @@ class CarWashManager extends EventEmitter {
     }
   }
 
-  setupMachineEventListeners(machineId, machine) {
+  setupMachineEventListeners(machine) {
     machine.on('statusUpdate', (state) => {
-      console.log(`세차기 ${machineId} 상태 변경:`, state);
-      this.sendStatusUpdate(machineId, state);
-      this.lastStatusReceived.set(machineId, Date.now()); // 마지막 상태 수신 시간 기록
-      this.clearConnectionIssue(machineId); // 연결 문제 해제
+      console.log(`세차기 상태 변경:`, state);
+      this.sendStatusUpdate(state);
+      this.lastStatusReceived = Date.now();
+      this.clearConnectionIssue();
     });
-    machine.on('error', (error) => this.handleMachineError(machineId, error));
+    machine.on('error', (error) => this.handleMachineError(error));
   }
 
-  sendStatusUpdate(machineId, state) {
+  sendStatusUpdate(state) {
     const windows = BrowserWindow.getAllWindows();
     windows.forEach(window => {
-      window.webContents.send('status-update', { machineId, state });
+      window.webContents.send('status-update', { state });
     });
   }
 
-  async startWash(event, machineId, mode) {
-    const machine = this.getMachine(machineId);
+  async startWash(event, mode) {
+    if (!this.machine) {
+      throw new Error('연결된 세차기가 없습니다');
+    }
     try {
-      const result = await machine.start(mode);
+      const result = await this.machine.start(mode);
       return result;
     } catch (error) {
       console.error('세차 시작 중 오류 발생:', error);
@@ -77,10 +117,12 @@ class CarWashManager extends EventEmitter {
     }
   }
 
-  async stopWash(event, machineId) {
-    const machine = this.getMachine(machineId);
+  async stopWash(event) {
+    if (!this.machine) {
+      throw new Error('연결된 세차기가 없습니다');
+    }
     try {
-      await machine.stop();
+      await this.machine.stop();
       return { success: true, message: '세차가 중지되었습니다.' };
     } catch (error) {
       console.error('세차 중지 중 오류 발생:', error);
@@ -88,44 +130,41 @@ class CarWashManager extends EventEmitter {
     }
   }
 
-  startPeriodicStatusCheck(machineId, turnOn) {
-    const machine = this.getMachine(machineId);
+  startPeriodicStatusCheck(turnOn) {
+    if (!this.machine) return;
+    
     if (turnOn) {
-      machine.startStatusCheck();
+      this.machine.startStatusCheck();
     } else {
-      machine.stopStatusCheck();
+      this.machine.stopStatusCheck();
     }
   }
 
   startStatusCheck() {
     this.statusCheckInterval = setInterval(() => {
-      this.checkAllMachinesStatus();
-    }, 10000); // 10초마다 상태 체크
+      this.checkMachineStatus();
+    }, 10000);
   }
 
-  checkAllMachinesStatus() {
-    this.machines.forEach((machine, machineId) => {
-      const lastReceived = this.lastStatusReceived.get(machineId);
-      if (lastReceived && (Date.now() - lastReceived > 30000)) {
-        // 상태가 30초 이상 업데이트되지 않은 경우 처리
-        this.handleConnectionIssue(machineId);
-      }
-    });
-  }
-
-  handleConnectionIssue(machineId) {
-    if (!this.connectionIssues.has(machineId)) {
-      console.error(`세차기 ${machineId}와의 연결에 문제가 있습니다.`);
-      this.sendStatusUpdate(machineId, { error: '연결에 문제가 있습니다.' });
-      this.connectionIssues.add(machineId); // 에러 상태 추가
+  checkMachineStatus() {
+    if (this.lastStatusReceived && (Date.now() - this.lastStatusReceived > 30000)) {
+      this.handleConnectionIssue();
     }
   }
 
-  clearConnectionIssue(machineId) {
-    if (this.connectionIssues.has(machineId)) {
-      console.log(`세차기 ${machineId}와의 연결 문제가 해결되었습니다.`);
-      this.sendStatusUpdate(machineId, { message: '연결 문제가 해결되었습니다.' });
-      this.connectionIssues.delete(machineId); // 에러 상태 제거
+  handleConnectionIssue() {
+    if (!this.hasConnectionIssue) {
+      console.error(`세차기와의 연결에 문제가 있습니다.`);
+      this.sendStatusUpdate({ error: '연결에 문제가 있습니다.' });
+      this.hasConnectionIssue = true;
+    }
+  }
+
+  clearConnectionIssue() {
+    if (this.hasConnectionIssue) {
+      console.log(`세차기와의 연결 문제가 해결되었습니다.`);
+      this.sendStatusUpdate({ message: '연결 문제가 해결되었습니다.' });
+      this.hasConnectionIssue = false;
     }
   }
 
@@ -136,17 +175,9 @@ class CarWashManager extends EventEmitter {
     }
   }
 
-  getMachine(machineId) {
-    const machine = this.machines.get(machineId);
-    if (!machine) {
-      throw new Error('세차기를 찾을 수 없습니다');
-    }
-    return machine;
-  }
-
-  handleMachineError(machineId, error) {
-    console.error(`세차기 ${machineId} 오류:`, error);
-    this.sendStatusUpdate(machineId, { error: error.message });
+  handleMachineError(error) {
+    console.error(`세차기 오류:`, error);
+    this.sendStatusUpdate({ error: error.message });
   }
 }
 

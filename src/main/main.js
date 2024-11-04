@@ -56,14 +56,8 @@ function createWindow() {
 
   log.info('애플리케이션 창이 생성되었습니다.');
 
-  carWashManager.addMachine({
-    type: 'FL30',
-    config: {
-      id: '0',
-      portName: process.env.PORT_NAME || '/dev/ttys022',
-      address: 0x01
-    }
-  });
+  // 세차기 초기화
+  carWashManager.initialize();
 
   // 스캐너 초기화
   scannerManager.initialize();

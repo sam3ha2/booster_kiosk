@@ -220,6 +220,10 @@ class FL30CarWash extends AbstractCarWashMachine {
       throw error;
     }
   }
+
+  disconnect() {
+    this.port.close();
+  }
 }
 
 module.exports = FL30CarWash;

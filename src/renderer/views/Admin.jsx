@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CarWashStatus from '../components/CarWashStatus';
 import AppBar from '../components/AppBar';
 
 const Admin = () => {
@@ -8,6 +7,11 @@ const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [pinCode, setPinCode] = useState('');
   const [carWashState, setCarWashState] = useState(null);
+  const [deviceStates, setDeviceStates] = useState({
+    carWash: { connected: false, path: '' },
+    scanner: { connected: false },
+    printer: { connected: false }
+  });
 
   const handlePinInput = (digit) => {
     if (pinCode.length < 4) {
@@ -55,55 +59,82 @@ const Admin = () => {
     };
   }, [isLoggedIn]);
 
-  const AdminMenu = () => (
-    <div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-2xl">
-      <button
-        onClick={() => navigate('/payment-admin')}
-        className="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center transition-colors"
-      >
-        <svg 
-          className="w-8 h-8 mb-2" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" 
-          />
-        </svg>
-        <span className="text-lg font-semibold">결제 관리</span>
-        <span className="text-sm mt-1">결제 내역 조회 및 취소</span>
-      </button>
+  const handleDeviceConnection = async (deviceType, action) => {
+    // 실제 연결/해제 로직 구현 필요
+    console.log(`${deviceType} ${action} 요청`);
+  };
 
-      <button
-        onClick={() => {}} // 다른 관리 메뉴를 위한 공간
-        className="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center transition-colors"
-      >
-        <svg 
-          className="w-8 h-8 mb-2" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-          />
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" 
-          />
-        </svg>
-        <span className="text-lg font-semibold">설정</span>
-        <span className="text-sm mt-1">시스템 설정 관리</span>
-      </button>
+  const MenuItem = ({ label, value, onClick, showArrow, actionButton }) => (
+    <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700 hover:bg-gray-800 cursor-pointer">
+      <span className="text-white text-lg">{label}</span>
+      <div className="flex items-center">
+        {value && <span className="text-gray-400 mr-4">{value}</span>}
+        {actionButton}
+        {showArrow && (
+          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        )}
+      </div>
+    </div>
+  );
+
+  const AdminMenu = () => (
+    <div className="w-full max-w-2xl bg-gray-900 rounded-lg overflow-hidden">
+      <MenuItem 
+        label="결제 관리" 
+        onClick={() => navigate('/payment-admin')} 
+        showArrow={true}
+      />
+      
+      <MenuItem 
+        label="세차기 관리" 
+        value={deviceStates.carWash.connected ? deviceStates.carWash.path : '연결 안됨'}
+        actionButton={
+          <button 
+            onClick={() => handleDeviceConnection('carWash', deviceStates.carWash.connected ? '해제' : '연결')}
+            className={`px-3 py-1 rounded mr-4 ${deviceStates.carWash.connected ? 'bg-red-600' : 'bg-green-600'}`}
+          >
+            {deviceStates.carWash.connected ? '해제' : '연결'}
+          </button>
+        }
+      />
+
+      <MenuItem 
+        label="세차기 상태" 
+        value={carWashState?.state || '상태 확인 중...'}
+      />
+
+      <MenuItem 
+        label="스캐너 관리" 
+        value={deviceStates.scanner.connected ? '연결됨' : '연결 안됨'}
+        actionButton={
+          <button 
+            onClick={() => handleDeviceConnection('scanner', deviceStates.scanner.connected ? '해제' : '연결')}
+            className={`px-3 py-1 rounded mr-4 ${deviceStates.scanner.connected ? 'bg-red-600' : 'bg-green-600'}`}
+          >
+            {deviceStates.scanner.connected ? '해제' : '연결'}
+          </button>
+        }
+      />
+
+      <MenuItem 
+        label="프린터 관리" 
+        value={deviceStates.printer.connected ? '연결됨' : '연결 안됨'}
+        actionButton={
+          <button 
+            onClick={() => handleDeviceConnection('printer', deviceStates.printer.connected ? '해제' : '연결')}
+            className={`px-3 py-1 rounded mr-4 ${deviceStates.printer.connected ? 'bg-red-600' : 'bg-green-600'}`}
+          >
+            {deviceStates.printer.connected ? '해제' : '연결'}
+          </button>
+        }
+      />
+
+      <MenuItem 
+        label="버전 정보" 
+        value={`v${APP_VERSION}`}
+      />
     </div>
   );
 
@@ -181,10 +212,7 @@ const Admin = () => {
         {!isLoggedIn ? (
           <Keypad />
         ) : (
-          <div className="flex flex-col items-center w-full">
-            <CarWashStatus carWashState={carWashState} isDevelopment={false} />
-            <AdminMenu />
-          </div>
+          <AdminMenu />
         )}
       </div>
     </div>

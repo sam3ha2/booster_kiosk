@@ -25,7 +25,6 @@ const Home = () => {
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
   const [carWashState, setCarWashState] = useState(null);
-  const [scannerInitError, setScannerInitError] = useState(null);
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   const statusUpdateListener = useCallback((data) => {
@@ -38,8 +37,8 @@ const Home = () => {
 
     const qrCodeListener = (data) => {
       console.log("QR 코드 스캔 데이터:", data);
-      window.scannerAPI.beep();
-      window.scannerAPI.toggleLight(false);
+      window.scannerIPC.beep();
+      window.scannerIPC.toggleLight(false);
       processQrCode(data);
     };
 
@@ -48,23 +47,9 @@ const Home = () => {
       alert('QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.');
     };
 
-    const scannerInitFailedListener = (error) => {
-      console.error("스캐너 초기화 실패:", error);
-      setScannerInitError(error);
-    };
-
-    window.scannerAPI.onQrCodeScanned(qrCodeListener);
-    window.scannerAPI.onScannerError(scannerErrorListener);
-    window.scannerAPI.onScannerInitFailed(scannerInitFailedListener);
+    window.scannerIPC.onQrCodeScanned(qrCodeListener);
+    window.scannerIPC.onScannerError(scannerErrorListener);
     
-    // 초기 스캐너 상태 확인
-    window.scannerAPI.getInitialScannerState().then(({ isInitialized }) => {
-      if (!isInitialized) {
-        console.error('스캐너가 초기화되지 않았습니다.');
-        setScannerInitError('스캐너 초기화 실패');
-      }
-    });
-
     // 개발 환경에서 초기 상태 설정
     if (isDevelopment && !carWashState) {
       setCarWashState({
@@ -79,9 +64,8 @@ const Home = () => {
 
     return () => {
       window.machineIPC.offStatusUpdate(statusUpdateListener);
-      window.scannerAPI.offQrCodeScanned(qrCodeListener);
-      window.scannerAPI.offScannerError(scannerErrorListener);
-      window.scannerAPI.offScannerInitFailed(scannerInitFailedListener);
+      window.scannerIPC.offQrCodeScanned(qrCodeListener);
+      window.scannerIPC.offScannerError(scannerErrorListener);
     };
   }, [statusUpdateListener]);
 
@@ -227,13 +211,6 @@ const Home = () => {
             </div>
           </div>
           {carWashState.error && <p className="text-red-500">오류: {carWashState.error}</p>}
-        </div>
-      )}
-
-      {scannerInitError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">스캐너 오류:</strong>
-          <span className="block sm:inline"> {scannerInitError}</span>
         </div>
       )}
 

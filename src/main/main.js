@@ -63,21 +63,8 @@ function initDevices() {
   setMachineHandlers();
   carWashManager.initialize();
 
-  // 스캐너 초기화
+  setScannerHandlers();
   scannerManager.initialize();
-
-  // 스캐너 이벤트 리스너 설정
-  scannerManager.on('data', (data) => {
-    mainWindow.webContents.send('qrCodeScanned', data);
-  });
-
-  scannerManager.on('error', (error) => {
-    mainWindow.webContents.send('scannerError', error.message);
-  });
-
-  scannerManager.on('initFailed', (message) => {
-    mainWindow.webContents.send('scannerInitFailed', message);
-  });
 
   setPrinterHandlers();
   try {
@@ -124,6 +111,41 @@ function setMachineHandlers() {
   ipcMain.handle('machine:getStatus', carWashManager.getMachineStatus.bind(carWashManager));
   ipcMain.handle('machine:connect', carWashManager.connectDevice.bind(carWashManager));
   ipcMain.handle('machine:disconnect', carWashManager.disconnectDevice.bind(carWashManager));
+}
+
+function setScannerHandlers() {
+  ipcMain.handle('scanner:connect', async (event) => {
+    scannerManager.initialize();
+    return scannerManager.getDeviceStatus();
+  });
+
+  ipcMain.handle('scanner:disconnect', async (event) => {
+    scannerManager.disconnect();
+    return scannerManager.getDeviceStatus();
+  });
+
+  ipcMain.handle('scanner:getStatus', async (event) => {
+    return scannerManager.getDeviceStatus();
+  });
+
+  ipcMain.handle('scanner:beep', () => {
+    scannerManager.beep();
+    return true;
+  });
+
+  ipcMain.handle('scanner:light', (event, isOn) => {
+    scannerManager.toggleLight(isOn);
+    return true;
+  });
+
+  // 스캐너 이벤트 리스너 설정
+  scannerManager.on('data', (data) => {
+    mainWindow.webContents.send('qrCodeScanned', data);
+  });
+
+  scannerManager.on('error', (error) => {
+    mainWindow.webContents.send('scannerError', error.message);
+  });
 }
 
 function setPrinterHandlers() {

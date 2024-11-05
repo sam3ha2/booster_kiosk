@@ -10,16 +10,16 @@ contextBridge.exposeInMainWorld('machineIPC', {
   disconnectMachine: () => ipcRenderer.invoke('machine:disconnect'),
 });
 
-contextBridge.exposeInMainWorld('scannerAPI', {
-  getInitialScannerState: () => ipcRenderer.invoke('getInitialScannerState'),
-  beep: () => ipcRenderer.invoke('beep'),
-  toggleLight: (isOn) => ipcRenderer.invoke('toggleLight', isOn),
+contextBridge.exposeInMainWorld('scannerIPC', {
+  connect: () => ipcRenderer.invoke('scanner:connect'),
+  disconnect: () => ipcRenderer.invoke('scanner:disconnect'),
+  getStatus: () => ipcRenderer.invoke('scanner:getStatus'),
+  beep: () => ipcRenderer.invoke('scanner:beep'),
+  toggleLight: (isOn) => ipcRenderer.invoke('scanner:light', isOn),
   onQrCodeScanned: (callback) => ipcRenderer.on('qrCodeScanned', (event, data) => callback(data)),
   offQrCodeScanned: (callback) => ipcRenderer.removeListener('qrCodeScanned', callback),
   onScannerError: (callback) => ipcRenderer.on('scannerError', (event, error) => callback(error)),
   offScannerError: (callback) => ipcRenderer.removeListener('scannerError', callback),
-  onScannerInitFailed: (callback) => ipcRenderer.on('scannerInitFailed', (event, message) => callback(message)),
-  offScannerInitFailed: (callback) => ipcRenderer.removeListener('scannerInitFailed', callback),
 });
 
 contextBridge.exposeInMainWorld('printerIPC', {

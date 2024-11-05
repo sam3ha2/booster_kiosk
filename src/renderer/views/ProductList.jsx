@@ -3,20 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Product } from '../../models/models';
 import ApiService from '../../utils/api_service';
 import AppBar from '../components/AppBar';
+import ArrowIcon from '../components/ArrowIcon';
 
 const TEST_MODE = process.env.NODE_ENV === 'development'; // 실제 배포 시 false로 변경
 
 const ServiceOption = ({ product, onSelect }) => (
-  <div className="bg-gray-800 rounded-lg p-4 mb-4 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
-    <div>
-      <h3 className="text-white font-bold">{product.name} ({product.duration}분)</h3>
-      <p className="text-gray-400 text-sm">{product.description}</p>
+  <div className="bg-gray-800 rounded-full py-4 pl-8 pr-5 mb-2 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
+    <div className="w-full">
+      <div className="flex justify-between">
+        <h3 className="text-white font-bold">{product.name} ({product.duration}분)</h3>
+        <span className="text-main font-bold ms-2 whitespace-nowrap">{product.price.toLocaleString()}원</span>
+      </div>
+      <p className="text-gray-400 text-xs mt-1">{product.description}</p>
     </div>
-    <div className="flex items-center">
-      <span className="text-green-400 font-bold mr-2">{product.price.toLocaleString()}원</span>
-      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-      </svg>
+    <div className="flex items-center ml-3">
+      <ArrowIcon direction="right" color="text-white" size="w-8 h-8" />
     </div>
   </div>
 );
@@ -24,7 +25,7 @@ const ServiceOption = ({ product, onSelect }) => (
 const Body = ({ loading, error, products, onSelect }) => {
   if (error) {
     return (
-      <div className="text-white text-center p-8">
+      <div className="text-white text-center p-8 overflow-y-auto">
         <p>에러 발생: {error.message}</p>
       </div>
     );
@@ -32,14 +33,14 @@ const Body = ({ loading, error, products, onSelect }) => {
 
   if (loading) {
     return (
-      <div className="text-white text-center p-8">
+      <div className="text-white text-center p-8 overflow-y-auto">
         <p>상품 목록을 불러오는 중...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto p-4">
+    <div className="max-w py-2 px-8 overflow-y-auto h-full">
       {products.map((product) => (
         <ServiceOption key={product.idx} product={product} onSelect={onSelect} />
       ))}
@@ -263,7 +264,7 @@ const ProductList = () => {
       }
       return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
+          <div className="bg-gray-800 p-8 mx-8 rounded-3xl max-w-md w-full text-white relative">
             <CloseButton onClick={() => setPaymentStatus(null)} />
             <h2 className="text-2xl font-bold mb-4">결제 대기 중</h2>
             <p>카드를 투입해 주세요.</p>
@@ -313,18 +314,22 @@ const ProductList = () => {
   };
 
   return (
-    <div className="bg-black min-h-screen flex flex-col">
-      <AppBar 
-        label="상품 선택"
-        showBack={true}
-        onBack={handleBack}
-      />
-      <Body 
-        loading={loading}
-        error={error}
-        products={products}
-        onSelect={selectProduct}
-      />
+    <div className="bg-black h-full flex flex-col">
+      <div className="sticky top-0 flex-none bg-black">
+        <AppBar 
+          label="상품 선택"
+          showBack={true}
+          onBack={handleBack}
+        />
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <Body 
+          loading={loading}
+          error={error}
+          products={products}
+          onSelect={selectProduct}
+        />
+      </div>
       {renderPaymentModal()}
       {paymentStatus === 'success' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

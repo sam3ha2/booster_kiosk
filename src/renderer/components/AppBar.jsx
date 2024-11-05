@@ -3,10 +3,10 @@ import BackButton from './BackButton';
 
 const AppBar = ({ label, image, showBack = false, onBack }) => {
   return (
-    <div className="border-gray-800">
-      <div className="max-w-md mx-auto pt-1 flex items-center justify-center min-h-[64px]">
+    <div className="w-full">
+      <div className="flex items-center justify-center min-h-[64px]">
         {showBack && (
-          <div className="absolute left-4">
+          <div className="absolute start-4">
             <BackButton onClick={onBack} />
           </div>
         )}
@@ -21,7 +21,7 @@ const AppBar = ({ label, image, showBack = false, onBack }) => {
           <img 
             src={image} 
             alt="Header Image"
-            className="h-5 object-contain" 
+            className="h-4 object-contain" 
           />
         )}
       </div>

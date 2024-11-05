@@ -3,8 +3,8 @@ import videoSource from '../../assets/videos/booster_kiosk_mov_01.mp4';
 
 const Layout = ({ children }) => {
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white">
-      <div className="flex-none h-[270px] bg-black text-white flex items-center justify-center overflow-hidden">
+    <div className="flex flex-col h-screen bg-black text-white">
+      <div className="flex-none h-1/3 bg-black text-white flex items-center justify-center overflow-hidden">
         <div className="relative w-full h-full">
           <video
             src={videoSource}

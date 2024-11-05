@@ -4,19 +4,20 @@ import ApiService from '../../utils/api_service';
 import AppBar from '../components/AppBar';
 import CarWashStatus from '../components/CarWashStatus';
 import boosterIcon from '../../assets/images/ic_booster_logo.png';
+import ArrowIcon from '../components/ArrowIcon';
 
 // 새로운 HomeButton 컴포넌트
 const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
   <button
     onClick={onClick}
-    className={`bg-gray-800 text-white px-8 py-6 rounded-full flex flex-col items-center transition duration-300 w-40 h-64 justify-center ${
+    className={`bg-gray-800 text-white px-2 py-0 rounded-full flex flex-col items-center transition duration-300 w-44 h-60 justify-center ${
       disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
     }`}
     disabled={disabled}
   >
-    <span className="text-lg font-semibold">{text}</span>
-    <span className="text-sm">{subText}</span>
-    <span className="mt-2 text-2xl">{icon}</span>
+    <span className="text-2xl font-normal mt-4">{text}</span>
+    <span className="text-2xl font-bold text-main">{subText}</span>
+    <span className="mt-10 text-2xl">{icon}</span>
   </button>
 );
 
@@ -36,6 +37,7 @@ const Home = () => {
     window.machineIPC.onStatusUpdate(statusUpdateListener);
 
     const qrCodeListener = (data) => {
+      if (isWashing) return;
       console.log("QR 코드 스캔 데이터:", data);
       window.scannerIPC.beep();
       window.scannerIPC.toggleLight(false);
@@ -129,42 +131,41 @@ const Home = () => {
     setShowUsageGuide(!showUsageGuide);
   };
 
-  const isWashing = carWashState && carWashState.isWashing;
-
-  const goToSettings = () => {
-    navigate('/admin'); // 관리자 페이지로 이동
-  };
+  const isWashing = carWashState?.state?.currentStep !== '없음' && carWashState?.state?.currentStep !== undefined;
 
   return (
-    <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
-      {/* APP_VERSION 표시 */}
-      <div className="absolute top-2 left-2 bg-gray-200 text-gray-700 px-2 py-1 rounded text-sm">
-        v{APP_VERSION}
-      </div>
+    <div className="h-full flex-1 p-0 flex flex-col items-center relative">
+      <AppBar image={boosterIcon} />
 
-      <AppBar 
-        image={boosterIcon}
-      />
-
-      <h1 className="text-2xl font-semibold text-center mb-8">
+      <h1 className="text-2xl font-semibold text-center mt-4 mb-8">
         안녕하세요. 고객님<br />{ localStorage.getItem('shop_name') || '씻자'}입니다.
       </h1>
-      <div className="flex space-x-8 mb-8">
-        <HomeButton
-          onClick={startWash}
-          disabled={isWashing}
-          text="자동세차"
-          subText="현장결제"
-          icon="→"
-        />
-      </div>
-      <button onClick={toggleUsageGuide} className="text-green-500 underline mb-4">
+
+      {isWashing ? (
+        // 세차 중일 때 표시되는 UI
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-green-500 mb-4">세차가 진행 중입니다</h2>
+          <CarWashStatus carWashState={carWashState} isDevelopment={isDevelopment} />
+        </div>
+      ) : (
+        // 세차 중이 아닐 때 표시되는 UI
+        <>
+          <div className="flex">
+            <HomeButton
+              onClick={startWash}
+              disabled={false}
+              text="자동세차"
+              subText="현장결제"
+              icon={<ArrowIcon direction="right" color="text-white" size="w-8 h-8" />}
+            />
+          </div>
+        </>
+      )}
+      <button onClick={toggleUsageGuide} className="fixed bottom-0 bg-gray-800 py-4 w-full text-white font-bold text-xl rounded-t-3xl">
         부스터 키오스크 사용 안내
       </button>
 
-      {/* 상태 표시 컴포넌트 사용 */}
-      <CarWashStatus carWashState={carWashState} isDevelopment={isDevelopment} />
-
+      {/* 모달 관련 코드 */}
       {showQrScanner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg max-w-md w-full text-black">
@@ -184,7 +185,7 @@ const Home = () => {
 
       {showUsageGuide && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-3xl max-w-2xl w-full text-white relative">
+          <div className="bg-gray-800 p-8 mx-4 rounded-3xl max-w-2xl w-full text-white relative">
             <button onClick={toggleUsageGuide} className="absolute top-4 right-4 text-white">
               <span className="text-3xl">&times;</span>
             </button>
@@ -213,11 +214,6 @@ const Home = () => {
           {carWashState.error && <p className="text-red-500">오류: {carWashState.error}</p>}
         </div>
       )}
-
-      {/* 설정 아이콘 */}
-      <button onClick={goToSettings} className="absolute top-2 right-2">
-        ⚙️
-      </button>
     </div>
   );
 };

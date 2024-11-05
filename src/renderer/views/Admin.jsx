@@ -6,7 +6,6 @@ const Admin = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [pinCode, setPinCode] = useState('');
-  const [carWashState, setCarWashState] = useState(null);
   const [deviceStates, setDeviceStates] = useState({
     carWash: { connected: false, path: '' },
     scanner: { connected: false },
@@ -43,31 +42,153 @@ const Admin = () => {
   }, [pinCode]);
 
   useEffect(() => {
-    const statusUpdateListener = (data) => {
-      console.log('세차기 상태 업데이트:', data);
-      setCarWashState(data);
-    };
-
     if (isLoggedIn) {
-      window.machineIPC.onStatusUpdate(statusUpdateListener);
+      loadDeviceStates();
     }
-
-    return () => {
-      if (isLoggedIn) {
-        window.machineIPC.offStatusUpdate(statusUpdateListener);
-      }
-    };
   }, [isLoggedIn]);
 
-  const handleDeviceConnection = async (deviceType, action) => {
-    // 실제 연결/해제 로직 구현 필요
-    console.log(`${deviceType} ${action} 요청`);
+  const loadDeviceStates = async () => {
+    try {
+      const carWashStatus = await window.machineIPC.getMachineStatus();
+      const scannerStatus = await window.scannerIPC.getStatus();
+      
+      setDeviceStates(prev => ({
+        carWash: {
+          connected: carWashStatus.connected,
+          path: carWashStatus.machineInfo?.port || '',
+          status: carWashStatus.machineInfo?.status
+        },
+        scanner: {
+          connected: scannerStatus.connected,
+          status: scannerStatus.status
+        },
+        printer: prev.printer
+      }));
+    } catch (error) {
+      console.error('장치 상태 로드 중 오류:', error);
+    }
   };
 
-  const MenuItem = ({ label, value, onClick, showArrow, actionButton }) => (
-    <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700 hover:bg-gray-800 cursor-pointer">
+  const handleDeviceConnection = async (deviceType, action) => {
+    try {
+      let result;
+      
+      switch (deviceType) {
+        case 'carWash':
+          if (action === 'connect') {
+            result = await window.machineIPC.connectMachine();
+            if (!result.connected) {
+              alert(result.message || '세차기 연결 실패');
+            }
+          } else {
+            result = await window.machineIPC.disconnectMachine();
+            if (result.connected) {
+              alert(result.message || '세차기 연결 해제 실패');
+            }
+          }
+          setDeviceStates(prev => ({
+            ...prev,
+            carWash: {
+              connected: result.connected,
+              path: result.machineInfo?.port || '',
+              machineInfo: result.machineInfo,
+              lastStatusReceived: result.lastStatusReceived,
+              status: result.machineInfo?.status
+            }
+          }));
+
+          break;
+
+        case 'scanner':
+          if (action === 'connect') {
+            result = await window.scannerIPC.connect();
+          } else {
+            result = await window.scannerIPC.disconnect();
+          }
+          setDeviceStates(prev => ({
+            ...prev,
+            scanner: { connected: result.connected }
+          }));
+          break;
+
+        case 'printer':
+          if (action === 'connect') {
+            result = await window.printerIPC.connect();
+          } else {
+            result = await window.printerIPC.disconnect();
+          }
+          setDeviceStates(prev => ({
+            ...prev,
+            printer: { connected: result.connected }
+          }));
+          break;
+      }
+    } catch (error) {
+      console.error(`${deviceType} ${action} 중 오류:`, error);
+      let type;
+      switch (deviceType) {
+        case 'printer':
+          type = '프린터';
+          break;
+        case 'scanner':
+          type = '스캐너';
+          break;
+        case 'carWash':
+          type = '세차기';
+          break;
+      }
+      alert(`${type} ${action === 'connect' ? '연결' : '해제'} 중 오류가 발생했습니다.\n${error}`);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      const statusUpdateListener = (data) => {
+        setDeviceStates(prev => ({
+          ...prev,
+          carWash: {
+            ...prev.carWash,
+            status: data.state
+          }
+        }));
+      };
+
+      const scannerErrorListener = (error) => {
+        setDeviceStates(prev => ({
+          ...prev,
+          scanner: {
+            ...prev.scanner,
+            status: 'error',
+            error: error
+          }
+        }));
+      };
+
+      window.machineIPC.onStatusUpdate(statusUpdateListener);
+      window.scannerIPC.onScannerError(scannerErrorListener);
+
+      return () => {
+        window.machineIPC.offStatusUpdate(statusUpdateListener);
+        window.scannerIPC.offScannerError(scannerErrorListener);
+      };
+    }
+  }, [isLoggedIn]);
+
+  const MenuItem = ({ label, value, onClick, showArrow, actionButton, status }) => (
+    <div 
+      className="flex items-center justify-between py-4 px-6 border-b border-gray-700 hover:bg-gray-800 cursor-pointer"
+      onClick={onClick}
+    >
       <span className="text-white text-lg">{label}</span>
       <div className="flex items-center">
+        {status && (
+          <span className={`mr-4 text-sm ${
+            status === 'error' ? 'text-red-500' : 
+            status === 'ready' ? 'text-green-500' : 'text-gray-400'
+          }`}>
+            {status}
+          </span>
+        )}
         {value && <span className="text-gray-400 mr-4">{value}</span>}
         {actionButton}
         {showArrow && (
@@ -90,9 +211,10 @@ const Admin = () => {
       <MenuItem 
         label="세차기 관리" 
         value={deviceStates.carWash.connected ? deviceStates.carWash.path : '연결 안됨'}
+        status={deviceStates.carWash.status}
         actionButton={
           <button 
-            onClick={() => handleDeviceConnection('carWash', deviceStates.carWash.connected ? '해제' : '연결')}
+            onClick={() => handleDeviceConnection('carWash', deviceStates.carWash.connected ? 'disconnect' : 'connect')}
             className={`px-3 py-1 rounded mr-4 ${deviceStates.carWash.connected ? 'bg-red-600' : 'bg-green-600'}`}
           >
             {deviceStates.carWash.connected ? '해제' : '연결'}
@@ -101,16 +223,12 @@ const Admin = () => {
       />
 
       <MenuItem 
-        label="세차기 상태" 
-        value={carWashState?.state || '상태 확인 중...'}
-      />
-
-      <MenuItem 
         label="스캐너 관리" 
         value={deviceStates.scanner.connected ? '연결됨' : '연결 안됨'}
+        status={deviceStates.scanner.status}
         actionButton={
           <button 
-            onClick={() => handleDeviceConnection('scanner', deviceStates.scanner.connected ? '해제' : '연결')}
+            onClick={() => handleDeviceConnection('scanner', deviceStates.scanner.connected ? 'disconnect' : 'connect')}
             className={`px-3 py-1 rounded mr-4 ${deviceStates.scanner.connected ? 'bg-red-600' : 'bg-green-600'}`}
           >
             {deviceStates.scanner.connected ? '해제' : '연결'}
@@ -121,9 +239,10 @@ const Admin = () => {
       <MenuItem 
         label="프린터 관리" 
         value={deviceStates.printer.connected ? '연결됨' : '연결 안됨'}
+        status={deviceStates.printer.status}
         actionButton={
           <button 
-            onClick={() => handleDeviceConnection('printer', deviceStates.printer.connected ? '해제' : '연결')}
+            onClick={() => handleDeviceConnection('printer', deviceStates.printer.connected ? 'disconnect' : 'connect')}
             className={`px-3 py-1 rounded mr-4 ${deviceStates.printer.connected ? 'bg-red-600' : 'bg-green-600'}`}
           >
             {deviceStates.printer.connected ? '해제' : '연결'}
@@ -148,9 +267,7 @@ const Admin = () => {
 
     return (
       <div className="w-full max-w-xs">
-        {/* PIN 표시 영역 */}
         <div className="mb-8 text-center">
-          <div className="text-2xl text-white mb-4">관리자 로그인</div>
           <div className="flex justify-center space-x-4">
             {[...Array(4)].map((_, i) => (
               <div
@@ -164,7 +281,6 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* 키패드 */}
         <div className="grid grid-cols-3 gap-4">
           {keys.map((row, rowIndex) => 
             row.map((key, colIndex) => (

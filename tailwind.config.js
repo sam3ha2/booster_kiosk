@@ -3,7 +3,11 @@ module.exports = {
     "./src/renderer/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        main: '#57F3A8',
+      },
+    },
   },
   plugins: [],
 }

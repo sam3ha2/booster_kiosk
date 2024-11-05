@@ -39,8 +39,10 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, '../preload.js'),
     },
-    icon: path.join(__dirname, '../../assets/images/icon.png'),
+    icon: path.join(__dirname, './src/assets/icons/png/64x64.png'),
   });
+
+  mainWindow.setMenuBarVisibility(false);
 
   if (isDevelopment) {
     mainWindow.loadURL('http://localhost:5173');

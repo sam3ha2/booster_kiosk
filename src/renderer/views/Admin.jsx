@@ -59,10 +59,11 @@ const Admin = () => {
           status: carWashStatus.machineInfo?.status
         },
         scanner: {
-          connected: scannerStatus.connected,
-          status: scannerStatus.status
+          connected: scannerStatus.connected
         },
-        printer: prev.printer
+        printer: {
+          connected: printerStatus.connected
+        }
       }));
     } catch (error) {
       console.error('장치 상태 로드 중 오류:', error);

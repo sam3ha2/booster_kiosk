@@ -91,7 +91,7 @@ const PaymentAdmin = () => {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2"
+            className="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 [color-scheme:dark]"
           />
         </div>
 
@@ -99,13 +99,13 @@ const PaymentAdmin = () => {
           <table className="min-w-full bg-gray-800 rounded-lg">
             <thead>
               <tr className="bg-gray-700">
-                <th className="px-4 py-2 text-left">결제 시간</th>
-                <th className="px-4 py-2 text-left">카드번호</th>
-                <th className="px-4 py-2 text-left">결제금액</th>
-                <th className="px-4 py-2 text-left">상태</th>
-                <th className="px-4 py-2 text-left">응답메시지</th>
-                <th className="px-4 py-2 text-left">승인번호</th>
-                <th className="px-4 py-2 text-left">작업</th>
+                <th className="px-4 py-2 text-center">결제 시간</th>
+                <th className="px-4 py-2 text-center">카드번호</th>
+                <th className="px-4 py-2 text-center">결제금액</th>
+                <th className="px-4 py-2 text-center">상태</th>
+                <th className="px-4 py-2 text-center">응답메시지</th>
+                <th className="px-4 py-2 text-center">승인번호</th>
+                <th className="px-4 py-2 text-center">작업</th>
               </tr>
             </thead>
             <tbody>
@@ -116,7 +116,7 @@ const PaymentAdmin = () => {
                       payment.trade_req_time.replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5:$6') 
                       : new Date(payment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                   </td>
-                  <td className="px-4 py-2">{payment.card_no ? `${payment.card_no}********` : ''}</td>
+                  <td className="px-4 py-2">{payment.card_no ? `${payment.card_no}${'*'.repeat(14 - payment.card_no.length)}` : ''}</td>
                   <td className="px-4 py-2">{parseInt(payment.tran_amt).toLocaleString()}원</td>
                   <td className={`px-4 py-2 ${getStatusColor(payment.status)}`}>{payment.status}</td>
                   <td className="px-4 py-2">{payment.reply_msg}</td>

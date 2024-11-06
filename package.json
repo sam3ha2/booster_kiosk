@@ -1,6 +1,6 @@
 {
   "name": "booster-car-wash-kiosk",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "부스터 세차 키오스크 애플리케이션",
   "main": "src/main/main.js",
   "scripts": {

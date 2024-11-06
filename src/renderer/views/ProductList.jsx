@@ -134,7 +134,8 @@ const ProductList = () => {
         tranAmt: selectedProduct.price.toString(),
         vatAmt: Math.floor(selectedProduct.price / 11).toString(),
         svcAmt: '0',
-        installment: '0'
+        installment: '0',
+        tradeReqDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
       };
 
       // 결제 요청 등록
@@ -145,11 +146,11 @@ const ProductList = () => {
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
         paymentInfo = await simulatePayment();
         // 테스트 모드에서도 결제 성공 기록
-        await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }), {
+        await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, paymentParams.tradeReqDate, {
           outCardNo: paymentInfo.card_number,
           outAuthNo: paymentInfo.approval_number,
           outAuthDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
-          ontTradReqTime: new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\D/g, ''),
+          ontTradeReqTime: new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\D/g, ''),
           outReplyMsg1: '테스트 결제 성공'
         });
       } else {

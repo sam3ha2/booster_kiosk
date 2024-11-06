@@ -58,27 +58,46 @@ function createWindow() {
 
   log.info('애플리케이션 창이 생성되었습니다.');
 
+  // 핸들러 먼저 초기화(*)
+  initIPCHandlers();
+  // 디바이스 초기화
   initDevices();
 }
 
-function initDevices() {
+function initIPCHandlers() {
   setMachineHandlers();
-  carWashManager.initialize();
-
   setScannerHandlers();
-  scannerManager.initialize();
-
   setPrinterHandlers();
+  setPaymentHandlers();
+  setDatabaseHandlers();
+}
+
+function initDevices() {
+  try {
+    carWashManager.initialize();
+  } catch (error) {
+    console.error(error);
+  }
+  
+  try {
+    scannerManager.initialize();
+  } catch (error) {
+    console.error(error);
+  }
+
   try {
     printerManager.initialize();
   } catch (error) {
     console.error(error);
   }
 
-  setPaymentHandlers();
-  paymentManager.initialize();
+  try {
+    paymentManager.initialize();
+  } catch (error) {
+    console.error(error);
+  }
 
-  setDatabaseHandlers();
+
 }
 
 // app.whenReady().then(createWindow);

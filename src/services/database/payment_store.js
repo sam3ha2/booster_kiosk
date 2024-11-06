@@ -16,7 +16,7 @@ class PaymentStore {
   }
 
   getFilePath(date) {
-    const fileName = `${date}.json`;
+    const fileName = `${date.replaceAll('-', '')}.json`;
     return path.join(this.baseDir, fileName);
   }
 
@@ -125,7 +125,7 @@ class PaymentStore {
 
   // 특정 날짜의 결제 정보 조회
   async getPaymentsByDate(date) {
-    const filePath = this.getFilePath(date);
+    const filePath = this.getFilePath(date.replaceAll('-', ''));
     try {
       if (fs.existsSync(filePath)) {
         const data = fs.readFileSync(filePath, 'utf8');

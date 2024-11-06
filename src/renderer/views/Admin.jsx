@@ -4,7 +4,7 @@ import AppBar from '../components/AppBar';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(process.env.NODE_ENV === 'development');
   const [pinCode, setPinCode] = useState('');
   const [deviceStates, setDeviceStates] = useState({
     carWash: { connected: false, path: '' },
@@ -51,6 +51,7 @@ const Admin = () => {
     try {
       const carWashStatus = await window.machineIPC.getMachineStatus();
       const scannerStatus = await window.scannerIPC.getStatus();
+      const printerStatus = await window.printerIPC.getStatus();
       
       setDeviceStates(prev => ({
         carWash: {
@@ -250,6 +251,22 @@ const Admin = () => {
           </button>
         }
       />
+
+      {
+        deviceStates.printer.connected && (
+          <MenuItem 
+            label="테스트"
+            actionButton={
+              <button 
+                onClick={() => window.printerIPC.printTest()}
+                className="px-3 py-1 rounded mr-4 bg-green-600"
+              >
+                출력
+              </button>
+            }
+          />
+        )
+      }
 
       <MenuItem 
         label="버전 정보" 

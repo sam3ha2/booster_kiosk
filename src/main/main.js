@@ -195,6 +195,16 @@ function setPrinterHandlers() {
       throw error;
     }
   });
+
+  ipcMain.handle('printer:printTest', async (event) => {
+    return await printerManager.print({
+      text: [
+        { content: '123456789012345678901234567890123456789012345678901234567890', encoding: 'EUC-KR' },
+        { content: 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz', encoding: 'EUC-KR' },
+        { content: '가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하', encoding: 'EUC-KR' },
+      ]
+    });
+  });
 }
 
 function setPaymentHandlers() {

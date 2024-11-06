@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('printerIPC', {
   disconnect: () => ipcRenderer.invoke('printer:disconnect'),
   getStatus: () => ipcRenderer.invoke('printer:getStatus'),
   printReceipt: (data) => ipcRenderer.invoke('printer:print', data),
+  printTest: () => ipcRenderer.invoke('printer:printTest'),
 });
 
 contextBridge.exposeInMainWorld('paymentIPC', {

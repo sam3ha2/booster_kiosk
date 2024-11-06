@@ -43,4 +43,9 @@ contextBridge.exposeInMainWorld('databaseIPC', {
   updatePaymentSuccess: (id, date, result) => ipcRenderer.invoke('db:payment:update', id, date, 'APPROVED', result),
   updatePaymentFailure: (id, date, error) => ipcRenderer.invoke('db:payment:update', id, date, 'FAILED', error),
   updatePaymentCancel: (id, date, result) => ipcRenderer.invoke('db:payment:update', id, date, 'CANCELED', result),
+});
+
+contextBridge.exposeInMainWorld('appControl', {
+  relaunch: () => ipcRenderer.invoke('app:relaunch'),
+  quit: () => ipcRenderer.invoke('app:quit'),
 }); 

@@ -244,3 +244,12 @@ function setDatabaseHandlers() {
     return await paymentStore.updatePayment(id, date, status, result);
   });
 }
+
+ipcMain.handle('app:relaunch', () => {
+  app.relaunch();
+  app.quit();
+});
+
+ipcMain.handle('app:quit', () => {
+  app.quit();
+});

@@ -254,6 +254,16 @@ const Admin = () => {
         label="버전 정보" 
         value={`v${APP_VERSION}`}
       />
+
+      <MenuItem 
+        label="앱 재시작"
+        onClick={() => window.appControl.relaunch()}
+      />
+
+      <MenuItem 
+        label="앱 종료"
+        onClick={() => window.appControl.quit()}
+      />
     </div>
   );
 

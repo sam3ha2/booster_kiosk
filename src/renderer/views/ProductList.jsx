@@ -11,10 +11,10 @@ const ServiceOption = ({ product, onSelect }) => (
   <div className="bg-gray-800 rounded-full py-4 pl-8 pr-5 mb-2 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
     <div className="w-full">
       <div className="flex justify-between">
-        <h3 className="text-white font-bold">{product.name} ({product.duration}분)</h3>
-        <span className="text-main font-bold ms-2 whitespace-nowrap">{product.price.toLocaleString()}원</span>
+        <h3 className="text-white font-bold text-xl">{product.name} ({product.duration}분)</h3>
+        <span className="text-main font-bold ms-2 whitespace-nowrap text-xl">{product.price.toLocaleString()}원</span>
       </div>
-      <p className="text-gray-400 text-xs mt-1">{product.description}</p>
+      <p className="text-gray-400 text-base mt-1">{product.description}</p>
     </div>
     <div className="flex items-center ml-3">
       <ArrowIcon direction="right" color="text-white" size="w-8 h-8" />

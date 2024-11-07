@@ -4,7 +4,7 @@ import BackButton from './BackButton';
 const AppBar = ({ label, image, showBack = false, onBack }) => {
   return (
     <div className="w-full">
-      <div className="flex items-center justify-center min-h-[64px]">
+      <div className="flex items-center p-4 justify-center min-h-[64px]">
         {showBack && (
           <div className="absolute start-4">
             <BackButton onClick={onBack} />

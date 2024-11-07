@@ -192,7 +192,7 @@ const Admin = () => {
             {status}
           </span>
         )}
-        {value && <span className="text-gray-400 mr-4">{value}</span>}
+        {value && <span className="text-gray-400 text-base mr-4">{value}</span>}
         {actionButton}
         {showArrow && (
           <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,11 +214,11 @@ const Admin = () => {
       <MenuItem 
         label="세차기 관리" 
         value={deviceStates.carWash.connected ? deviceStates.carWash.path : '연결 안됨'}
-        status={deviceStates.carWash.status.currentStep}
+        status={deviceStates.carWash.status?.currentStep}
         actionButton={
           <button 
             onClick={() => handleDeviceConnection('carWash', deviceStates.carWash.connected ? 'disconnect' : 'connect')}
-            className={`px-3 py-1 rounded mr-4 ${deviceStates.carWash.connected ? 'bg-red-600' : 'bg-green-600'}`}
+            className={`px-3 py-1 rounded mr-4 text-sm ${deviceStates.carWash.connected ? 'bg-red-600' : 'bg-green-600'}`}
           >
             {deviceStates.carWash.connected ? '해제' : '연결'}
           </button>
@@ -232,7 +232,7 @@ const Admin = () => {
         actionButton={
           <button 
             onClick={() => handleDeviceConnection('scanner', deviceStates.scanner.connected ? 'disconnect' : 'connect')}
-            className={`px-3 py-1 rounded mr-4 ${deviceStates.scanner.connected ? 'bg-red-600' : 'bg-green-600'}`}
+            className={`px-3 py-1 rounded mr-4 text-sm ${deviceStates.scanner.connected ? 'bg-red-600' : 'bg-green-600'}`}
           >
             {deviceStates.scanner.connected ? '해제' : '연결'}
           </button>
@@ -246,7 +246,7 @@ const Admin = () => {
         actionButton={
           <button 
             onClick={() => handleDeviceConnection('printer', deviceStates.printer.connected ? 'disconnect' : 'connect')}
-            className={`px-3 py-1 rounded mr-4 ${deviceStates.printer.connected ? 'bg-red-600' : 'bg-green-600'}`}
+            className={`px-3 py-1 rounded mr-4 text-sm ${deviceStates.printer.connected ? 'bg-red-600' : 'bg-green-600'}`}
           >
             {deviceStates.printer.connected ? '해제' : '연결'}
           </button>
@@ -260,7 +260,7 @@ const Admin = () => {
             actionButton={
               <button 
                 onClick={() => window.printerIPC.printTest()}
-                className="px-3 py-1 rounded mr-4 bg-green-600"
+                className="px-3 py-1 rounded mr-4 text-sm bg-green-600"
               >
                 출력
               </button>

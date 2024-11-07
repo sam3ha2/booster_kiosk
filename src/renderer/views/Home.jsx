@@ -186,22 +186,28 @@ const Home = () => {
       {showUsageGuide && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 mx-4 rounded-3xl max-w-2xl w-full text-white relative">
-            <button onClick={toggleUsageGuide} className="absolute top-4 right-4 text-white">
-              <span className="text-3xl">&times;</span>
+            <button onClick={toggleUsageGuide} className="absolute top-2 right-4 text-white">
+              <span className="text-4xl">&times;</span>
             </button>
             <h2 className="text-2xl font-bold mb-6 text-center">부스터 키오스크 사용 안내</h2>
             <div className="space-y-6">
               <div className="flex items-start">
-                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">1</div>
-                <p>앱 예약, 구독은 '자동세차 QR확인' 버튼을 현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
+                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                  <span className="text-xl">1</span>
+                </div>
+                <p className='text-xl'>앱 예약, 구독은 '자동세차 QR확인' 버튼을 현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
               </div>
               <div className="flex items-start">
-                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">2</div>
-                <p>QR확인은 모니터 왼쪽 하단에 30cm 거리 안에서 스캔하고 세차를 진행해 주세요.</p>
+                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                  <span className="text-xl">2</span>
+                </div>
+                <p className='text-xl'>QR확인은 모니터 왼쪽 하단에 30cm 거리 안에서 스캔하고 세차를 진행해 주세요.</p>
               </div>
               <div className="flex items-start">
-                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">3</div>
-                <p>현장 결제는 원하는 상품을 누르고 전화번호 입력 후 모니터 오른쪽 하단 카드결제하고 세차를 진행해 주세요.</p>
+                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                  <span className="text-xl">3</span>
+                </div>
+                <p className='text-xl'>현장 결제는 원하는 상품을 누르고 전화번호 입력 후 모니터 오른쪽 하단 카드결제하고 세차를 진행해 주세요.</p>
               </div>
             </div>
             <div className="mt-8 bg-gray-700 p-4 rounded-xl">

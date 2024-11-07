@@ -91,7 +91,7 @@ const PaymentAdmin = () => {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 [color-scheme:dark]"
+            className="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm [color-scheme:dark]"
           />
         </div>
 
@@ -99,29 +99,29 @@ const PaymentAdmin = () => {
           <table className="min-w-full bg-gray-800 rounded-lg">
             <thead>
               <tr className="bg-gray-700">
-                <th className="px-4 py-2 text-center">결제 시간</th>
-                <th className="px-4 py-2 text-center">카드번호</th>
-                <th className="px-4 py-2 text-center">결제금액</th>
-                <th className="px-4 py-2 text-center">상태</th>
-                <th className="px-4 py-2 text-center">응답메시지</th>
-                <th className="px-4 py-2 text-center">승인번호</th>
-                <th className="px-4 py-2 text-center">작업</th>
+                <th className="px-4 py-2 text-center text-sm">결제 시간</th>
+                <th className="px-4 py-2 text-center text-sm">카드번호</th>
+                <th className="px-4 py-2 text-center text-sm">결제금액</th>
+                <th className="px-4 py-2 text-center text-sm">상태</th>
+                <th className="px-4 py-2 text-center text-sm">응답메시지</th>
+                <th className="px-4 py-2 text-center text-sm">승인번호</th>
+                <th className="px-4 py-2 text-center text-sm">작업</th>
               </tr>
             </thead>
             <tbody>
               {payments.map((payment) => (
                 <tr key={payment.id} className="border-b border-gray-700 hover:bg-gray-700">
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 text-sm">
                     {payment.trade_req_time ? 
                       payment.trade_req_time.replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5:$6') 
                       : new Date(payment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                   </td>
-                  <td className="px-4 py-2">{payment.card_no ? `${payment.card_no}${'*'.repeat(14 - payment.card_no.length)}` : ''}</td>
-                  <td className="px-4 py-2">{parseInt(payment.tran_amt).toLocaleString()}원</td>
-                  <td className={`px-4 py-2 ${getStatusColor(payment.status)}`}>{payment.status}</td>
-                  <td className="px-4 py-2">{payment.reply_msg}</td>
-                  <td className="px-4 py-2">{payment.auth_no}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 text-sm">{payment.card_no ? `${payment.card_no}${'*'.repeat(14 - payment.card_no.length)}` : ''}</td>
+                  <td className="px-4 py-2 text-sm">{parseInt(payment.tran_amt).toLocaleString()}원</td>
+                  <td className={`px-4 py-2 text-sm ${getStatusColor(payment.status)}`}>{payment.status}</td>
+                  <td className="px-4 py-2 text-sm">{payment.reply_msg}</td>
+                  <td className="px-4 py-2 text-sm">{payment.auth_no}</td>
+                  <td className="px-4 py-2 text-sm">
                     {payment.status === 'APPROVED' && (
                       <button
                         onClick={() => {
@@ -139,7 +139,7 @@ const PaymentAdmin = () => {
               ))}
               {payments.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="px-4 py-2 text-center">결제 내역이 없습니다.</td>
+                  <td colSpan="7" className="px-4 py-2 text-center text-sm">결제 내역이 없습니다.</td>
                 </tr>
               )}
             </tbody>
@@ -150,24 +150,24 @@ const PaymentAdmin = () => {
         {showConfirmModal && selectedPayment && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-gray-800 p-6 rounded-lg max-w-md">
-              <h3 className="text-lg font-bold mb-4">결제 취소 확인</h3>
-              <p className="mb-2">다음 결제를 취소하시겠습니까?</p>
-              <p className="mb-2">금액: {parseInt(selectedPayment.tran_amt).toLocaleString()}원</p>
-              <p className="mb-4">카드번호: {selectedPayment.card_no}********</p>
+              <h3 className="text-lg font-bold mb-4 text-sm">결제 취소 확인</h3>
+              <p className="mb-2 text-sm">다음 결제를 취소하시겠습니까?</p>
+              <p className="mb-2 text-sm">금액: {parseInt(selectedPayment.tran_amt).toLocaleString()}원</p>
+              <p className="mb-4 text-sm">카드번호: {selectedPayment.card_no}********</p>
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => {
                     setShowConfirmModal(false);
                     setSelectedPayment(null);
                   }}
-                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500"
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500 text-sm"
                 >
                   닫기
                 </button>
                 <button
                   onClick={handleCancel}
                   disabled={loading}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-600"
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-600 text-sm"
                 >
                   취소
                 </button>
@@ -179,7 +179,7 @@ const PaymentAdmin = () => {
         {/* 로딩 오버레이 */}
         {loading && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="text-white">처리중...</div>
+            <div className="text-white text-sm">처리중...</div>
           </div>
         )}
       </div>

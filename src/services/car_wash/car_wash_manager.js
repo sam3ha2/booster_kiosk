@@ -29,9 +29,8 @@ class CarWashManager extends EventEmitter {
       }
 
       const ports = await SerialPort.list();
-      console.log('사용 가능한 포트:', ports);
       const fl30Port = ports.find((port) =>
-        port.vendorId === '1234' && port.productId === 'abcd'
+        port.vendorId === '0403' && port.productId === '6001'
       );
 
       if (!fl30Port) {
@@ -143,7 +142,7 @@ class CarWashManager extends EventEmitter {
   sendStatusUpdate(state) {
     const windows = BrowserWindow.getAllWindows();
     windows.forEach(window => {
-      window.webContents.send('status-update', { state });
+      window.webContents.send('status-update', state);
     });
   }
 

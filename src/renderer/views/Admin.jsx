@@ -88,14 +88,15 @@ const Admin = () => {
               alert(result.message || '세차기 연결 해제 실패');
             }
           }
+          const status = result.status;
           setDeviceStates(prev => ({
             ...prev,
             carWash: {
-              connected: result.connected,
-              path: result.machineInfo?.port || '',
-              machineInfo: result.machineInfo,
-              lastStatusReceived: result.lastStatusReceived,
-              status: result.machineInfo?.status
+              connected: status.connected,
+              path: status.machineInfo?.port || '',
+              machineInfo: status.machineInfo,
+              lastStatusReceived: status.lastStatusReceived,
+              status: status.machineInfo?.status
             }
           }));
 
@@ -150,7 +151,7 @@ const Admin = () => {
           ...prev,
           carWash: {
             ...prev.carWash,
-            status: data.state
+            status: data
           }
         }));
       };
@@ -213,7 +214,7 @@ const Admin = () => {
       <MenuItem 
         label="세차기 관리" 
         value={deviceStates.carWash.connected ? deviceStates.carWash.path : '연결 안됨'}
-        status={deviceStates.carWash.status}
+        status={deviceStates.carWash.status.currentStep}
         actionButton={
           <button 
             onClick={() => handleDeviceConnection('carWash', deviceStates.carWash.connected ? 'disconnect' : 'connect')}

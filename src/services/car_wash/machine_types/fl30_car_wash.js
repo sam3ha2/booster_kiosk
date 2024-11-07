@@ -34,12 +34,39 @@ class FL30CarWash extends AbstractCarWashMachine {
       });
 
       this.port.on('data', (data) => {
-        // check validate
-        if (data[0] == 0x3A) {
-          data = data.slice(1);
+        // 데이터 버퍼 초기화 
+        this.dataBuffer = this.dataBuffer || Buffer.alloc(0);
+        
+        // 새로운 데이터를 버퍼에 추가
+        this.dataBuffer = Buffer.concat([this.dataBuffer, data]);
+        
+        // Modbus RTU 프로토콜 패킷 길이 확인 (최소 4바이트: 주소+기능코드+데이터+CRC)
+        if (this.dataBuffer.length >= 4) {
+          // 기능 코드와 데이터 길이에 따라 전체 패킷 길이 계산
+          const functionCode = this.dataBuffer[1];
+          let expectedLength;
+          
+          if (functionCode === 1 || functionCode === 2) {
+            // Read Coils/Inputs: 주소(1) + 기능코드(1) + 바이트수(1) + 데이터(n) + CRC(2)
+            const byteCount = this.dataBuffer[2];
+            expectedLength = 5 + byteCount;
+          } else if (functionCode === 3 || functionCode === 4) {
+            // Read Holding/Input Registers: 주소(1) + 기능코드(1) + 바이트수(1) + 데이터(n) + CRC(2) 
+            const byteCount = this.dataBuffer[2];
+            expectedLength = 5 + byteCount;
+          } else if (functionCode === 5 || functionCode === 6) {
+            // Write Single Coil/Register: 주소(1) + 기능코드(1) + 주소(2) + 값(2) + CRC(2)
+            expectedLength = 8;
+          }
+
+          if (this.dataBuffer.length >= expectedLength) {
+            const completePacket = this.dataBuffer.slice(0, expectedLength);
+            this.dataBuffer = this.dataBuffer.slice(expectedLength);
+            
+            console.log('완성된 패킷 (HEX):', completePacket.toString('hex'));
+            this.interpretData(completePacket.toString('hex'));
+          }
         }
-        console.log('data', data.slice(0, -4).toString('ascii'));
-        this.interpretData(data.slice(0, -4).toString('ascii'));
       });
 
       await new Promise((resolve) => {
@@ -56,19 +83,6 @@ class FL30CarWash extends AbstractCarWashMachine {
 
   on(event, listener) {
     this.eventEmitter.on(event, listener);
-  }
-
-  parseModbusASCII(data) {
-    console.log("파싱된 요청:", data);
-    if (data.toUpperCase().startsWith('3A')) {
-      const content = data.slice(2, -4); // LRC와 CRLF 제거
-      const bytes = [];
-      for (let i = 0; i < content.length; i += 2) {
-        bytes.push(parseInt(content.substr(i, 2), 16));
-      }
-      return bytes;
-    }
-    return null;
   }
 
   async start(mode) {
@@ -180,7 +194,7 @@ class FL30CarWash extends AbstractCarWashMachine {
 
   async sendCommand(command) {
     return new Promise((resolve, reject) => {
-      const buffer = Buffer.from(`3A ${command}`.replace(/\s/g, ''), 'hex');
+      const buffer = Buffer.from(command.replace(/\s/g, ''), 'hex');
       this.port.write(buffer, (err) => {
         if (err) {
           console.error('명령어 전송 중 오류:', err);

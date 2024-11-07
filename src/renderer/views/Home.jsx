@@ -131,7 +131,7 @@ const Home = () => {
     setShowUsageGuide(!showUsageGuide);
   };
 
-  const isWashing = carWashState?.state?.currentStep !== '없음' && carWashState?.state?.currentStep !== undefined;
+  const isWashing = carWashState?.status !== 0 && carWashState?.status !== 1 && carWashState?.status !== undefined;
 
   return (
     <div className="h-full flex-1 p-0 flex flex-col items-center relative">

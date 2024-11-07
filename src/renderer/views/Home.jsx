@@ -131,7 +131,7 @@ const Home = () => {
     setShowUsageGuide(!showUsageGuide);
   };
 
-  const isWashing = carWashState?.status !== 0 && carWashState?.status !== 1 && carWashState?.status !== undefined;
+  const isWashing = carWashState?.status !== 0 && carWashState?.status !== undefined;
 
   return (
     <div className="h-full flex-1 p-0 flex flex-col items-center relative">

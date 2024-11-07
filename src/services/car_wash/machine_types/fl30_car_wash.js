@@ -177,16 +177,16 @@ class FL30CarWash extends AbstractCarWashMachine {
 
   interpretStep(status) {
     const statusMap = {
-      0: '기계 대기 중',
+      0: '대기 중',
       1: '세차 종료',
-      2: '무브러시 세차 중',
-      3: '거품 분사 중',
+      2: '세제 분사 중',
+      3: '스노우폼 분사 중',
       4: '왁스 분사 중',
       5: '건조 중',
-      6: '고압 물 분사 중',
-      7: '하부 분사 중',
-      8: '무브러시 세차 완료, 대기 중',
-      9: '거품 분사 완료, 브러시 대기 중',
+      6: '고압수 세차 중',
+      7: '하부 세차 중',
+      8: '세제 분사 완료, 대기 중',
+      9: '스노우폼 분사 완료, 고압수 대기 중',
       10: '결제 성공'
     };
     return statusMap[status] || this.currentStep;

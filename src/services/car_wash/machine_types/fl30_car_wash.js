@@ -146,14 +146,21 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   interpretData(data) {
-    if (data.startsWith('0101') && data.length === 10) {
-      // M285 읽기 응답
+    // TODO: 0101 응답이 여럿 있고, 구분이 불가함. 추후 command queue 로 변경 필요
+    // if (data.startsWith('0101') && data.length === 10) {
+    //   // M285 읽기 응답
+    //   const status = parseInt(data.slice(6, 8), 16);
+    //   this.eventEmitter.emit('errorStatusUpdate', status === 1);
+    // } else if (data.startsWith('0101')) {
+    //   // M136 읽기 응답
+    //   const status = parseInt(data.slice(6, 8), 16);
+    //   this.eventEmitter.emit('washingComplete', status === 1);
+
+    // 현재는 차량 존재 여부 확인 명령어로만 사용
+    if (data.startsWith('0101')) {
+      // M46 읽기 응답
       const status = parseInt(data.slice(6, 8), 16);
-      this.eventEmitter.emit('errorStatusUpdate', status === 1);
-    } else if (data.startsWith('0101')) {
-      // M136 읽기 응답
-      const status = parseInt(data.slice(6, 8), 16);
-      this.eventEmitter.emit('washingComplete', status === 1);
+      this.eventEmitter.emit('carExist', status === 1);
     } else if (data.startsWith('0105')) {
       // M208 또는 M209 쓰기 응답 (세차 시작 명령 성공)
       if (this.startCommandInterval) {
@@ -211,6 +218,11 @@ class FL30CarWash extends AbstractCarWashMachine {
     this.statusCheckInterval = setInterval(() => {
       this.sendCommand('01 03 00 64 00 01 C5 D5'); // D100 읽기
     }, this.STATUS_CHECK_INTERVAL);
+  }
+
+  // M46 읽기 명령어
+  checkExistCar() {
+    this.sendCommand('01 01 00 2E 00 01 9D C3'); // M46 읽기
   }
 
   stopStatusCheck() {

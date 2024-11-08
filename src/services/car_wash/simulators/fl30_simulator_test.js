@@ -24,6 +24,9 @@ async function initializeTest() {
     carWash.on('errorStatusUpdate', (isError) => {
       console.log('오류 상태 업데이트 수신:', isError);
     });
+    carWash.on('carExist', (isExist) => {
+      console.log('차량 존재 여부 수신:', isExist);
+    });
     carWash.on('washingComplete', (isComplete) => {
       console.log('세차 완료 상태 수신:', isComplete);
     });
@@ -45,11 +48,12 @@ function showMenu() {
   console.log('2. 세차 시작 (빠른 세차)');
   console.log('3. 세차 정지');
   console.log('4. 상태 확인 (D100 읽기)');
-  console.log('5. 세차 완료 확인 (M136 읽기)');
-  console.log('6. 기계 작동 상태 확인 (M37 읽기)');
-  console.log('7. 오류 상태 확인 (M285 읽기)');
-  console.log('8. 리셋');
-  console.log('9. 종료');
+  console.log('[X] 5. 세차 완료 확인 (M136 읽기)');
+  console.log('[X] 6. 기계 작동 상태 확인 (M37 읽기)');
+  console.log('[X] 7. 오류 상태 확인 (M285 읽기)');
+  console.log('8. 차량 존재 여부 확인 (M46 읽기)');
+  console.log('99. 리셋');
+  console.log('100. 종료');
   rl.question('선택하세요: ', handleUserInput);
 }
 
@@ -85,10 +89,14 @@ async function handleUserInput(choice) {
         await carWash.sendCommand('01 01 01 1D 00 01 AC 14');
         break;
       case '8':
+        console.log('M46 차량 존재 여부 확인 명령 전송 중...');
+        carWash.checkExistCar();
+        break;
+      case '99':
         console.log('리셋 명령 전송 중...');
         await carWash.reset();
         break;
-      case '9':
+      case '100':
         console.log('테스트를 종료합니다.');
         await carWash.stop();
         rl.close();

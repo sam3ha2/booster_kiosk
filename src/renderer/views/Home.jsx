@@ -29,8 +29,10 @@ const Home = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   const statusUpdateListener = useCallback((data) => {
-    console.log('세차기 상태 업데이트:', data);
-    setCarWashState(data);
+    if (data.status !== carWashState?.status) {
+      console.log(`[${new Date().toLocaleTimeString('es-US', {hour12: false})}] 세차기 상태 업데이트:`, data);
+      setCarWashState(data);
+    }
   }, []);
 
   useEffect(() => {

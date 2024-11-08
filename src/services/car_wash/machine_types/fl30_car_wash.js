@@ -146,8 +146,6 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 
   interpretData(data) {
-    console.log('수신된 데이터 (HEX):', data);
-
     if (data.startsWith('0101') && data.length === 10) {
       // M285 읽기 응답
       const status = parseInt(data.slice(6, 8), 16);

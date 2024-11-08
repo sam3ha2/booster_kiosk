@@ -1,3 +1,4 @@
+const log = require('electron-log');
 const { BrowserWindow } = require('electron');
 const { SerialPort } = require('serialport');
 const SG90CarWash = require('./machine_types/sg90_car_wash');
@@ -131,7 +132,10 @@ class CarWashManager extends EventEmitter {
 
   setupMachineEventListeners(machine) {
     machine.on('statusUpdate', (state) => {
-      console.log(`세차기 상태 변경:`, state);
+      if (this.lastState !== state) {
+        log.info(`세차기 상태 변경:`, state);
+        this.lastState = state;
+      }
       this.sendStatusUpdate(state);
       this.lastStatusReceived = Date.now();
       this.clearConnectionIssue();

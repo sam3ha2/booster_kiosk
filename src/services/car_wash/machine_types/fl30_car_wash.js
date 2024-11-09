@@ -90,10 +90,13 @@ class FL30CarWash extends AbstractCarWashMachine {
       let command;
       switch (mode) {
         case 'MODE1':
-          command = '01 05 00 D0 FF 00 8D C3'; // 정밀 세차 모드
+          command = '01 05 00 D0 FF 00 8D C3'; // M208
           break;
         case 'MODE2':
-          command = '01 05 00 D1 FF 00 DC 03'; // 빠른 세차 모드
+          command = '01 05 00 D1 FF 00 DC 03'; // M209
+          break;
+        case 'MODE3':
+          command = '01 05 00 D2 FF 00 2C 03'; // M210
           break;
         default:
           reject(new Error('알 수 없는 세차 모드'));

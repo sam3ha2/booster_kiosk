@@ -227,17 +227,38 @@ class CarWashManager extends EventEmitter {
   }
 
   // 연결 상태 및 정보를 반환하는 메서드
-  getMachineStatus() {
-    return {
-      connected: !!this.machine,
-      hasConnectionIssue: this.hasConnectionIssue,
-      lastStatusReceived: this.lastStatusReceived,
-      machineInfo: this.machine ? {
-        type: this.machine.constructor.name,
-        port: this.machine.config?.portName,
-        status: this.machine.status
-      } : null
-    };
+  async getMachineStatus() {
+    try {
+      if (!this.machine) {
+        return {
+          connected: false,
+          error: '세차기가 연결되지 않았습니다.'
+        };
+      }
+
+      // 직렬화 가능한 단순 객체만 반환
+      return {
+        connected: true,
+        status: {
+          currentStep: this.machine.currentStep || '없음',
+          remainingTime: this.machine.remainingTime || 0,
+          progress: this.machine.progress || 0,
+          error: this.machine.error || null
+        },
+        machineInfo: {
+          type: this.machine.constructor.name,
+          portName: this.machine.config?.portName
+        },
+        lastStatusReceived: this.machine.lastStatusReceived ? 
+          this.machine.lastStatusReceived.toISOString() : null
+      };
+    } catch (error) {
+      console.error('getMachineStatus error:', error);
+      return {
+        connected: false,
+        error: error.message
+      };
+    }
   }
 }
 

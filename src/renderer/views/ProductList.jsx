@@ -136,6 +136,8 @@ const ProductList = () => {
 
       const vatAmt = Utils.getVatAmount(selectedProduct.price);
       const paymentParams = {
+        product_idx: selectedProduct.idx,
+        product_name: selectedProduct.name,
         tran_amt: selectedProduct.price,
         vat_amt: vatAmt,
         svc_amt: '0',
@@ -252,8 +254,10 @@ const ProductList = () => {
 
       await window.printerIPC.printReceipt({
         shop: JSON.parse(localStorage.getItem(STORAGE_KEYS.RECEIPT_INFO)),
-        product: selectedProduct,
-        payment: lastPayment,
+        info: {
+          ...lastPayment,
+          product_name: selectedProduct.name,
+        },
         headquarters: HEADQUARTERS
       });
 

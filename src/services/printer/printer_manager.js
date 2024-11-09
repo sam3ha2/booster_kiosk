@@ -27,7 +27,16 @@ class PrinterManager {
     };
   }
 
-  async printReceipt({ shop, product, payment, headquarters }) {
+  getAmountText(amount, { isCancel = false, unit = '' }) {
+    return `${isCancel ? '-' : ''}${amount.toLocaleString()}${unit}`;
+  }
+
+  getCardNumber(cardNo) {
+    const paddedNumber = cardNo + '*'.repeat(16 - cardNo.length);
+    return paddedNumber.replace(/(.{4})/g, '$1-').slice(0, -1);
+  }
+
+  async printReceipt({ shop, info, headquarters, isCancel = false }) {
     try {
       this.device.open((error) => {
         if (error) {
@@ -49,20 +58,20 @@ class PrinterManager {
             .text(`${this.alignLeftRight(`대표자: ${shop.representative_name}`, `Tel: ${shop.shop_tel}`)}`, 'EUC-KR')
             .text(`주  소: ${shop.shop_address}`, 'EUC-KR')
             .text('-'.repeat(48), 'EUC-KR')
-            .text(`상  품: ${product.name}`, 'EUC-KR')
+            .text(`상  품: ${info.product_name}`, 'EUC-KR')
             .align('RT')
-            .text(`${this.alignLeftRight('금  액: ', `${payment.tran_amt - payment.vat_amt}`, 20)}`, 'EUC-KR')
-            .text(`${this.alignLeftRight('부가세: ', `${payment.vat_amt}`, 20)}`, 'EUC-KR')
-            .text(`${this.alignLeftRight('합  계: ', `${payment.tran_amt}`, 20)}`, 'EUC-KR')
+            .text(`${this.alignLeftRight('금  액: ', `${getAmountText(info.tran_amt - info.vat_amt, { isCancel })}`, 20)}`, 'EUC-KR')
+            .text(`${this.alignLeftRight('부가세: ', `${getAmountText(info.vat_amt, { isCancel })}`, 20)}`, 'EUC-KR')
+            .text(`${this.alignLeftRight('합  계: ', `${getAmountText(info.tran_amt, { isCancel })}`, 20)}`, 'EUC-KR')
             .text('-'.repeat(48), 'EUC-KR')
             .align('LT')
             .text('카드정보', 'EUC-KR')
-            .text(`카드번호: ${payment.card_no}`, 'EUC-KR')
-            .text(`승인금액: ${payment.tran_amt}원`, 'EUC-KR')
-            .text(`승인번호: ${payment.auth_no}`, 'EUC-KR')
-            .text(`매 입 사: ${payment.card_company || ''}`, 'EUC-KR')
-            .text(`가맹번호: ${payment.merchant_no || ''}`, 'EUC-KR')
-            .text(`거래번호: ${payment.transaction_id || ''}`, 'EUC-KR')
+            .text(`카드번호: ${getCardNumber(info.card_no)}`, 'EUC-KR')
+            .text(`승인금액: ${getAmountText(info.tran_amt, { isCancel, unit: '원' })}`, 'EUC-KR')
+            .text(`승인번호: ${info.auth_no}`, 'EUC-KR')
+            .text(`매 입 사: ${info.card_company || ''}`, 'EUC-KR')
+            .text(`가맹번호: ${info.merchant_no || ''}`, 'EUC-KR')
+            .text(`거래번호: ${info.transaction_id || ''}`, 'EUC-KR')
             .text('-'.repeat(48), 'EUC-KR')
             .text(`${this.alignLeftRight('본사', headquarters.company)}`, 'EUC-KR')
             .text(`${this.alignLeftRight('사업자번호', headquarters.registration_number)}`, 'EUC-KR')

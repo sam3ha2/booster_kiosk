@@ -4,6 +4,8 @@ import { Product } from '../../models/models';
 import ApiService from '../../utils/api_service';
 import AppBar from '../components/AppBar';
 import ArrowIcon from '../components/ArrowIcon';
+import { HEADQUARTERS, STORAGE_KEYS } from '../../constants/constants';
+import Utils from '../../utils/utils';
 
 const TEST_MODE = process.env.NODE_ENV === 'development'; // 실제 배포 시 false로 변경
 
@@ -25,7 +27,7 @@ const ServiceOption = ({ product, onSelect }) => (
 const Body = ({ loading, error, products, onSelect }) => {
   if (error) {
     return (
-      <div className="text-white text-center p-8 overflow-y-auto">
+      <div className="text-white text-center text-xl p-8 overflow-y-auto">
         <p>에러 발생: {error.message}</p>
       </div>
     );
@@ -33,7 +35,7 @@ const Body = ({ loading, error, products, onSelect }) => {
 
   if (loading) {
     return (
-      <div className="text-white text-center p-8 overflow-y-auto">
+      <div className="text-white text-center text-xl p-8 overflow-y-auto">
         <p>상품 목록을 불러오는 중...</p>
       </div>
     );
@@ -130,12 +132,14 @@ const ProductList = () => {
       setPaymentStatus('processing');
       setPaymentMessage('결제 처리 중...');
 
+      const { tranAmt, vatAmt } = Utils.getAmount(selectedProduct.price);
       const paymentParams = {
-        tranAmt: selectedProduct.price.toString(),
-        vatAmt: Math.floor(selectedProduct.price / 11).toString(),
-        svcAmt: '0',
+        amount: selectedProduct.price,
+        tran_amt: tranAmt.toString(),
+        vat_amt: vatAmt.toString(),
+        svc_amt: '0',
         installment: '0',
-        tradeReqDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
+        trade_req_date: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
       };
 
       // 결제 요청 등록
@@ -144,15 +148,28 @@ const ProductList = () => {
       let paymentInfo;
       if (TEST_MODE) {
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
-        paymentInfo = await simulatePayment();
+        paymentInfo = await simulatePayment(paymentParams);
         // 테스트 모드에서도 결제 성공 기록
-        await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, paymentParams.tradeReqDate, {
+        await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, paymentParams.trade_req_date, {
           outCardNo: paymentInfo.card_number,
-          outAuthNo: paymentInfo.approval_number,
+          outAuthNo: paymentInfo.auth_no,
           outAuthDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
           ontTradeReqTime: new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\D/g, ''),
           outReplyMsg1: '테스트 결제 성공'
         });
+
+        // 테스트 모드에서 결제 정보 저장
+        localStorage.setItem(STORAGE_KEYS.LAST_PAYMENT, JSON.stringify({
+          card_company: paymentInfo.card_company_number,
+          card_number: paymentInfo.card_number,
+          merchant_number: paymentInfo.merchant_number,
+          transaction_id: paymentInfo.transaction_id,
+          amount: paymentInfo.amount,
+          tran_amount: paymentInfo.tran_amount,
+          vat_amount: paymentInfo.vat_amount,
+          auth_no: paymentInfo.auth_no,
+          auth_date: paymentParams.trade_req_date,
+        }));
       } else {
         // 실제 결제 처리
         const result = await window.paymentIPC.processApproval(paymentParams);
@@ -160,12 +177,20 @@ const ProductList = () => {
           // 결제 성공 업데이트
           await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, result.outAuthDate, result);
           paymentInfo = {
-            approval_number: result.outAuthNo,
-            card_number: result.outCardNo,
+            amount: paymentParams.amount,
+            tran_amount: paymentParams.tran_amount,
+            vat_amount: paymentParams.vat_amount,
             card_company_number: result.outCatId,
+            card_number: result.outCardNo,
+            merchant_number: result.outMerchantNo,
+            transaction_id: result.outTranId,
+            auth_no: result.outAuthNo,
+            auth_date: result.outAuthDate,
             type: 'CARD',
-            amount: selectedProduct.price
           };
+
+          // 실제 결제 성공 시 결제 정보 저장
+          localStorage.setItem(STORAGE_KEYS.LAST_PAYMENT, JSON.stringify(paymentInfo));
         } else {
           // 결제 실패 업데이트
           await window.databaseIPC.updatePaymentFailure(paymentRecord.id, result.outAuthDate, {
@@ -186,17 +211,6 @@ const ProductList = () => {
         if (result.success) {
           setPaymentStatus('success');
         } else {
-          // 세차기 실패 시 결제 취소 처리
-          if (!TEST_MODE) {
-            await window.paymentIPC.processCancel({
-              tranAmt: selectedProduct.price.toString(),
-              vatAmt: Math.floor(selectedProduct.price / 11).toString(),
-              svcAmt: '0',
-              installment: '0',
-              orgAuthNo: paymentInfo.approval_number,
-              orgAuthDate: new Date().toISOString().slice(2,8)
-            });
-          }
           throw new Error(result.error || '세차기 시작 실패');
         }
       } catch (error) {
@@ -210,15 +224,17 @@ const ProductList = () => {
     }
   };
 
-  const simulatePayment = () => {
+  const simulatePayment = (paymentParams) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
-          approval_number: 'SIM' + Math.random().toString(36).substr(2, 9),
+          auth_no: 'SIM' + Math.random().toString(36).substr(2, 9),
           card_number: Math.floor(100000 + Math.random() * 900000),
           card_company_number: '01',
           type: 'CARD',
-          amount: selectedProduct.price
+          amount: paymentParams.amount,
+          tran_amount: paymentParams.tran_amt,
+          vat_amount: paymentParams.vat_amt,
         });
       }, 1000); // 1초 후 결제 완료 시뮬레이션
     });
@@ -232,21 +248,17 @@ const ProductList = () => {
 
   const handlePrintReceipt = async () => {
     try {
-      const lastPayment = JSON.parse(localStorage.getItem('lastPayment'));
+      const lastPayment = JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_PAYMENT));
       if (!lastPayment) {
         console.error('결제 정보를 찾을 수 없습니다.');
         return;
       }
 
-      const paymentInfo = {
-        card_number: lastPayment.cardNo || '************',
-        approval_number: lastPayment.authNo,
-        auth_datetime: lastPayment.authDate
-      };
-
       await window.printerIPC.printReceipt({
+        shop: JSON.parse(localStorage.getItem(STORAGE_KEYS.RECEIPT_INFO)),
         product: selectedProduct,
-        payment: paymentInfo
+        payment: lastPayment,
+        headquarters: HEADQUARTERS
       });
 
       console.log('영수증 출력 완료');

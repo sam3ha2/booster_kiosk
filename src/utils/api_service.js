@@ -42,6 +42,15 @@ api.interceptors.response.use(
 )
 
 const ApiService = {
+  async getReceiptInfo() {
+    try {
+      const response = await api.get('/kiosk/receipt-info')
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+
   async getProducts() {
     try {
       const response = await api.get('/kiosk/products')

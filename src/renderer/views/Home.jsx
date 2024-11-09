@@ -5,6 +5,9 @@ import AppBar from '../components/AppBar';
 import CarWashStatus from '../components/CarWashStatus';
 import boosterIcon from '../../assets/images/ic_booster_logo.png';
 import ArrowIcon from '../components/ArrowIcon';
+import { STORAGE_KEYS, RECEIPT_INFO_REFRESH_TIME } from '../../constants/constants';
+
+let isFirstTime = true;
 
 // 새로운 HomeButton 컴포넌트
 const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
@@ -27,6 +30,36 @@ const Home = () => {
   const [showUsageGuide, setShowUsageGuide] = useState(false);
   const [carWashState, setCarWashState] = useState(null);
   const isDevelopment = process.env.NODE_ENV === 'development';
+
+  // 영수증 정보 로드
+  useEffect(() => {
+    const loadReceiptInfo = async () => {
+      try {
+        const lastUpdated = localStorage.getItem(STORAGE_KEYS.RECEIPT_INFO_UPDATED_AT);
+        const now = Date.now();
+        
+        // 저장된 정보가 없거나, 마지막 업데이트로부터 6시간이 지났으면 새로 로드
+        if (isFirstTime || !lastUpdated || (now - parseInt(lastUpdated)) > RECEIPT_INFO_REFRESH_TIME) {
+          isFirstTime = false;
+          console.log('영수증 정보 새로 로드');
+          const response = await ApiService.getReceiptInfo();
+          
+          if (response.item) {
+            localStorage.setItem(STORAGE_KEYS.RECEIPT_INFO, JSON.stringify(response.item));
+            localStorage.setItem(STORAGE_KEYS.SHOP_NAME, response.item.shop_name || '씻자');
+            localStorage.setItem(STORAGE_KEYS.RECEIPT_INFO_UPDATED_AT, now.toString());
+            console.log('영수증 정보 저장 완료:', response.item);
+          }
+        } else {
+          console.log('캐시된 영수증 정보 사용');
+        }
+      } catch (error) {
+        console.error('영수증 정보 로드 실패:', error);
+      }
+    };
+
+    loadReceiptInfo();
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   const statusUpdateListener = useCallback((data) => {
     if (data.status !== carWashState?.status) {
@@ -140,7 +173,7 @@ const Home = () => {
       <AppBar image={boosterIcon} />
 
       <h1 className="text-2xl font-semibold text-center mt-4 mb-8">
-        안녕하세요. 고객님<br />{ localStorage.getItem('shop_name') || '씻자'}입니다.
+        안녕하세요. 고객님<br />{ localStorage.getItem(STORAGE_KEYS.SHOP_NAME) || '씻자'}입니다.
       </h1>
 
       {isWashing ? (

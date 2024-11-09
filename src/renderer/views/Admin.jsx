@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../components/AppBar';
+import { STORE_KEYS } from '../../constants/constants';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -11,6 +12,10 @@ const Admin = () => {
     carWash: { connected: false, path: '' },
     scanner: { connected: false },
     printer: { connected: false }
+  });
+  const [monitorSchedule, setMonitorSchedule] = useState({
+    startTime: '09:00',
+    endTime: '23:00'
   });
 
   const handlePinInput = (digit) => {
@@ -55,6 +60,7 @@ const Admin = () => {
     if (isLoggedIn) {
       loadDeviceStates();
       loadKioskState();
+      loadMonitorSchedule();
     }
   }, [isLoggedIn]);
 
@@ -201,6 +207,55 @@ const Admin = () => {
       };
     }
   }, [isLoggedIn]);
+
+  const loadMonitorSchedule = async () => {
+    try {
+      const operatingHours = await window.storeAPI.get(STORE_KEYS.OPERATING_HOURS);
+      if (operatingHours) {
+        setMonitorSchedule({
+          startTime: formatTime(operatingHours.start_time),
+          endTime: formatTime(operatingHours.end_time)
+        });
+      }
+    } catch (error) {
+      console.error('모니터 스케줄 로드 실패:', error);
+    }
+  };
+
+  const formatTime = (time) => {
+    // HHMM 형식을 HH:MM 형식으로 변환
+    const timeStr = time.toString().padStart(4, '0');
+    return `${timeStr.slice(0, 2)}:${timeStr.slice(2)}`;
+  };
+
+  const parseTime = (timeStr) => {
+    // HH:MM 형식을 HHMM 형식으로 변환
+    return parseInt(timeStr.replace(':', ''));
+  };
+
+  const handleScheduleChange = async () => {
+    try {
+      const startTime = parseTime(monitorSchedule.startTime);
+      const endTime = parseTime(monitorSchedule.endTime);
+
+      // electron-store에 저장
+      await window.storeAPI.set(STORE_KEYS.OPERATING_HOURS, {
+        start_time: startTime,
+        end_time: endTime
+      });
+
+      // 모니터 매니저에 새로운 스케줄 설정
+      const result = await window.monitorAPI.setSchedule(startTime, endTime);
+      if (result.success) {
+        alert('운영 시간이 저장되었습니다.');
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('운영 시간 설정 실패:', error);
+      alert('운영 시간 설정에 실패했습니다.');
+    }
+  };
 
   const MenuItem = ({ label, value, onClick, showArrow, actionButton, status }) => (
     <div 
@@ -376,6 +431,56 @@ const Admin = () => {
             className="px-3 py-1 rounded text-sm bg-red-600 hover:bg-red-700"
           >
             앱 종료
+          </button>
+        </div>
+      </div>
+
+      <MenuItem 
+        label="앱 종료"
+        onClick={() => window.appControl.quit()}
+      />
+
+      <MenuItem 
+        label="모니터 제어" 
+        actionButton={
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => window.monitorAPI.turnOn()}
+              className="px-3 py-1 rounded text-sm bg-green-600"
+            >
+              켜기
+            </button>
+            <button 
+              onClick={() => window.monitorAPI.turnOff()}
+              className="px-3 py-1 rounded text-sm bg-red-600"
+            >
+              끄기
+            </button>
+          </div>
+        }
+      />
+
+      <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700">
+        <span className="text-white text-lg">모니터 스케줄</span>
+        <div className="flex items-center space-x-4">
+          <input
+            type="time"
+            value={monitorSchedule.startTime}
+            onChange={(e) => setMonitorSchedule(prev => ({ ...prev, startTime: e.target.value }))}
+            className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1 text-sm"
+          />
+          <span className="text-gray-400">~</span>
+          <input
+            type="time"
+            value={monitorSchedule.endTime}
+            onChange={(e) => setMonitorSchedule(prev => ({ ...prev, endTime: e.target.value }))}
+            className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1 text-sm"
+          />
+          <button
+            onClick={handleScheduleChange}
+            className="px-3 py-1 rounded text-sm bg-blue-600"
+          >
+            저장
           </button>
         </div>
       </div>

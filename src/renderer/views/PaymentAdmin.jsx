@@ -38,21 +38,28 @@ const PaymentAdmin = () => {
     
     try {
       setLoading(true);
-      const cancelParams = {
-        tranAmt: selectedPayment.tran_amt,
-        vatAmt: selectedPayment.vat_amt,
-        svcAmt: selectedPayment.svc_amt,
-        installment: selectedPayment.installment,
-        orgAuthNo: selectedPayment.auth_no,
-        orgAuthDate: selectedPayment.auth_date.slice(-6)
-      };
+      console.log('결제 취소 요청:', selectedPayment);
 
-      const result = await window.paymentIPC.processCancel(cancelParams);
+      const isSimulated = selectedPayment.auth_no.startsWith('SIM');
+
+      let result;
+      if (isSimulated) {
+        result = {
+          isSuccess: true,
+          outReplyMsg1: '결제 취소 완료'
+        }
+      } else {
+        result = await window.paymentIPC.processCancel(selectedPayment);
+      }
       
       if (result.isSuccess) {
         await window.databaseIPC.updatePaymentCancel(selectedPayment.id, selectedDate, {
           outReplyMsg1: result.outReplyMsg1 || '결제 취소 완료'
         });
+        if (!isSimulated) {
+          // TODO: 취소 영수증 출력
+          // await window.printerIPC.printCancelReceipt(selectedPayment);
+        }
         alert('결제가 취소되었습니다.');
         loadPayments(selectedDate);
       } else {
@@ -119,7 +126,7 @@ const PaymentAdmin = () => {
                   <td className="px-4 py-2 text-sm">{payment.card_no ? `${payment.card_no}${'*'.repeat(14 - payment.card_no.length)}` : ''}</td>
                   <td className="px-4 py-2 text-sm">{parseInt(payment.tran_amt).toLocaleString()}원</td>
                   <td className={`px-4 py-2 text-sm ${getStatusColor(payment.status)}`}>{payment.status}</td>
-                  <td className="px-4 py-2 text-sm">{payment.reply_msg}</td>
+                  <td className="px-4 py-2 text-sm">{payment.reply_msg1 || payment.reply_msg2}</td>
                   <td className="px-4 py-2 text-sm">{payment.auth_no}</td>
                   <td className="px-4 py-2 text-sm">
                     {payment.status === 'APPROVED' && (

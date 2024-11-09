@@ -57,8 +57,12 @@ const PaymentAdmin = () => {
           outReplyMsg1: result.outReplyMsg1 || '결제 취소 완료'
         });
         if (!isSimulated) {
-          // TODO: 취소 영수증 출력
-          // await window.printerIPC.printCancelReceipt(selectedPayment);
+          await window.printerIPC.printReceipt({
+            shop: JSON.parse(localStorage.getItem(STORAGE_KEYS.RECEIPT_INFO)),
+            info: selectedPayment,
+            headquarters: HEADQUARTERS,
+            isCancel: true
+          });
         }
         alert('결제가 취소되었습니다.');
         loadPayments(selectedDate);

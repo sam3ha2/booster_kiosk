@@ -168,7 +168,10 @@ class KisSocket {
       outTradeReqTime: response.outTradeReqTime || '',
       outTradeType: response.outTradeType || '',
       outVanKey: response.outVanKey || '',
-      outAccepterCompany: response.outAccepterCompany || '',
+      outAccepterCode: response.outAccepterCode || '',
+      outAccepterName: response.outAccepterName || '',
+      outIssuerCode: response.outIssuerCode || '',
+      outIssuerName: response.outIssuerName || '',
       outMerchantRegNo: response.outMerchantRegNo || '',
       isSuccess: response.outRtn === 0 && response.outAgentCode === '0000'
     };

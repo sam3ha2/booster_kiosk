@@ -39,18 +39,10 @@ class PaymentStore {
     let data = await this.getPaymentsByDate(today);
     const newPayment = {
       id: crypto.randomUUID(),
-      tran_amt: paymentData.tran_amt,
-      vat_amt: paymentData.vat_amt,
-      svc_amt: paymentData.svc_amt,
-      installment: paymentData.installment,
-      card_no: '',
-      auth_no: '',
-      auth_date: '',
       status: 'PENDING',
-      reply_msg1: '',
-      trade_req_time: '',
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      ...paymentData,
     };
 
     data.orders.push(newPayment);

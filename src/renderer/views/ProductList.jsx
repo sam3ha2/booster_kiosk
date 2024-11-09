@@ -136,6 +136,8 @@ const ProductList = () => {
 
       const vatAmt = Utils.getVatAmount(selectedProduct.price);
       const paymentParams = {
+        product_idx: selectedProduct.idx,
+        product_name: selectedProduct.name,
         tran_amt: selectedProduct.price,
         vat_amt: vatAmt,
         svc_amt: '0',
@@ -161,7 +163,10 @@ const ProductList = () => {
       }
 
       const paymentInfo = {
-        card_company: result.outAccepterCompany,
+        accepter_code: result.outAccepterCode,
+        accepter_name: result.outAccepterName,
+        issuer_code: result.outIssuerCode,
+        issuer_name: result.outIssuerName,
         card_no: result.outCardNo,
         tran_amt: paymentParams.tran_amt,
         vat_amt: paymentParams.vat_amt,
@@ -221,9 +226,11 @@ const ProductList = () => {
 
   const simulatePayment = () => {
     return Promise.resolve({
-      outAccepterCompany: 'SIM - CARD',
+      outIssuerCode: '01',
+      outIssuerName: 'SIM - IssuerName',
       outAccepterCode: '01',
-      outCardNo: Math.floor(100000 + Math.random() * 900000),
+      outAccepterName: 'SIM - AccepterName',
+      outCardNo: 'SIM' + Math.floor(100000 + Math.random() * 900000),
       outMerchantRegNo: 'SIM',
       outTradeNum: 'SIM' + Math.random().toString(36).slice(2, 11),
       outAuthNo: 'SIM' + Math.random().toString(36).slice(2, 11),
@@ -252,8 +259,10 @@ const ProductList = () => {
 
       await window.printerIPC.printReceipt({
         shop: JSON.parse(localStorage.getItem(STORAGE_KEYS.RECEIPT_INFO)),
-        product: selectedProduct,
-        payment: lastPayment,
+        info: {
+          ...lastPayment,
+          product_name: selectedProduct.name,
+        },
         headquarters: HEADQUARTERS
       });
 

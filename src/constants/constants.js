@@ -13,5 +13,9 @@ export const STORAGE_KEYS = {
   LAST_PAYMENT: 'last_payment',
 };
 
+export const STORE_KEYS = {
+  OPERATING_HOURS: 'operating_hours',
+};
+
 // 6시간을 밀리초로 변환
 export const RECEIPT_INFO_REFRESH_TIME = 6 * 60 * 60 * 1000;

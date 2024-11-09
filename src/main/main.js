@@ -9,6 +9,8 @@ import PaymentManager from '../services/payment/payment_manager.js';
 import PrinterManager from '../services/printer/printer_manager.js';
 import PaymentStore from '../services/database/payment_store.js';
 import ConfigManager from '../services/config/config_manager.js';
+import MonitorManager from '../services/monitor/monitor_manager.js';
+import SimpleStore from '../services/database/simple_store.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -29,6 +31,7 @@ const scannerManager = new ScannerManager();
 const printerManager = new PrinterManager();
 const paymentManager = new PaymentManager();
 const paymentStore = new PaymentStore();
+const monitorManager = new MonitorManager();
 
 async function loadConfigToEnv() {
   let configResult = await configManager.loadConfiguration();
@@ -106,9 +109,11 @@ function initIPCHandlers() {
   setPaymentHandlers();
   setDatabaseHandlers();
   setAppHandlers();
+  setMonitorHandlers();
+  setStoreHandlers();
 }
 
-function initDevices() {
+async function initDevices() {
   try {
     carWashManager.initialize();
   } catch (error) {
@@ -129,6 +134,12 @@ function initDevices() {
 
   try {
     paymentManager.initialize();
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
+    monitorManager.initialize();
   } catch (error) {
     console.error(error);
   }
@@ -183,6 +194,11 @@ app.on('ready', () => {
 // 예외 처리
 process.on('uncaughtException', (error) => {
   log.error('Uncaught Exception:', error);
+});
+
+// 앱 종료 시 스케줄 정리
+app.on('before-quit', () => {
+  monitorManager.clearSchedule();
 });
 
 function setConfigHandler() {
@@ -358,5 +374,48 @@ function setAppHandlers() {
 
   ipcMain.handle('app:quit', () => {
     app.quit();
+  });
+}
+
+function setMonitorHandlers() {
+  ipcMain.handle('monitor:get-schedule', () => {
+    return {
+      isOn: monitorManager.isMonitorOn,
+      startTime: monitorManager.startTime,
+      endTime: monitorManager.endTime,
+    };
+  });
+
+  ipcMain.handle('monitor:set-schedule', async (event, startTime, endTime) => {
+    try {
+      await monitorManager.setSchedule(startTime, endTime);
+      return { success: true };
+    } catch (error) {
+      console.error('모니터 스케줄 설정 실패:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('monitor:turn-on', () => {
+    monitorManager.turnOnMonitor();
+  });
+
+  ipcMain.handle('monitor:turn-off', () => {
+    monitorManager.turnOffMonitor();
+  });
+}
+
+function setStoreHandlers() {
+  ipcMain.handle('store:get', (event, key) => {
+    return SimpleStore.getInstance().get(key);
+  });
+
+  ipcMain.handle('store:set', (event, key, value) => {
+    if (value === null || value === undefined) {
+      SimpleStore.getInstance().delete(key);
+    } else {
+      SimpleStore.getInstance().set(key, value);
+    }
+    return true;
   });
 }

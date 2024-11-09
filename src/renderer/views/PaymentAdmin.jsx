@@ -135,34 +135,41 @@ const PaymentAdmin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <AppBar 
-        label="결제 내역"
-        showBack={true}
-      />
-      <div className="p-6">
+    <div className="h-screen bg-gray-900 text-white flex flex-col">
+      <div className="flex-none">
+        <AppBar 
+          label="결제 내역"
+          showBack={true}
+        />
+      </div>
 
-        <div className="mb-6">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm [color-scheme:dark]"
-          />
-        </div>
+      <div className="flex-none bg-gray-900 px-6 py-4">
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm [color-scheme:dark]"
+        />
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-gray-800 rounded-lg">
-            <thead>
-              <tr className="bg-gray-700">
+      <div className="flex-1 px-6 overflow-hidden">
+        <div className="bg-gray-800 rounded-t-lg">
+          <table className="min-w-full">
+            <thead className="bg-gray-700">
+              <tr>
                 <th className="px-2 py-2 text-center text-sm">결제 시간</th>
                 <th className="px-2 py-2 text-center text-sm">카드번호</th>
                 <th className="px-2 py-2 text-center text-sm">결제금액</th>
                 <th className="px-2 py-2 text-center text-sm">상태</th>
-                <th className="px-2 py-2 text-center text-sm">결제</th>
-                <th className="px-2 py-2 text-center text-sm">영수증</th>
+                <th className="px-2 py-2 text-center text-sm">승인번호</th>
+                <th className="px-2 py-2 text-center text-sm">결제, 영수증</th>
               </tr>
             </thead>
+          </table>
+        </div>
+
+        <div className="overflow-y-auto" style={{ height: 'calc(100% - 37px)' }}>
+          <table className="min-w-full bg-gray-800 rounded-b-lg">
             <tbody>
               {payments.map((payment) => (
                 <tr key={payment.id} className="border-b border-gray-700 hover:bg-gray-700">
@@ -206,78 +213,75 @@ const PaymentAdmin = () => {
               ))}
               {payments.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="px-4 py-2 text-center text-sm">결제 내역이 없습니다.</td>
+                  <td colSpan="6" className="px-4 py-2 text-center text-sm">결제 내역이 없습니다.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-
-        {/* 결제 취소 확인 모달 */}
-        {showPaymentCancelModal && selectedPayment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-gray-800 p-6 rounded-lg max-w-md">
-              <h3 className="text-lg font-bold mb-4 text-sm">결제 취소 확인</h3>
-              <p className="mb-2 text-sm">다음 결제를 취소하시겠습니까?</p>
-              <p className="mb-2 text-sm">금액: {parseInt(selectedPayment.tran_amt).toLocaleString()}원</p>
-              <p className="mb-4 text-sm">카드번호: {selectedPayment.card_no}********</p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowPaymentCancelModal(false);
-                    setSelectedPayment(null);
-                  }}
-                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500 text-sm"
-                >
-                  아니요
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={loading}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-600 text-sm"
-                >
-                  예
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 영수증 출력 확인 모달 */}
-        {showReceiptPrintModal && selectedPayment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-gray-800 p-6 rounded-lg max-w-md">
-              <h3 className="text-lg font-bold mb-4 text-sm">영수증 출력 확인</h3>
-              <p className="mb-2 text-sm">결제 영수증을 출력하시겠습니까?</p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowReceiptPrintModal(false);
-                    setSelectedPayment(null);
-                  }}
-                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500 text-sm"
-                >
-                  아니요
-                </button>
-                <button
-                  onClick={handlePrintReceipt}
-                  disabled={loading}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-600 text-sm"
-                >
-                  예
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 로딩 오버레이 */}
-        {loading && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="text-white text-sm">처리중...</div>
-          </div>
-        )}
       </div>
+
+      {showPaymentCancelModal && selectedPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-gray-800 p-6 rounded-lg max-w-md">
+            <h3 className="text-lg font-bold mb-4 text-sm">결제 취소 확인</h3>
+            <p className="mb-2 text-sm">다음 결제를 취소하시겠습니까?</p>
+            <p className="mb-2 text-sm">금액: {parseInt(selectedPayment.tran_amt).toLocaleString()}원</p>
+            <p className="mb-4 text-sm">카드번호: {selectedPayment.card_no}********</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowPaymentCancelModal(false);
+                  setSelectedPayment(null);
+                }}
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500 text-sm"
+              >
+                아니요
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={loading}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-600 text-sm"
+              >
+                예
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReceiptPrintModal && selectedPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-gray-800 p-6 rounded-lg max-w-md">
+            <h3 className="text-lg font-bold mb-4 text-sm">영수증 출력 확인</h3>
+            <p className="mb-2 text-sm">결제 영수증을 출력하시겠습니까?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowReceiptPrintModal(false);
+                  setSelectedPayment(null);
+                }}
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500 text-sm"
+              >
+                아니요
+              </button>
+              <button
+                onClick={handlePrintReceipt}
+                disabled={loading}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-600 text-sm"
+              >
+                예
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="text-white text-sm">처리중...</div>
+        </div>
+      )}
     </div>
   );
 };

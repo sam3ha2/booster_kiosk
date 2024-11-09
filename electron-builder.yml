@@ -5,6 +5,7 @@ directories:
   buildResources: src/assets
 files:
   - "dist/**/*"
+  - "src/constants/constants.js"
   - "src/main/**/*"
   - "src/services/**/*"
   - "src/preload.cjs"

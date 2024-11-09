@@ -69,3 +69,16 @@ contextBridge.exposeInMainWorld('appControl', {
   toggleKiosk: (enable) => ipcRenderer.invoke('app:toggle-kiosk', enable),
   getKioskState: () => ipcRenderer.invoke('app:get-kiosk-state'),
 });
+
+contextBridge.exposeInMainWorld('monitorAPI', {
+  getSchedule: () => ipcRenderer.invoke('monitor:get-schedule'),
+  setSchedule: (startTime, endTime) =>
+    ipcRenderer.invoke('monitor:set-schedule', startTime, endTime),
+  turnOn: () => ipcRenderer.invoke('monitor:turn-on'),
+  turnOff: () => ipcRenderer.invoke('monitor:turn-off'),
+});
+
+contextBridge.exposeInMainWorld('storeAPI', {
+  get: (key) => ipcRenderer.invoke('store:get', key),
+  set: (key, value) => ipcRenderer.invoke('store:set', key, value),
+});

@@ -1,5 +1,5 @@
 const ModbusRTU = require('modbus-serial');
-const SG90Simulator = require('./sg90_simulator');
+const SG90Simulator = require('../simulators/sg90_simulator');
 
 const simulatorPortName = '/dev/ttys018';
 const simulator = new SG90Simulator(simulatorPortName);

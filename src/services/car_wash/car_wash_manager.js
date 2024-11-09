@@ -120,7 +120,7 @@ class CarWashManager extends EventEmitter {
       this.startPeriodicStatusCheck(true);
 
       if (!this.statusCheckInterval) {
-        this.startStatusCheck();
+        this.startConnectionCheck();
       }
 
       return { success: true, message: `${type} 세차기가 추가되었습니다.` };
@@ -140,6 +140,15 @@ class CarWashManager extends EventEmitter {
       this.lastStatusReceived = Date.now();
       this.clearConnectionIssue();
     });
+
+    machine.on('carExist', (isExist) => {
+      log.info(`차량 존재 여부: ${isExist ? '있음' : '없음'}`);
+    });
+
+    machine.on('errorStatusUpdate', (isError) => {
+      log.error(`세차기 오류: ${isError ? '있음' : '없음'}`);
+    });
+
     machine.on('error', (error) => this.handleMachineError(error));
   }
 
@@ -186,7 +195,7 @@ class CarWashManager extends EventEmitter {
     }
   }
 
-  startStatusCheck() {
+  startConnectionCheck() {
     this.statusCheckInterval = setInterval(() => {
       this.checkMachineStatus();
     }, 10000);

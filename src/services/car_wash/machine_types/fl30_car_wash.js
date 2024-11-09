@@ -125,6 +125,8 @@ class FL30CarWash extends AbstractCarWashMachine {
     this.statusCheckInterval = setInterval(() => {
       if (this.isConnected) {
         this.checkStatus();
+        this.checkExistCar();
+        this.checkErrorStatus();
       }
     }, this.STATUS_CHECK_INTERVAL);
   }

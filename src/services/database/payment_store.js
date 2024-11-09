@@ -39,15 +39,15 @@ class PaymentStore {
     let data = await this.getPaymentsByDate(today);
     const newPayment = {
       id: crypto.randomUUID(),
-      tran_amt: paymentData.tranAmt,
-      vat_amt: paymentData.vatAmt,
-      svc_amt: paymentData.svcAmt,
+      tran_amt: paymentData.tran_amt,
+      vat_amt: paymentData.vat_amt,
+      svc_amt: paymentData.svc_amt,
       installment: paymentData.installment,
       card_no: '',
       auth_no: '',
       auth_date: '',
       status: 'PENDING',
-      reply_msg: '',
+      reply_msg1: '',
       trade_req_time: '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -89,14 +89,16 @@ class PaymentStore {
 
   // 결제 성공 업데이트
   async updatePaymentSuccess(orgData, result) {
+    console.log('결제 성공 업데이트:', {
+      ...orgData,
+      ...result,
+      status: 'APPROVED',
+      updated_at: new Date().toISOString()
+    });
     return {
       ...orgData,
-      card_no: result.outCardNo,
-      auth_no: result.outAuthNo,
-      auth_date: result.outAuthDate,
+      ...result,
       status: 'APPROVED',
-      reply_msg: result.outReplyMsg1 || '결제 성공',
-      trade_req_time: result.outTradeReqTime || '',
       updated_at: new Date().toISOString()
     };
   }
@@ -105,9 +107,8 @@ class PaymentStore {
   async updatePaymentFailure(orgData, error) {
     return {
       ...orgData,
+      reply_msg1: error.message || '결제 실패',
       status: 'FAILED',
-      reply_msg: error.message || '결제 실패',
-      trade_req_time: error.tradeReqTime || '',
       updated_at: new Date().toISOString()
     };
   }
@@ -116,16 +117,17 @@ class PaymentStore {
   async updatePaymentCancel(orgData, result) {
     return {
       ...orgData,
+      reply_msg1: result.reply_msg1,
+      reply_msg2: result.reply_msg2,
+      trade_req_time: result.trade_req_time || orgData.trade_req_time,
       status: 'CANCELED',
-      reply_msg: result.outReplyMsg1 || '결제 취소 완료',
-      trade_req_time: result.outTradeReqTime || orgData.trade_req_time,
       updated_at: new Date().toISOString()
     };
   }
 
   // 특정 날짜의 결제 정보 조회
   async getPaymentsByDate(date) {
-    const filePath = this.getFilePath(date.replaceAll('-', ''));
+    const filePath = this.getFilePath(date);
     try {
       if (fs.existsSync(filePath)) {
         const data = fs.readFileSync(filePath, 'utf8');

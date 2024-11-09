@@ -15,7 +15,7 @@ class PaymentManager {
       return true;
     } catch (error) {
       log.error('결제 모듈 초기화 실패:', error);
-      return false;
+      throw error;
     }
   }
 
@@ -50,27 +50,27 @@ class PaymentManager {
   /**
    * 결제 승인
    * @param {Object} params
-   * @param {string} params.tranAmt - 거래금액
-   * @param {string} params.vatAmt - 부가세
-   * @param {string} params.svcAmt - 봉사료 
+   * @param {string} params.tran_amt - 거래금액
+   * @param {string} params.vat_amt - 부가세
+   * @param {string} params.svc_amt - 봉사료 
    * @param {string} params.installment - 할부개월수
    */
   async requestPayment(params) {
-    return await this.processPayment({...params, isApproval: true});
+    return await this.processPayment({...params, is_approval: true});
   }
 
   /**
    * 결제 취소
    * @param {Object} params
-   * @param {string} params.tranAmt - 거래금액
-   * @param {string} params.vatAmt - 부가세
-   * @param {string} params.svcAmt - 봉사료
+   * @param {string} params.tran_amt - 거래금액
+   * @param {string} params.vat_amt - 부가세
+   * @param {string} params.svc_amt - 봉사료
    * @param {string} params.installment - 할부개월수
-   * @param {string} params.orgAuthNo - 원거래 승인번호
-   * @param {string} params.orgAuthDate - 원거래 승인일자
+   * @param {string} params.org_auth_no - 원거래 승인번호
+   * @param {string} params.org_auth_date - 원거래 승인일자
    */
   async requestCancel(params) {
-    return await this.processPayment({...params, isApproval: false});
+    return await this.processPayment({...params, is_approval: false});
   }
 
   /**

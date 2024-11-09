@@ -7,7 +7,7 @@ import ArrowIcon from '../components/ArrowIcon';
 import { HEADQUARTERS, STORAGE_KEYS } from '../../constants/constants';
 import Utils from '../../utils/utils';
 
-const TEST_MODE = process.env.NODE_ENV === 'development'; // 실제 배포 시 false로 변경
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 const ServiceOption = ({ product, onSelect }) => (
   <div className="bg-gray-800 rounded-full py-4 pl-8 pr-5 mb-2 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
@@ -127,83 +127,78 @@ const ProductList = () => {
     setPaymentStatus('waiting');
   };
 
-  const processPayment = async () => {
+  const processPayment = async (isSimulated = false) => {
     try {
       setPaymentStatus('processing');
       setPaymentMessage('결제 처리 중...');
 
-      const { tranAmt, vatAmt } = Utils.getAmount(selectedProduct.price);
+      console.log('selectedProduct : ', selectedProduct)
+
+      const vatAmt = Utils.getVatAmount(selectedProduct.price);
       const paymentParams = {
-        amount: selectedProduct.price,
-        tran_amt: tranAmt.toString(),
-        vat_amt: vatAmt.toString(),
+        tran_amt: selectedProduct.price,
+        vat_amt: vatAmt,
         svc_amt: '0',
         installment: '0',
-        trade_req_date: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
+        trade_req_date: new Date().format({pattern: 'yyyyMMdd'}),
       };
 
       // 결제 요청 등록
       const paymentRecord = await window.databaseIPC.registerPayment(paymentParams);
 
-      let paymentInfo;
-      if (TEST_MODE) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
-        paymentInfo = await simulatePayment(paymentParams);
-        // 테스트 모드에서도 결제 성공 기록
-        await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, paymentParams.trade_req_date, {
-          outCardNo: paymentInfo.card_number,
-          outAuthNo: paymentInfo.auth_no,
-          outAuthDate: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\D/g, ''),
-          ontTradeReqTime: new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\D/g, ''),
-          outReplyMsg1: '테스트 결제 성공'
-        });
-
-        // 테스트 모드에서 결제 정보 저장
-        localStorage.setItem(STORAGE_KEYS.LAST_PAYMENT, JSON.stringify({
-          card_company: paymentInfo.card_company_number,
-          card_number: paymentInfo.card_number,
-          merchant_number: paymentInfo.merchant_number,
-          transaction_id: paymentInfo.transaction_id,
-          amount: paymentInfo.amount,
-          tran_amount: paymentInfo.tran_amount,
-          vat_amount: paymentInfo.vat_amount,
-          auth_no: paymentInfo.auth_no,
-          auth_date: paymentParams.trade_req_date,
-        }));
+      let result;
+      if (isSimulated) {
+        result = await simulatePayment(paymentParams);
       } else {
-        // 실제 결제 처리
-        const result = await window.paymentIPC.processApproval(paymentParams);
-        if (result.isSuccess) {
-          // 결제 성공 업데이트
-          await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, result.outAuthDate, result);
-          paymentInfo = {
-            amount: paymentParams.amount,
-            tran_amount: paymentParams.tran_amount,
-            vat_amount: paymentParams.vat_amount,
-            card_company_number: result.outCatId,
-            card_number: result.outCardNo,
-            merchant_number: result.outMerchantNo,
-            transaction_id: result.outTranId,
-            auth_no: result.outAuthNo,
-            auth_date: result.outAuthDate,
-            type: 'CARD',
-          };
-
-          // 실제 결제 성공 시 결제 정보 저장
-          localStorage.setItem(STORAGE_KEYS.LAST_PAYMENT, JSON.stringify(paymentInfo));
-        } else {
+        result = await window.paymentIPC.processApproval(paymentParams);
+        if (!result.isSuccess) {
           // 결제 실패 업데이트
-          await window.databaseIPC.updatePaymentFailure(paymentRecord.id, result.outAuthDate, {
+          await window.databaseIPC.updatePaymentFailure(paymentRecord.id, result.outReplyDate, {
             message: result.outReplyMsg1 || '결제 실패'
           });
           throw new Error(result.outReplyMsg1 || '결제 실패');
         }
       }
 
-      setPaymentMessage('예약 생성 중...');
-      // 예약 로직 (주석 처리된 부분)
+      const paymentInfo = {
+        card_company: result.outAccepterCompany,
+        card_no: result.outCardNo,
+        tran_amt: paymentParams.tran_amt,
+        vat_amt: paymentParams.vat_amt,
+        merchant_no: result.outMerchantRegNo,
+        transaction_id: result.outTradeNum,
+        auth_no: result.outAuthNo,
+        auth_date: result.outReplyDate,
+        trade_req_date: result.outTradeReqDate,
+        trade_req_time: result.outTradeReqTime,
+        trade_type: result.outTradeType,
+        van_key: result.outVanKey,
+        reply_msg1: result.outReplyMsg1,
+        reply_msg2: result.outReplyMsg2,
+      };
 
-      console.log('selectedProduct : ', selectedProduct)
+      await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, result.outReplyDate, paymentInfo);
+
+      // 실제 결제 성공 시 결제 정보 저장
+      localStorage.setItem(STORAGE_KEYS.LAST_PAYMENT, JSON.stringify(paymentInfo));
+
+      setPaymentMessage('예약 생성 중...');
+      // 예약 요청
+      const reservationResponse = await ApiService.createReservation({
+        tel: '010-0000-0000',
+        product_idx: selectedProduct.idx,
+        payment: {
+          approval_number: result.outAuthNo,
+          card_number: result.outCardNo,
+          card_company_number: result.outAccepterCode,
+          type: 'CARD',
+          amount: paymentParams.tran_amt,
+        },
+        status: 'COMPLETE'
+      });
+
+      console.log('예약이 완료되었습니다:', reservationResponse);
+
       // 세차기 동작 시작
       try {
         const result = await window.machineIPC.startWash(selectedProduct.targetMode);
@@ -224,19 +219,20 @@ const ProductList = () => {
     }
   };
 
-  const simulatePayment = (paymentParams) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          auth_no: 'SIM' + Math.random().toString(36).substr(2, 9),
-          card_number: Math.floor(100000 + Math.random() * 900000),
-          card_company_number: '01',
-          type: 'CARD',
-          amount: paymentParams.amount,
-          tran_amount: paymentParams.tran_amt,
-          vat_amount: paymentParams.vat_amt,
-        });
-      }, 1000); // 1초 후 결제 완료 시뮬레이션
+  const simulatePayment = () => {
+    return Promise.resolve({
+      outAccepterCompany: 'SIM - CARD',
+      outAccepterCode: '01',
+      outCardNo: Math.floor(100000 + Math.random() * 900000),
+      outMerchantRegNo: 'SIM',
+      outTradeNum: 'SIM' + Math.random().toString(36).slice(2, 11),
+      outAuthNo: 'SIM' + Math.random().toString(36).slice(2, 11),
+      outReplyDate: new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+      outTradeReqDate: new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+      outTradeReqTime: new Date().toTimeString().slice(0, 8).replace(/:/g, ''),
+      outTradeType: 'SIM',
+      outVanKey: 'SIM',
+      outReplyMsg1: '테스트 결제 성공',
     });
   };
 
@@ -271,37 +267,37 @@ const ProductList = () => {
 
   const renderPaymentModal = () => {
     if (paymentStatus === 'waiting') {
-      if (!TEST_MODE) {
-        processPayment();
-        return null;
-      }
-      return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 mx-8 rounded-3xl max-w-md w-full text-white relative">
-            <CloseButton onClick={() => setPaymentStatus(null)} />
-            <h2 className="text-2xl font-bold mb-4">결제 대기 중</h2>
-            <p>카드를 투입해 주세요.</p>
-            <button onClick={processPayment} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
-              결제 시뮬레이션
-            </button>
-          </div>
-        </div>
-      );
-    }
-    if (paymentStatus === 'processing') {
-      if (!TEST_MODE) {
+      if (isDevelopment) {
         return (
-          <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 pointer-events-auto">
-            <div className="absolute inset-0" style={{ pointerEvents: 'auto' }}></div>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-8 mx-8 rounded-3xl max-w-md w-full text-white relative">
+              <CloseButton onClick={() => setPaymentStatus(null)} />
+              <h2 className="text-2xl font-bold mb-8">결제 방식 선택</h2>
+              <div className="flex flex-col gap-4">
+                <button 
+                  onClick={() => processPayment(false)} 
+                  className="bg-blue-500 text-white px-6 py-4 rounded-xl text-xl hover:bg-blue-600"
+                >
+                  실제 결제 진행
+                </button>
+                <button 
+                  onClick={() => processPayment(true)} 
+                  className="bg-green-500 text-white px-6 py-4 rounded-xl text-xl hover:bg-green-600"
+                >
+                  가상 결제 시뮬레이션
+                </button>
+              </div>
+            </div>
           </div>
         );
       }
+      processPayment(false);
+      return null;
+    }
+    if (paymentStatus === 'processing') {
       return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
-            <h2 className="text-2xl font-bold mb-4">결제 처리 중</h2>
-            <p>{paymentMessage}</p>
-          </div>
+        <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 pointer-events-auto">
+          <div className="absolute inset-0" style={{ pointerEvents: 'auto' }}></div>
         </div>
       );
     }

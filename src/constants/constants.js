@@ -10,7 +10,6 @@ export const STORAGE_KEYS = {
   RECEIPT_INFO: 'receipt_info',
   RECEIPT_INFO_UPDATED_AT: 'receipt_info_updated_at',
   SHOP_NAME: 'shop_name',
-  TEST_MODE: 'test_mode',
   LAST_PAYMENT: 'last_payment'
 };
 

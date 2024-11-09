@@ -125,24 +125,24 @@ class KisSocket {
    * 결제 요청 생성
    */
   createPaymentPayload({
-    tranAmt = '0',
-    vatAmt = '0',
-    svcAmt = '0',
+    tran_amt = '0',
+    vat_amt = '0',
+    svc_amt = '0',
     installment = '0',
-    orgAuthNo = '',
-    orgAuthDate = '',
-	isApproval = true
+    auth_no = '',
+    auth_date = '',
+    is_approval = true
   }) {
     return {
       KIS_ICApproval: {
         inTranCode: 'NV',
-        inTradeType: isApproval ? 'D1' : 'D2',
-        inTranAmt: tranAmt,
-        inVatAmt: vatAmt,
-        inSvcAmt: svcAmt,
+        inTradeType: is_approval ? 'D1' : 'D2',
+        inTranAmt: tran_amt,
+        inVatAmt: vat_amt,
+        inSvcAmt: svc_amt,
         inInstallment: installment,
-        inOrgAuthNo: orgAuthNo,
-        inOrgAuthDate: orgAuthDate
+        inOrgAuthNo: auth_no,
+        inOrgAuthDate: auth_date.slice(-6)
       }
     };
   }
@@ -163,6 +163,13 @@ class KisSocket {
       outEightCardNo: response.outEightCardNo || '',
       outAuthNo: response.outAuthNo || '',
       outReplyDate: response.outReplyDate || '',
+      outTradeNum: response.outTradeNum || '',
+      outTradeReqDate: response.outTradeReqDate || '',
+      outTradeReqTime: response.outTradeReqTime || '',
+      outTradeType: response.outTradeType || '',
+      outVanKey: response.outVanKey || '',
+      outAccepterCompany: response.outAccepterCompany || '',
+      outMerchantRegNo: response.outMerchantRegNo || '',
       isSuccess: response.outRtn === 0 && response.outAgentCode === '0000'
     };
   }

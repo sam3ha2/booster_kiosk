@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AppBar from '../components/AppBar';
 import { STORAGE_KEYS, HEADQUARTERS } from '../../constants/constants';
+import ApiService from '../../utils/api_service';
 
 const PaymentAdmin = () => {
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -55,8 +56,17 @@ const PaymentAdmin = () => {
       }
       
       if (result.isSuccess) {
+        const cancelResponse = await ApiService.updateReservationStatus(
+          selectedPayment.reservation_idx,
+          {
+            status: 'CANCEL',
+          }
+        );
+        const needUpdateServer = cancelResponse.type !== 'SUCCESS' ? { is_dirty_server: true } : {};
+
         await window.databaseIPC.updatePaymentCancel(selectedPayment.id, selectedDate, {
-          outReplyMsg1: result.outReplyMsg1 || '결제 취소 완료'
+          outReplyMsg1: result.outReplyMsg1 || '결제 취소 완료',
+          ...needUpdateServer,
         });
         if (!isSimulated) {
           await window.printerIPC.printReceipt({

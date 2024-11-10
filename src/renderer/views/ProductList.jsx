@@ -222,6 +222,8 @@ const ProductList = () => {
 
       console.log('예약이 완료되었습니다:', reservationResponse);
 
+      await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, result.outReplyDate, { reservation_idx: reservationResponse.item.idx });
+
       // 세차기 동작 시작
       try {
         const result = await window.machineIPC.startWash(selectedProduct.targetMode);

@@ -20,8 +20,13 @@ class ScannerManager extends EventEmitter {
         this.emit('ready');
       });
 
+      let is = true;
       this.scanner.on("data", (data) => {
-        this.emit('data', data);
+        if (is) {
+          is = false;
+          this.emit('data', data);
+          setTimeout(() => is = true, 2000);
+        }
       });
 
       this.scanner.on("error", (error) => {

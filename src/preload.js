@@ -20,9 +20,15 @@ contextBridge.exposeInMainWorld('scannerIPC', {
   getStatus: () => ipcRenderer.invoke('scanner:getStatus'),
   beep: () => ipcRenderer.invoke('scanner:beep'),
   toggleLight: (isOn) => ipcRenderer.invoke('scanner:light', isOn),
-  onQrCodeScanned: (callback) => ipcRenderer.on('qrCodeScanned', (event, data) => callback(data)),
+  onQrCodeScanned: (callback) => {
+    ipcRenderer.removeAllListeners('qrCodeScanned');
+    ipcRenderer.on('qrCodeScanned', (event, data) => callback(data));
+  },
   offQrCodeScanned: (callback) => ipcRenderer.removeListener('qrCodeScanned', callback),
-  onScannerError: (callback) => ipcRenderer.on('scannerError', (event, error) => callback(error)),
+  onScannerError: (callback) => {
+    ipcRenderer.removeAllListeners('scannerError');
+    ipcRenderer.on('scannerError', (event, error) => callback(error));
+  },
   offScannerError: (callback) => ipcRenderer.removeListener('scannerError', callback),
 });
 

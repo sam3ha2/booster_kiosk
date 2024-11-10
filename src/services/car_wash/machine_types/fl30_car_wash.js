@@ -24,6 +24,7 @@ class FL30CarWash extends AbstractCarWashMachine {
         stopBits: 1,
         parity: 'even'
       });
+      this.client.setTimeout(10000);
 
       // Slave ID 설정
       this.client.setID(this.address);

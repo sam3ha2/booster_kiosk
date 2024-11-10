@@ -353,11 +353,8 @@ const ProductList = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
             <CloseButton onClick={handleClose} />
-            <h2 className="text-2xl font-bold mb-4 text-center">결제가 완료되었습니다.</h2>
-            <p className="mb-4 text-center">모니터 오른쪽 하단에 카드를 회수해 주세요.</p>
-            <div className="flex justify-center mb-6">
-              <img src="/path-to-success-icon.png" alt="Success Icon" className="w-24 h-24" />
-            </div>
+            <h2 className="text-2xl font-bold mb-4 text-center">결제가<br/>완료되었습니다.</h2>
+            <p className="mb-4 text-center text-base">모니터 하단에 카드를 회수해 주세요.</p>
             <div className="flex justify-between mt-6">
               <button onClick={handleClose} className="bg-red-500 text-white px-6 py-2 rounded-full w-[48%]">
                 닫기 ({countdown})

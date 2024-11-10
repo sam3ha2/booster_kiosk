@@ -230,7 +230,7 @@ const Home = () => {
                 <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
                   <span className="text-xl">1</span>
                 </div>
-                <p className='text-xl'>앱 예약, 구독은 '자동세차 QR확인' 버튼을 현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
+                <p className='text-xl'>앱 예약, 구독은 메인화면에서 QR코드를 스캔해 주세요.<br/>현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
               </div>
               <div className="flex items-start">
                 <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
@@ -242,7 +242,7 @@ const Home = () => {
                 <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
                   <span className="text-xl">3</span>
                 </div>
-                <p className='text-xl'>현장 결제는 원하는 상품을 누르고 전화번호 입력 후 모니터 오른쪽 하단 카드결제하고 세차를 진행해 주세요.</p>
+                <p className='text-xl'>현장 결제는 원하는 상품을 선택 후 모니터 하단에서 카드결제하고 세차를 진행해 주세요.</p>
               </div>
             </div>
             <div className="mt-8 bg-gray-700 p-4 rounded-xl">

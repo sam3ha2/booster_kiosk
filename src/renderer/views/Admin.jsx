@@ -5,6 +5,7 @@ import AppBar from '../components/AppBar';
 const Admin = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(process.env.NODE_ENV === 'development');
+  const [isKioskMode, setIsKioskMode] = useState(false);
   const [pinCode, setPinCode] = useState('');
   const [deviceStates, setDeviceStates] = useState({
     carWash: { connected: false, path: '' },
@@ -42,10 +43,34 @@ const Admin = () => {
   }, [pinCode]);
 
   useEffect(() => {
+    const loadKioskState = async () => {
+      try {
+        const { isKiosk } = await window.appControl.getKioskState();
+        setIsKioskMode(isKiosk);
+      } catch (error) {
+        console.error('키오스크 상태 로드 실패:', error);
+      }
+    };
+
     if (isLoggedIn) {
       loadDeviceStates();
+      loadKioskState();
     }
   }, [isLoggedIn]);
+
+  const handleKioskToggle = async (e) => {
+    try {
+      const result = await window.appControl.toggleKiosk(e.target.checked);
+      if (result.success) {
+        setIsKioskMode(result.isKiosk);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('키오스크 모드 설정 실패:', error);
+      alert('키오스크 모드 설정에 실패했습니다.');
+    }
+  };
 
   const loadDeviceStates = async () => {
     try {
@@ -273,6 +298,31 @@ const Admin = () => {
         label="컨트롤 패널" 
         value={`v${APP_VERSION}`}
       />
+
+      <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700">
+        <span className="text-white text-lg">키오스크 모드</span>
+        <div className="flex items-center">
+          <label className="inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={isKioskMode}
+              onChange={handleKioskToggle}
+            />
+            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-none 
+              peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer 
+              ${isKioskMode ? 'bg-green-600' : 'bg-gray-700'}
+              peer-checked:after:translate-x-full peer-checked:after:border-white 
+              after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+              after:bg-white after:border-gray-300 after:border after:rounded-full 
+              after:h-5 after:w-5 after:transition-all`}>
+            </div>
+            <span className="ml-3 text-sm font-medium text-gray-300">
+              {isKioskMode ? '활성화' : '비활성화'}
+            </span>
+          </label>
+        </div>
+      </div>
 
       <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700">
         <div className="flex items-center justify-between w-full">

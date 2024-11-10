@@ -53,4 +53,6 @@ contextBridge.exposeInMainWorld('databaseIPC', {
 contextBridge.exposeInMainWorld('appControl', {
   relaunch: () => ipcRenderer.invoke('app:relaunch'),
   quit: () => ipcRenderer.invoke('app:quit'),
+  toggleKiosk: (enable) => ipcRenderer.invoke('app:toggle-kiosk', enable),
+  getKioskState: () => ipcRenderer.invoke('app:get-kiosk-state')
 }); 

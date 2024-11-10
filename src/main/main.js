@@ -32,8 +32,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1080 + devToolWidth,
     height: 1920,
-    fullscreen: isProduction,
-    kiosk: isProduction,
+    fullscreen: !isDevelopment,
+    kiosk: !isDevelopment,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -70,6 +70,7 @@ function initIPCHandlers() {
   setPrinterHandlers();
   setPaymentHandlers();
   setDatabaseHandlers();
+  setAppHandlers();
 }
 
 function initDevices() {
@@ -256,11 +257,33 @@ function setDatabaseHandlers() {
   });
 }
 
-ipcMain.handle('app:relaunch', () => {
-  app.relaunch();
-  app.quit();
-});
+function setAppHandlers() {
+  ipcMain.handle('app:toggle-kiosk', (event, enable) => {
+    try {
+      if (mainWindow) {
+        mainWindow.setKiosk(enable);
+        mainWindow.setFullScreen(enable);
+        return { success: true, isKiosk: enable };
+      }
+      return { success: false, error: 'Window not found' };
+    } catch (error) {
+      console.error('키오스크 모드 설정 실패:', error);
+      return { success: false, error: error.message };
+    }
+  });
 
-ipcMain.handle('app:quit', () => {
-  app.quit();
-});
+  ipcMain.handle('app:get-kiosk-state', () => {
+    return { 
+      isKiosk: mainWindow ? mainWindow.isKiosk() : false 
+    };
+  });
+  
+  ipcMain.handle('app:relaunch', () => {
+    app.relaunch();
+    app.quit();
+  });
+  
+  ipcMain.handle('app:quit', () => {
+    app.quit();
+  });
+}

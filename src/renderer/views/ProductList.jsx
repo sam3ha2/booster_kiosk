@@ -145,6 +145,42 @@ const ProductList = () => {
   };
 
   const processPayment = async (isSimulated = false) => {
+    if (selectedProduct.tran_amt === 0) {
+      setPaymentStatus('processing');
+      setPaymentMessage('예약 생성 중...');
+
+      console.log('selectedProduct : ', selectedProduct)
+
+      // 예약 요청
+      const reservationResponse = await ApiService.createReservation({
+        tel: '010-0000-0000',
+        product_idx: selectedProduct.idx,
+        payment: {
+          type: 'CARD',
+          amount: selectedProduct.tran_amt,
+        },
+        status: 'COMPLETE'
+      });
+
+      console.log('예약이 완료되었습니다:', reservationResponse);
+
+      // 세차기 동작 시작
+      try {
+        const result = await window.machineIPC.startWash(selectedProduct.targetMode);
+        console.log('세차기 제어 결과:', result);
+        if (result.success) {
+          setPaymentStatus('success');
+        } else {
+          throw new Error(result.error || '세차기 시작 실패');
+        }
+      } catch (error) {
+        console.error('세차기 시작 중 오류 발생:', error);
+        setPaymentStatus('failed');
+        setPaymentMessage('세차기 실패: ' + error.message);
+      } finally {
+        return;
+      }
+    }
     try {
       setPaymentStatus('processing');
       setPaymentMessage('결제 처리 중...');
@@ -296,7 +332,10 @@ const ProductList = () => {
 
   const renderPaymentModal = () => {
     if (paymentStatus === 'waiting') {
-      if (isDevelopment) {
+      if (selectedProduct.tran_amt === 0) {
+        processPayment(false);
+        return null;
+      } else if (isDevelopment) {
         return (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-gray-800 p-8 mx-8 rounded-3xl max-w-md w-full text-white relative">
@@ -325,8 +364,13 @@ const ProductList = () => {
     }
     if (paymentStatus === 'processing') {
       return (
-        <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 pointer-events-auto">
-          <div className="absolute inset-0" style={{ pointerEvents: 'auto' }}></div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mb-4"></div>
+              <p className="text-xl font-bold">{paymentMessage}</p>
+            </div>
+          </div>
         </div>
       );
     }
@@ -370,10 +414,9 @@ const ProductList = () => {
         />
       </div>
       {renderPaymentModal()}
-      {paymentStatus === 'success' && (
+      {paymentStatus === 'success' && selectedProduct.tran_amt > 0 && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
-            <CloseButton onClick={handleClose} />
             <h2 className="text-2xl font-bold mb-4 text-center">결제가<br/>완료되었습니다.</h2>
             <p className="mb-4 text-center text-base">모니터 하단에 카드를 회수해 주세요.</p>
             <div className="flex justify-between mt-6">
@@ -382,6 +425,18 @@ const ProductList = () => {
               </button>
               <button onClick={handlePrintReceipt} className="bg-green-500 text-white px-6 py-2 rounded-full w-[48%]">
                 영수증 출력
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {paymentStatus === 'success' && selectedProduct.tran_amt === 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
+            <h2 className="text-2xl font-bold mb-4 text-center">세차가 시작됩니다.</h2>
+            <div className="flex justify-center mt-6">
+              <button onClick={handleClose} className="bg-red-500 text-white px-6 py-2 rounded-full w-[48%]">
+                닫기 ({countdown})
               </button>
             </div>
           </div>

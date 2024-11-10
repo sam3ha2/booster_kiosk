@@ -8,6 +8,7 @@ import ArrowIcon from '../components/ArrowIcon';
 import { STORAGE_KEYS, RECEIPT_INFO_REFRESH_TIME } from '../../constants/constants';
 
 let isFirstTime = true;
+const isDiscountable = true;
 
 // 새로운 HomeButton 컴포넌트
 const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
@@ -106,12 +107,8 @@ const Home = () => {
     };
   }, [statusUpdateListener]);
 
-  const startWash = () => {
-    navigate('/products');
-  };
-
-  const checkReservation = () => {
-    setShowQrScanner(true);
+  const moveToSelectProductPage = (discount = 0) => {
+    navigate('/products', { state: { discount } });
   };
 
   const closeQrScanner = () => {
@@ -123,10 +120,33 @@ const Home = () => {
       const qrCodeData = JSON.parse(qrData);
 
       console.log(qrCodeData);
+
+      // 예약 QR 코드인 경우
+      if (qrCodeData.qr_idx && qrCodeData.qr_created_at && qrCodeData.qr_checksum) {
+        const targetMode = await getReservedTargetMode(qrCodeData);
+        const controlResponse = await window.machineIPC.startWash(targetMode);
+          
+        if (controlResponse.success) {
+          console.log('예약이 확인되었습니다. 세차를 시작합니다.');
+        } else {
+          alert('세차기 시작에 실패했습니다. 관리자에게 문의해주세요.');
+        }
+      }
+      // 세차 할인 QR 코드인 경우
+      else if (isDiscountable && qrCodeData.discount && qrCodeData.issue_date) {
+        moveToSelectProductPage(qrCodeData.discount);
+      }
+    } catch (error) {
+      console.error('QR 코드 데이터 파싱 오류:', error);
+    } finally {
+      closeQrScanner();
+    }
+  }
+
+  const getReservedTargetMode = async (qrData) => {
+    try {
       const reservationResponse = await ApiService.getReservation({
-        qr_idx: qrCodeData.qr_idx,
-        qr_created_at: qrCodeData.qr_created_at,
-        qr_checksum: qrCodeData.qr_checksum,
+        ...qrData,
         is_test: isDevelopment ? 'Y' : null,
       });
       
@@ -141,24 +161,16 @@ const Home = () => {
         );
         
         if (updateResponse.type === 'SUCCESS') {
-          const controlResponse = await window.machineIPC.startWash(reservationResponse.item.product.target_mode);
-          
-          if (controlResponse.success) {
-            alert('예약이 확인되었습니다. 세차를 시작합니다.');
-          } else {
-            alert('세차기 시작에 실패했습니다. 관리자에게 문의해주세요.');
-          }
+          return reservationResponse.item.product.target_mode;
         } else {
-          alert('예약 상태 업데이트에 실패했습니다. 다시 시도해주세요.');
+          throw new Error('예약 상태 업데이트 실패');
         }
       } else {
-        alert('유효하지 않은 QR 코드입니다.');
+        throw new Error('유효하지 않은 QR 코드');
       }
     } catch (error) {
       console.error('예약 확인 중 오류가 발생했습니다:', error);
       alert('예약 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
-    } finally {
-      closeQrScanner();
     }
   };
 
@@ -185,9 +197,9 @@ const Home = () => {
       ) : (
         // 세차 중이 아닐 때 표시되는 UI
         <>
-          <div className="flex">
+          <div className="flex space-x-4">
             <HomeButton
-              onClick={startWash}
+              onClick={() => moveToSelectProductPage()}
               disabled={false}
               text="자동세차"
               subText="현장결제"

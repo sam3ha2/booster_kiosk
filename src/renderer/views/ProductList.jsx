@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Product } from '../../models/models';
 import ApiService from '../../utils/api_service';
 import AppBar from '../components/AppBar';
@@ -9,12 +9,22 @@ import Utils from '../../utils/utils';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const ServiceOption = ({ product, onSelect }) => (
-  <div className="bg-gray-800 rounded-full py-4 pl-8 pr-5 mb-2 flex justify-between items-center cursor-pointer" onClick={() => onSelect(product)}>
+const ServiceOption = ({ product, onSelect, discount = 0 }) => (
+  <div className="bg-gray-800 rounded-full py-4 pl-8 pr-5 mb-2 flex justify-between items-center cursor-pointer" 
+        onClick={() => onSelect({...product, tran_amt: Math.max(0, product.price - discount)})}>
     <div className="w-full">
       <div className="flex justify-between">
         <h3 className="text-white font-bold text-xl">{product.name} ({product.duration}분)</h3>
-        <span className="text-main font-bold ms-2 whitespace-nowrap text-xl">{product.price.toLocaleString()}원</span>
+        <div className="text-right">
+          {discount > 0 && (
+            <span className="text-gray-400 line-through me-2 text-base">
+              {product.price.toLocaleString()}원
+            </span>
+          )}
+          <span className="text-main font-bold ms-2 whitespace-nowrap text-xl">
+            {Math.max(0, product.price - discount).toLocaleString()}원
+          </span>
+        </div>
       </div>
       <p className="text-gray-400 text-base mt-1">{product.description}</p>
     </div>
@@ -24,7 +34,7 @@ const ServiceOption = ({ product, onSelect }) => (
   </div>
 );
 
-const Body = ({ loading, error, products, onSelect }) => {
+const Body = ({ loading, error, products, discount, onSelect }) => {
   if (error) {
     return (
       <div className="text-white text-center text-xl p-8 overflow-y-auto">
@@ -44,7 +54,12 @@ const Body = ({ loading, error, products, onSelect }) => {
   return (
     <div className="max-w py-2 px-8 overflow-y-auto h-full">
       {products.map((product) => (
-        <ServiceOption key={product.idx} product={product} onSelect={onSelect} />
+        <ServiceOption 
+          key={product.idx} 
+          product={product} 
+          onSelect={onSelect}
+          discount={discount}
+        />
       ))}
     </div>
   );
@@ -74,6 +89,8 @@ const CloseButton = ({ onClick }) => (
 
 const ProductList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const discount = location.state?.discount || 0;
   const [products, setProducts] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,7 +155,8 @@ const ProductList = () => {
       const paymentParams = {
         product_idx: selectedProduct.idx,
         product_name: selectedProduct.name,
-        tran_amt: selectedProduct.price,
+        price: selectedProduct.price,
+        tran_amt: selectedProduct.tran_amt,
         vat_amt: vatAmt,
         svc_amt: '0',
         installment: '0',
@@ -345,6 +363,7 @@ const ProductList = () => {
           loading={loading}
           error={error}
           products={products}
+          discount={discount}
           onSelect={selectProduct}
         />
       </div>

@@ -192,7 +192,7 @@ const Admin = () => {
             {status}
           </span>
         )}
-        {value && <span className="text-gray-400 text-base mr-4">{value}</span>}
+        {value && <span className="text-gray-400 text-base mr-2">{value}</span>}
         {actionButton}
         {showArrow && (
           <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@ const Admin = () => {
         actionButton={
           <button 
             onClick={() => handleDeviceConnection('carWash', deviceStates.carWash.connected ? 'disconnect' : 'connect')}
-            className={`px-3 py-1 rounded mr-4 text-sm ${deviceStates.carWash.connected ? 'bg-red-600' : 'bg-green-600'}`}
+            className={`px-3 py-1 rounded text-sm ${deviceStates.carWash.connected ? 'bg-red-600' : 'bg-main'}`}
           >
             {deviceStates.carWash.connected ? '해제' : '연결'}
           </button>
@@ -232,7 +232,7 @@ const Admin = () => {
         actionButton={
           <button 
             onClick={() => handleDeviceConnection('scanner', deviceStates.scanner.connected ? 'disconnect' : 'connect')}
-            className={`px-3 py-1 rounded mr-4 text-sm ${deviceStates.scanner.connected ? 'bg-red-600' : 'bg-green-600'}`}
+            className={`px-3 py-1 rounded text-sm ${deviceStates.scanner.connected ? 'bg-red-600' : 'bg-main'}`}
           >
             {deviceStates.scanner.connected ? '해제' : '연결'}
           </button>
@@ -246,7 +246,7 @@ const Admin = () => {
         actionButton={
           <button 
             onClick={() => handleDeviceConnection('printer', deviceStates.printer.connected ? 'disconnect' : 'connect')}
-            className={`px-3 py-1 rounded mr-4 text-sm ${deviceStates.printer.connected ? 'bg-red-600' : 'bg-green-600'}`}
+            className={`px-3 py-1 rounded text-sm ${deviceStates.printer.connected ? 'bg-red-600' : 'bg-main'}`}
           >
             {deviceStates.printer.connected ? '해제' : '연결'}
           </button>
@@ -260,7 +260,7 @@ const Admin = () => {
             actionButton={
               <button 
                 onClick={() => window.printerIPC.printTest()}
-                className="px-3 py-1 rounded mr-4 text-sm bg-green-600"
+                className="px-3 py-1 rounded text-sm bg-main"
               >
                 출력
               </button>
@@ -270,19 +270,65 @@ const Admin = () => {
       }
 
       <MenuItem 
-        label="버전 정보" 
+        label="컨트롤 패널" 
         value={`v${APP_VERSION}`}
       />
 
-      <MenuItem 
-        label="앱 재시작"
-        onClick={() => window.appControl.relaunch()}
-      />
+      <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.machineIPC.startWash('MODE1')}
+              className="px-3 py-1 rounded text-sm bg-main hover:bg-green-700"
+            >
+              1번
+            </button>
+            <button
+              onClick={() => window.machineIPC.startWash('MODE2')}
+              className="px-3 py-1 rounded text-sm bg-main hover:bg-green-700"
+            >
+              2번
+            </button>
+            <button
+              onClick={() => window.machineIPC.startWash('MODE3')}
+              className="px-3 py-1 rounded text-sm bg-main hover:bg-green-700"
+            >
+              3번
+            </button>
+          </div>
+          <div className="flex gap-2 ">
+            <button
+              onClick={() => window.machineIPC.stopWash()}
+              className="px-3 py-1 rounded text-sm bg-red-600 hover:bg-red-700"
+            >
+              정지
+            </button>
+            <button
+              onClick={() => window.machineIPC.reset()}
+              className="px-3 py-1 rounded text-sm bg-blue-600 hover:bg-blue-700"
+            >
+              리셋
+            </button>
+          </div>
+        </div>
+      </div>
 
-      <MenuItem 
-        label="앱 종료"
-        onClick={() => window.appControl.quit()}
-      />
+      <div className="flex items-center justify-end py-4 px-6 border-b border-gray-700 hover:bg-gray-800 cursor-pointer">
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.appControl.relaunch()}
+            className="px-3 py-1 rounded text-sm bg-blue-600 hover:bg-blue-700"
+          >
+            앱 재시작
+          </button>
+          <button 
+            onClick={() => window.appControl.quit()}
+            className="px-3 py-1 rounded text-sm bg-red-600 hover:bg-red-700"
+          >
+            앱 종료
+          </button>
+        </div>
+      </div>
     </div>
   );
 

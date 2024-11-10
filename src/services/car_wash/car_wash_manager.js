@@ -176,6 +176,19 @@ class CarWashManager extends EventEmitter {
     }
   }
 
+  async reset(event) {
+    if (!this.machine) {
+      throw new Error('연결된 세차기가 없습니다');
+    }
+    try {
+      await this.machine.reset();
+      return { success: true, message: '세차기가 초기화되었습니다.' };
+    } catch (error) {
+      console.error('세차기 리셋 중 오류 발생:', error);
+      throw error;
+    }
+  }
+
   startPeriodicStatusCheck(turnOn) {
     if (!this.machine) return;
     

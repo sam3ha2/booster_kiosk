@@ -129,6 +129,7 @@ process.on('uncaughtException', (error) => {
 function setMachineHandlers() {
   ipcMain.handle('machine:start-wash', carWashManager.startWash.bind(carWashManager));
   ipcMain.handle('machine:stop-wash', carWashManager.stopWash.bind(carWashManager));
+  ipcMain.handle('machine:reset', carWashManager.reset.bind(carWashManager));
   ipcMain.handle('machine:getStatus', carWashManager.getMachineStatus.bind(carWashManager));
   ipcMain.handle('machine:connect', carWashManager.connectDevice.bind(carWashManager));
   ipcMain.handle('machine:disconnect', carWashManager.disconnectDevice.bind(carWashManager));

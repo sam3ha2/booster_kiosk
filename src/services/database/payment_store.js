@@ -5,7 +5,8 @@ const { app } = require('electron');
 
 class PaymentStore {
   constructor() {
-    this.baseDir = path.join(app.getPath('userData'), 'data', 'payments');
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    this.baseDir = path.join(app.getPath('userData'), `data${isDevelopment ? '_dev' : ''}`, 'payments');
     this.ensureDatabase();
   }
 

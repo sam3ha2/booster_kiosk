@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
 const path = require('path');
 const dotenv = require('dotenv');
 const log = require('electron-log');
@@ -41,6 +41,19 @@ function createWindow() {
     },
     icon: path.join(__dirname, './src/assets/icons/png/64x64.png'),
   });
+
+  // 프로덕션 환경에서 추가 설정
+  if (isProduction) {
+    mainWindow.setFullScreen(true);
+    mainWindow.setKiosk(true);
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    // 단축키 비활성화
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.control || input.alt || input.meta) {
+        event.preventDefault();
+      }
+    });
+  }
 
   mainWindow.setMenuBarVisibility(false);
 
@@ -97,16 +110,19 @@ function initDevices() {
   } catch (error) {
     console.error(error);
   }
-
-
 }
 
 // app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    paymentManager.terminate();
-    app.quit();
+  if (isProduction) {
+    e.preventDefault();
+    createWindow();
+  } else {
+    if (process.platform !== 'darwin') {
+      paymentManager.terminate();
+      app.quit();
+    }
   }
 });
 
@@ -117,8 +133,29 @@ app.on('activate', () => {
 });
 
 app.on('ready', () => {
+  // 윈도우 시작 시 앱이 실행되도록 설정 (Windows 전용)
+  if (process.platform === 'win32') {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: app.getPath('exe'),
+    });
+  }
   createWindow();
   setupAutoUpdater();
+
+  // 프로덕션 환경에서 추가 설정
+  if (isProduction) {
+    // 모든 단축키 비활성화
+    globalShortcut.unregisterAll();
+    // Alt+F4 등 시스템 단축키 비활성화
+    globalShortcut.register('Alt+F4', () => {
+      return false;
+    });
+    // 작업 관리자 비활성화
+    globalShortcut.register('Control+Shift+Escape', () => {
+      return false;
+    });
+  }
 });
 
 // 예외 처리

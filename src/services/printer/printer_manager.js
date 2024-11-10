@@ -38,6 +38,16 @@ class PrinterManager {
 
   async printReceipt({ shop, info, headquarters, isCancel = false }) {
     try {
+      const updatedAt = new Date(info.updated_at);
+      const date = `${updatedAt.toLocaleDateString('ko-KR').replace(/\. /g, '-').replace(/\./g, '')}`;
+      const time = updatedAt.toLocaleString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      const datetime = `${date} ${time}`;
+
       this.device.open((error) => {
         if (error) {
           console.error('프린터 연결 오류:', error);
@@ -72,6 +82,7 @@ class PrinterManager {
             .text(`매 입 사: ${info.accepter_name || ''}`, 'EUC-KR')
             .text(`가맹번호: ${info.merchant_no || ''}`, 'EUC-KR')
             .text(`거래번호: ${info.transaction_id || ''}`, 'EUC-KR')
+            .text(`거래일시: ${datetime}`, 'EUC-KR')
             .text('-'.repeat(48), 'EUC-KR')
             .text(`${this.alignLeftRight('본사', headquarters.company)}`, 'EUC-KR')
             .text(`${this.alignLeftRight('사업자번호', headquarters.registration_number)}`, 'EUC-KR')

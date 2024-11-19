@@ -1,14 +1,20 @@
-const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
-const path = require('path');
-const dotenv = require('dotenv');
-const log = require('electron-log');
-const CarWashManager = require('../services/car_wash/car_wash_manager');
-const ScannerManager = require('../services/scanner/scanner_manager');
-const setupAutoUpdater = require('./autoUpdater');
-const PaymentManager = require('../services/payment/payment_manager');
-const PrinterManager = require('../services/printer/printer_manager');
-const PaymentStore = require('../services/database/payment_store');
-const ConfigManager = require("../services/config/config_manager");
+import electron from 'electron';
+import path from 'path';
+import dotenv from 'dotenv';
+import log from 'electron-log';
+import CarWashManager from '../services/car_wash/car_wash_manager.js';
+import ScannerManager from '../services/scanner/scanner_manager.js';
+import setupAutoUpdater from './autoUpdater.js';
+import PaymentManager from '../services/payment/payment_manager.js';
+import PrinterManager from '../services/printer/printer_manager.js';
+import PaymentStore from '../services/database/payment_store.js';
+import ConfigManager from '../services/config/config_manager.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const { app, BrowserWindow, ipcMain, globalShortcut } = electron;
 
 // .env 파일 로드
 dotenv.config({ path: ['.env.development.local', '.env.development', '.env'] });
@@ -54,7 +60,7 @@ async function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, '../preload.js'),
+      preload: path.join(__dirname, '../preload.cjs'),
     },
     icon: path.join(__dirname, './src/assets/icons/png/64x64.png'),
   });

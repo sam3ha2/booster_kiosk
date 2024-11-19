@@ -1,5 +1,5 @@
-const log = require('electron-log');
-const KisSocket = require('./kis/kis_socket');
+import log from 'electron-log';
+import KisSocket from './kis/kis_socket.js';
 
 class PaymentManager {
   constructor() {
@@ -70,7 +70,7 @@ class PaymentManager {
    * @param {string} params.org_auth_date - 원거래 승인일자
    */
   async requestCancel(params) {
-    return await this.processPayment({...params, is_approval: false});
+    return await this.processPayment({ ...params, is_approval: false });
   }
 
   /**
@@ -93,4 +93,4 @@ class PaymentManager {
   }
 }
 
-module.exports = PaymentManager;
+export default PaymentManager;

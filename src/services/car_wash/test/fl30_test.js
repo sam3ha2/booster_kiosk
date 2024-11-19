@@ -1,5 +1,5 @@
-const readline = require('readline');
-const FL30CarWash = require('../machine_types/fl30_car_wash');
+import readline from 'readline';
+import FL30CarWash from '../machine_types/fl30_car_wash.js';
 
 class FL30Test {
   constructor(config) {
@@ -176,4 +176,4 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-module.exports = FL30Test; 
+export default FL30Test;

@@ -1,4 +1,6 @@
-const { SerialPort } = require('serialport');
+import serialport from 'serialport';
+
+const { SerialPort } = serialport;
 
 class AbstractCarWashMachine {
   constructor(config) {
@@ -58,4 +60,4 @@ class AbstractCarWashMachine {
   // 다른 메서드들은 그대로 유지...
 }
 
-module.exports = AbstractCarWashMachine;
+export default AbstractCarWashMachine;

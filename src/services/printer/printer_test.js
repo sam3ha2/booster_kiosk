@@ -1,4 +1,4 @@
-const PrinterManager = require('./printer_manager');
+import PrinterManager from './printer_manager.js';
 
 async function testPrinter() {
   try {

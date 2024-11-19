@@ -1,5 +1,7 @@
-const escpos = require('escpos');
-escpos.USB = require('escpos-usb');
+import escpos from 'escpos';
+import escposUsb from 'escpos-usb';
+
+escpos.USB = escposUsb;
 
 class PrinterManager {
   constructor() {
@@ -87,7 +89,7 @@ class PrinterManager {
             .text(`${this.alignLeftRight('본사', headquarters.company)}`, 'EUC-KR')
             .text(`${this.alignLeftRight('사업자번호', headquarters.registration_number)}`, 'EUC-KR')
             .text(`${this.alignLeftRight(`대표자: ${headquarters.representative}`, `Tel: ${headquarters.tel}`)}`, 'EUC-KR')
-            .text(`주  소: ${headquarters.address}`, 'EUC-KR');                 
+            .text(`주  소: ${headquarters.address}`, 'EUC-KR');
 
           printer
             .cut()
@@ -118,7 +120,7 @@ class PrinterManager {
 
             printer
               .font('a')
-              .style('normal')
+              .style('normal');
 
             text.forEach(({ content, encoding, align = 'LT', size = [0.5, 0.5] }) => {
               printer
@@ -152,7 +154,7 @@ class PrinterManager {
         vendorId: device.deviceDescriptor.idVendor,
         productId: device.deviceDescriptor.idProduct,
         manufacturer: device.manufacturer,
-        product: device.product
+        product: device.product,
       }));
     } catch (error) {
       console.error('프린터 목록 조회 오류:', error);
@@ -168,10 +170,10 @@ class PrinterManager {
 
   getTextLength(text) {
     return text.split('').reduce((len, char) => {
-        // 한글은 2바이트, 나머지는 1바이트로 계산
-        return len + (char.match(/[가-힣]/) ? 2 : 1);
+      // 한글은 2바이트, 나머지는 1바이트로 계산
+      return len + (char.match(/[가-힣]/) ? 2 : 1);
     }, 0);
   }
 }
 
-module.exports = PrinterManager;
+export default PrinterManager;

@@ -1,5 +1,7 @@
-const log = require('electron-log');
-const { NsisUpdater } = require("electron-updater");
+import * as electronUpdater from 'electron-updater';
+import log from 'electron-log';
+
+const { NsisUpdater } = electronUpdater;
 
 let updaterTimer = null;
 const updateUrl = `https://image.boosteron.co.kr/apps/kiosk${process.env.VITE_APP_ENV !== 'production' ? '-dev' : ''}`;
@@ -38,5 +40,4 @@ function updateTimerInput() {
 function checkUpdate() {
   autoUpdater.checkForUpdates();
 }
-
-module.exports = setupAutoUpdater;
+export default setupAutoUpdater;

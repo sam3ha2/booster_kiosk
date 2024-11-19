@@ -1,4 +1,4 @@
-const winston = require('winston');
+import winston from 'winston';
 
 const logger = winston.createLogger({
   level: 'info',
@@ -17,4 +17,9 @@ function log_function_call(func_name, args, result) {
   });
 }
 
-module.exports = { logger, log_function_call };
+export { logger };
+export { log_function_call };
+export default {
+    logger,
+    log_function_call
+};

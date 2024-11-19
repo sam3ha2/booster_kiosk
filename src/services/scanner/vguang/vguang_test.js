@@ -1,10 +1,10 @@
-const VguangScanner = require("./VguangScanner");
+import VguangScanner from './VguangScanner.js';
 
-const scanner = new VguangScanner({ mode: "tx400" });
+const scanner = new VguangScanner({ mode: 'tx400' });
 
 let is = true;
 
-scanner.on("data", data => {
+scanner.on('data', data => {
   if (is) {
     is = false;
     console.log(data);

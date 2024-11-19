@@ -1,4 +1,4 @@
-const ModbusRTU = require('modbus-serial');
+import ModbusRTU from 'modbus-serial';
 
 class SG90Simulator {
   constructor(portName) {
@@ -20,7 +20,7 @@ class SG90Simulator {
       parity: 'even'
     });
     this.client.setID(1);
-    console.log("[Simulator] 시뮬레이터가 초기화되었습니다.");
+    console.log('[Simulator] 시뮬레이터가 초기화되었습니다.');
 
     // 데이터 수신 이벤트 리스너 추가
     this.client._port.on('data', this.onDataReceived.bind(this));
@@ -172,7 +172,7 @@ class SG90Simulator {
   }
 }
 
-module.exports = SG90Simulator;
+export default SG90Simulator;
 
 // 시뮬레이터를 독립적으로 실행할 수 있는 코드
 if (require.main === module) {

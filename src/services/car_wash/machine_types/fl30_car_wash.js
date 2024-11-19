@@ -1,6 +1,6 @@
-const AbstractCarWashMachine = require('../abstract_car_wash_machine');
-const ModbusRTU = require('modbus-serial');
-const EventEmitter = require('events');
+import AbstractCarWashMachine from '../abstract_car_wash_machine.js';
+import ModbusRTU from 'modbus-serial';
+import EventEmitter from 'events';
 
 class FL30CarWash extends AbstractCarWashMachine {
   constructor(config) {
@@ -203,4 +203,4 @@ class FL30CarWash extends AbstractCarWashMachine {
   }
 }
 
-module.exports = FL30CarWash;
+export default FL30CarWash;

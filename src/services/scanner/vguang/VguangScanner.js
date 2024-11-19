@@ -1,29 +1,29 @@
-"use strict"
+import events from 'events';
+import * as HID from 'node-hid';
+import VguangScannerOption from './VguangScannerOption.js';
+import { platform } from 'os';
 
-const { EventEmitter } = require("events");
-const HID = require("node-hid");
-const VguangScannerOption = require("./VguangScannerOption");
-const platform = require("os").platform();
+const { EventEmitter } = events;
 
 class VguangScanner extends EventEmitter {
-  constructor (options) {
+  constructor(options) {
     super();
     this.options = new VguangScannerOption(options);
     this._device = null;
     this._findDevice();
     this._listen();
     // 스캐너 내장 스캔 후 비프음, 표시등 피드백 비활성화
-    // this._write([0x24, "00000001"]);
+    // this._write([0x24, '00000001']);
     this._write([0x25, 1]);
-    process.on("exit", () => {
-      this._write([0x24, "00000000"]);
+    process.on('exit', () => {
+      this._write([0x24, '00000000']);
       this._device.close();
     });
   }
 
   _error (err) {
     this._device && this._device.close();
-    const errorEventName = VguangScanner.Events["ERROR"];
+    const errorEventName = VguangScanner.Events['ERROR'];
     if (this.listenerCount(errorEventName) > 0) {
       this.emit(errorEventName, err);
     } else {
@@ -39,7 +39,7 @@ class VguangScanner extends EventEmitter {
       { pid } = VguangScannerOption.Modes[this.options.mode],
       vid = VguangScannerOption.Vid;
             
-    if (["linux", "win32"].includes(platform)) {
+    if (['linux', 'win32'].includes(platform)) {
       const { path } = HID.devices().filter(item => item.vendorId === vid && item.productId === pid).pop();
       try {
         this._device = new HID.HID(path);
@@ -54,16 +54,16 @@ class VguangScanner extends EventEmitter {
         this._error(err);
       }
     }
-    this._device.on("error", this._error.bind(this));
+    this._device.on('error', this._error.bind(this));
   }
 
   /**
    * 스캐너 리스닝 시작
    */
   _listen () {
-    this._device.on("data", chunk => {
-      const data = this._parseBytes(chunk).replace("\x00", "");
-      if (data) this.emit(VguangScanner.Events["DATA"], data);
+    this._device.on('data', chunk => {
+      const data = this._parseBytes(chunk).replace('\x00', '');
+      if (data) this.emit(VguangScanner.Events['DATA'], data);
     });
   }   
 
@@ -80,8 +80,8 @@ class VguangScanner extends EventEmitter {
     // 먼저 명령어 추출
     if (bins[0]) bytes.push(bins.shift());
     bins.forEach(item =>{
-      if (typeof item === "number") data.push(item);
-      if (typeof item === "string") data.push(parseInt(item, 2));
+      if (typeof item === 'number') data.push(item);
+      if (typeof item === 'string') data.push(parseInt(item, 2));
     });
     bytes.push(data.length & 0xff, data.length >> 8 & 0xff);
     bytes.splice(1, 0, 0x55, 0xaa);
@@ -130,7 +130,7 @@ class VguangScanner extends EventEmitter {
    * @param {Number} interval (선택) 비프음 간격, ms
    */
   beep (num = 1, time = 200, interval = 50) {
-    this._write([0x04, "00001000", 0xff & num, time / 50, interval / 50, 0]);
+    this._write([0x04, '00001000', 0xff & num, time / 50, interval / 50, 0]);
   }
 
   /**
@@ -141,7 +141,7 @@ class VguangScanner extends EventEmitter {
    * @param {Number} interval
    */
   blinkRed (num = 1, time = 200, interval = 50) {
-    this._write([0x04, "00000010", 0xff & num, time / 50, interval / 50, 0]);
+    this._write([0x04, '00000010', 0xff & num, time / 50, interval / 50, 0]);
   }
 
   /**
@@ -152,7 +152,7 @@ class VguangScanner extends EventEmitter {
    * @param {Number} interval
    */
   blinkGreen (num = 1, time = 200, interval = 50) {
-    this._write([0x04, "00000100", 0xff & num, time / 50, interval / 50, 0]);
+    this._write([0x04, '00000100', 0xff & num, time / 50, interval / 50, 0]);
   }
 
   /**
@@ -161,13 +161,14 @@ class VguangScanner extends EventEmitter {
    * @param {Boolean} is
    */
   toggleLight (is = true) {
-    this._write([0x24, "00000000" + (is ? 1 : 0)]);
+    this._write([0x24, '00000000' + (is ? 1 : 0)]);
   }
 }
 VguangScanner.Events = {
-  "DATA": "data",
-  "ERROR": "error"
-}
+  'DATA': 'data',
+  'ERROR': 'error'
+};
+
 VguangScanner.VguangScannerOption = VguangScannerOption;
 
-module.exports = VguangScanner;
+export default VguangScanner;

@@ -8,6 +8,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [react()],
     base: './',
     build: {
+      target: 'esnext',
       outDir: path.resolve(__dirname, 'dist'), // 빌드 출력 경로 수정
       assetsDir: 'assets',
       emptyOutDir: true,

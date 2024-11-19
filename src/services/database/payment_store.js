@@ -1,7 +1,9 @@
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { app } = require('electron');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import electron from 'electron';
+
+const { app } = electron;
 
 class PaymentStore {
   constructor() {
@@ -23,8 +25,8 @@ class PaymentStore {
 
   // 한국 시간 기준으로 오늘 날짜 가져오기
   getKoreanToday() {
-    const date = new Date().toLocaleString("ko-KR", {
-      timeZone: "Asia/Seoul",
+    const date = new Date().toLocaleString('ko-KR', {
+      timeZone: 'Asia/Seoul',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
@@ -141,4 +143,4 @@ class PaymentStore {
   }
 }
 
-module.exports = PaymentStore;
+export default PaymentStore;

@@ -1,4 +1,4 @@
-const AbstractCarWashMachine = require('../abstract_car_wash_machine');
+import AbstractCarWashMachine from '../abstract_car_wash_machine.js';
 
 class TypeACarWash extends AbstractCarWashMachine {
   constructor(config) {
@@ -44,4 +44,4 @@ class TypeACarWash extends AbstractCarWashMachine {
   }
 }
 
-module.exports = TypeACarWash;
+export default TypeACarWash;

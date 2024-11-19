@@ -1,4 +1,4 @@
-const KisSocket = require('./kis_socket');
+import KisSocket from './kis_socket.js';
 
 async function testPayment() {
   const payment = new KisSocket();

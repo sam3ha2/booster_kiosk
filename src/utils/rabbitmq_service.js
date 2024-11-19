@@ -1,4 +1,4 @@
-const amqp = require('amqplib');
+import amqp from 'amqplib';
 
 class RabbitMQService {
   constructor() {
@@ -19,4 +19,4 @@ class RabbitMQService {
   }
 }
 
-module.exports = RabbitMQService;
+export default RabbitMQService;

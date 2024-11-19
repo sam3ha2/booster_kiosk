@@ -1,5 +1,5 @@
-const AbstractCarWashMachine = require('../abstract_car_wash_machine');
-const ModbusRTU = require('modbus-serial');
+import AbstractCarWashMachine from '../abstract_car_wash_machine.js';
+import ModbusRTU from 'modbus-serial';
 
 // TODO: 미완성
 class SG90CarWash extends AbstractCarWashMachine {
@@ -87,4 +87,4 @@ class SG90CarWash extends AbstractCarWashMachine {
   }
 }
 
-module.exports = SG90CarWash;
+export default SG90CarWash;

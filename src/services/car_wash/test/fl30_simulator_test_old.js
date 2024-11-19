@@ -1,5 +1,5 @@
-const readline = require('readline');
-const FL30CarWash = require('../machine_types/fl30_car_wash');
+import readline from 'readline';
+import FL30CarWash from '../machine_types/fl30_car_wash.js';
 
 const clientPortName = '/dev/tty.usbserial-B003QP3Z';
 const carWash = new FL30CarWash({ portName: clientPortName });

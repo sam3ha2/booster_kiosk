@@ -1,5 +1,5 @@
-const log = require('electron-log');
-const WebSocket = require('ws');
+import log from 'electron-log';
+import WebSocket from 'ws';
 
 class KisSocket {
   constructor() {
@@ -17,27 +17,27 @@ class KisSocket {
           ? `wss://127.0.0.1:1517/${endpoint}`
           : `ws://127.0.0.1:1516/${endpoint}`;
 
-        log.info(webSocketURL + " Connecting...");
+        log.info(webSocketURL + ' Connecting...');
 
         this.webSocket = new WebSocket(webSocketURL);
         this.webSocket.EnableRedirect = true;
 
         this.webSocket.on('open', () => {
-          log.info("WebSocket OPEN");
+          log.info('WebSocket OPEN');
           resolve();
         });
 
         this.webSocket.on('close', () => {
-          log.info("WebSocket CLOSE");
+          log.info('WebSocket CLOSE');
         });
 
         this.webSocket.on('error', (error) => {
-          log.error("WebSocket ERROR:", error);
+          log.error('WebSocket ERROR:', error);
           reject(error);
         });
 
         this.webSocket.on('message', (data) => {
-          log.info("WebSocket MESSAGE");
+          log.info('WebSocket MESSAGE');
           try {
             const response = JSON.parse(data);
             
@@ -103,7 +103,7 @@ class KisSocket {
    */
   sendPing() {
     if (this.webSocket && this.webSocket.readyState === WebSocket.OPEN) {
-      this.webSocket.Ping("PingTest");
+      this.webSocket.Ping('PingTest');
     }
   }
 
@@ -111,7 +111,7 @@ class KisSocket {
    * Agent 중지
    */
   stopAgent() {
-    this.sendMessage("{\"KIS_Agent_Stop\":{}}");
+    this.sendMessage('{\'KIS_Agent_Stop\':{}}');
   }
 
   /**
@@ -178,4 +178,4 @@ class KisSocket {
   }
 }
 
-module.exports = KisSocket;
+export default KisSocket;

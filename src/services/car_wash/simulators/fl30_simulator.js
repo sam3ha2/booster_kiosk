@@ -1,4 +1,6 @@
-const { SerialPort } = require('serialport');
+import serialport from 'serialport';
+
+const { SerialPort } = serialport;
 
 class FL30Simulator {
   constructor(portName) {
@@ -28,7 +30,7 @@ class FL30Simulator {
 
   initialize() {
     this.port.on('open', () => {
-      console.log("[Simulator] FL3.0 시뮬레이터가 초기화되었습니다.");
+      console.log('[Simulator] FL3.0 시뮬레이터가 초기화되었습니다.');
     });
 
     this.port.on('data', (data) => {
@@ -36,7 +38,7 @@ class FL30Simulator {
       if (Math.random() < 0.5) {
         this.onDataReceived(data);
       } else {
-        console.log("[Simulator] 데이터 누락 시뮬레이션");
+        console.log('[Simulator] 데이터 누락 시뮬레이션');
       }
     });
 
@@ -48,13 +50,13 @@ class FL30Simulator {
     this.setCoil(37, false); // M37 (기계 작동 중이 아님)
     this.setCoil(285, false); // M285 (기계 정상 상태)
     this.setRegister(100, 0); // D100 (기계 대기 중)
-    console.log("[Simulator] 초기 상태 설정 완료");
+    console.log('[Simulator] 초기 상태 설정 완료');
   }
 
   onDataReceived(data) {
-    console.log("[Simulator] 원시 데이터 수신:", data.toString('hex'));
+    console.log('[Simulator] 원시 데이터 수신:', data.toString('hex'));
     const request = this.parseModbusASCII(data.toString('hex'));
-    console.log("[Simulator] 파싱된 요청:", request);
+    console.log('[Simulator] 파싱된 요청:', request);
     if (request) {
       this.handleRequest(request);
     }
@@ -92,7 +94,7 @@ class FL30Simulator {
         response = this.handleWriteCoil(slaveId, startAddress, request[4] === 0xFF);
         break;
       default:
-        console.log("[Simulator] 지원하지 않는 기능 코드:", functionCode);
+        console.log('[Simulator] 지원하지 않는 기능 코드:', functionCode);
         return;
     }
 
@@ -131,7 +133,7 @@ class FL30Simulator {
       if (this.registers[100] === 0 || this.registers[100] === 1) {
         this.startWash(address === 208 ? '정밀' : '빠른');
       } else {
-        console.log("[Simulator] 세차 시작 무시: 대기 중이나 종료 상태가 아님");
+        console.log('[Simulator] 세차 시작 무시: 대기 중이나 종료 상태가 아님');
       }
     }
     
@@ -140,7 +142,7 @@ class FL30Simulator {
       if (this.registers[100] === 0 || this.registers[100] === 1) {
         this.stopWash();
       } else {
-        console.log("[Simulator] 복위/정지 명령 무시: 대기 중이나 종료 상태가 아님");
+        console.log('[Simulator] 복위/정지 명령 무시: 대기 중이나 종료 상태가 아님');
       }
     }
 
@@ -149,7 +151,7 @@ class FL30Simulator {
 
   sendResponse(response) {
     const asciiResponse = this.createModbusASCIIResponse(response);
-    console.log("[Simulator] 응답 전송:", asciiResponse.toString('ascii'));
+    console.log('[Simulator] 응답 전송:', asciiResponse.toString('ascii'));
     this.port.write(asciiResponse, (err) => {
       if (err) {
         console.error(`[Simulator] 응답 전송 중 오류 발생: ${err.message}`);
@@ -277,14 +279,14 @@ class FL30Simulator {
   close() {
     return new Promise((resolve) => {
       this.port.close(() => {
-        console.log("[Simulator] 포트가 닫혔습니다.");
+        console.log('[Simulator] 포트가 닫혔습니다.');
         resolve();
       });
     });
   }
 }
 
-module.exports = FL30Simulator;
+export default FL30Simulator;
 
 // 시뮬레이터를 독립적으로 실행할 수 있는 코드
 if (require.main === module) {

@@ -1,5 +1,5 @@
-const VguangScanner = require('./vguang/VguangScanner');
-const EventEmitter = require('events');
+import VguangScanner from './vguang/VguangScanner.js';
+import EventEmitter from 'events';
 
 class ScannerManager extends EventEmitter {
   constructor() {
@@ -9,19 +9,20 @@ class ScannerManager extends EventEmitter {
 
   initialize() {
     if (this.scanner) {
-      console.log("Scanner already initialized");
+      console.log('Scanner already initialized');
+      return
     }
 
-    console.log("Initializing scanner...");
+    console.log('Initializing scanner...');
     try {
-      this.scanner = new VguangScanner({ mode: "tx400" });
-      this.scanner.on("ready", () => {
-        console.log("스캐너가 준비되었습니다.");
+      this.scanner = new VguangScanner({ mode: 'tx400' });
+      this.scanner.on('ready', () => {
+        console.log('스캐너가 준비되었습니다.');
         this.emit('ready');
       });
 
       let is = true;
-      this.scanner.on("data", (data) => {
+      this.scanner.on('data', (data) => {
         if (is) {
           is = false;
           this.emit('data', data);
@@ -29,12 +30,12 @@ class ScannerManager extends EventEmitter {
         }
       });
 
-      this.scanner.on("error", (error) => {
-        console.error("스캐너 오류:", error);
+      this.scanner.on('error', (error) => {
+        console.error('스캐너 오류:', error);
         this.emit('error', error);
       });
     } catch (error) {
-      console.log("스캐너 초기화 실패:", error);
+      console.log('스캐너 초기화 실패:', error);
       throw error;
     }
   }
@@ -66,4 +67,4 @@ class ScannerManager extends EventEmitter {
   }
 }
 
-module.exports = ScannerManager;
+export default ScannerManager;

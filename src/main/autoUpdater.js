@@ -1,13 +1,16 @@
-const { autoUpdater } = require('electron-updater');
-const log = require('electron-log');
-const { dialog } = require('electron');
+import * as electronUpdater from 'electron-updater';
+import log from 'electron-log';
+import { dialog } from 'electron';
+
+const { autoUpdater } = electronUpdater;
 
 function setupAutoUpdater() {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   // 로깅 설정
-  autoUpdater.logger = log;
-  autoUpdater.logger.transports.file.level = 'debug';
+  // ESM 변경 후 logger undefined 에러 발생
+  // autoUpdater.logger = log;
+  // autoUpdater.logger.transports.file.level = 'debug';
   log.info('Auto Updater setup starting...');
 
   // 개발 환경에서도 업데이트 확인 강제
@@ -90,4 +93,4 @@ function setupAutoUpdater() {
   }
 }
 
-module.exports = setupAutoUpdater;
+export default setupAutoUpdater;

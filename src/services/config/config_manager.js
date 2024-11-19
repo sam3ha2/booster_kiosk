@@ -1,9 +1,9 @@
-// const log = require('electron-log');
-const { BrowserWindow } = require('electron');
-const EventEmitter = require('events');
-const {cloneDeep} = require('lodash');
-const {readFile} = require("node:fs");
-const URLSafeBase64 = require('urlsafe-base64');
+import EventEmitter from 'events';
+import lodash from 'lodash';
+import { readFile } from 'node:fs';
+import URLSafeBase64 from 'urlsafe-base64';
+
+const { cloneDeep } = lodash;
 
 class ConfigManager extends EventEmitter {
   constructor() {
@@ -98,4 +98,4 @@ class ConfigManager extends EventEmitter {
   }
 }
 
-module.exports = ConfigManager;
+export default ConfigManager;

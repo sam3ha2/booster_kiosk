@@ -1,9 +1,12 @@
-const log = require('electron-log');
-const { BrowserWindow } = require('electron');
-const { SerialPort } = require('serialport');
-const SG90CarWash = require('./machine_types/sg90_car_wash');
-const FL30CarWash = require('./machine_types/fl30_car_wash');
-const EventEmitter = require('events');
+import log from 'electron-log';
+import electron from 'electron';
+import serialport from 'serialport';
+import SG90CarWash from './machine_types/sg90_car_wash.js';
+import FL30CarWash from './machine_types/fl30_car_wash.js';
+import EventEmitter from 'events';
+
+const { BrowserWindow } = electron;
+const { SerialPort } = serialport;
 
 class CarWashManager extends EventEmitter {
   constructor() {
@@ -275,4 +278,4 @@ class CarWashManager extends EventEmitter {
   }
 }
 
-module.exports = CarWashManager;
+export default CarWashManager;

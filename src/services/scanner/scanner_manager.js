@@ -10,7 +10,7 @@ class ScannerManager extends EventEmitter {
   initialize() {
     if (this.scanner) {
       console.log('Scanner already initialized');
-      return
+      return;
     }
 
     console.log('Initializing scanner...');
@@ -26,7 +26,7 @@ class ScannerManager extends EventEmitter {
         if (is) {
           is = false;
           this.emit('data', data);
-          setTimeout(() => is = true, 2000);
+          setTimeout(() => (is = true), 2000);
         }
       });
 
@@ -62,7 +62,7 @@ class ScannerManager extends EventEmitter {
 
   getDeviceStatus() {
     return {
-      connected: this.scanner !== null
+      connected: this.scanner !== null,
     };
   }
 }

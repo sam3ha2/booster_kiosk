@@ -1,0 +1,18 @@
+# 특정 파일 제외
+node_modules
+dist/
+build/
+package-lock.json
+
+# 특정 파일 형식 제외
+*.min.js
+*.map
+
+# 특정 디렉토리 안의 파일 제외
+src/services/car_wash/manuels/
+
+# 특정 파일 제외
+Booster API.postman_collection.json
+**/*.yml
+**/*.jsx
+**/*.html

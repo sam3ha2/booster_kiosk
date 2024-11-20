@@ -8,7 +8,7 @@ const carWash = new FL30CarWash({ portName: clientPortName });
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 async function initializeTest() {
@@ -111,10 +111,12 @@ async function handleUserInput(choice) {
 }
 
 console.log('FL30 시뮬레이터 테스트를 시작합니다...');
-initializeTest().then(showMenu).catch(error => {
-  console.error('초기화 중 오류 발생:', error);
-  process.exit(1);
-});
+initializeTest()
+  .then(showMenu)
+  .catch((error) => {
+    console.error('초기화 중 오류 발생:', error);
+    process.exit(1);
+  });
 
 process.on('uncaughtException', (error) => {
   console.error('처리되지 않은 예외:', error);

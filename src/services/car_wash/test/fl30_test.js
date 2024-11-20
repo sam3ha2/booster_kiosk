@@ -6,7 +6,7 @@ class FL30Test {
     this.carWash = new FL30CarWash(config);
     this.rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
   }
 
@@ -40,7 +40,6 @@ class FL30Test {
       this.carWash.on('stopped', () => {
         console.log('\n⏹ 세차 정지됨');
       });
-
     } catch (error) {
       console.error('FL30 세차기 초기화 실패:', error);
       throw error;
@@ -59,7 +58,7 @@ class FL30Test {
     console.log('88. 세차 정지');
     console.log('99. 리셋');
     console.log('100. 종료');
-    
+
     this.rl.question('\n선택하세요: ', async (choice) => {
       await this.handleChoice(choice);
     });
@@ -67,24 +66,27 @@ class FL30Test {
 
   async handleChoice(choice) {
     try {
-      switch(choice) {
+      switch (choice) {
         case '1':
           console.log('\nMODE1 세차 시작...');
-          this.carWash.start('MODE1')
+          this.carWash
+            .start('MODE1')
             .then((response) => console.log('MODE1', response))
             .catch((error) => console.error('error', error));
           break;
 
         case '2':
           console.log('\nMODE2 세차 시작...');
-          this.carWash.start('MODE2')
+          this.carWash
+            .start('MODE2')
             .then((response) => console.log('MODE2', response))
             .catch((error) => console.error('error', error));
           break;
 
         case '3':
           console.log('\nMODE3 세차 시작...');
-          this.carWash.start('MODE3')
+          this.carWash
+            .start('MODE3')
             .then((response) => console.log('MODE3', response))
             .catch((error) => console.error('error', error));
           break;
@@ -150,7 +152,7 @@ class FL30Test {
 // 테스트 실행
 async function runTest() {
   const tester = new FL30Test({
-    portName: process.argv[2] || '/dev/ttys017'
+    portName: process.argv[2] || '/dev/ttys017',
   });
 
   try {

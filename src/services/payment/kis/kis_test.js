@@ -12,18 +12,17 @@ async function testPayment() {
         vatAmt: '100',
         svcAmt: '0',
         installment: '0',
-        isApproval: true
+        isApproval: true,
       });
-
 
       if (result.isSuccess) {
         console.log('결제 승인 성공:', {
           카드번호: result.outCardNo,
           승인번호: result.outAuthNo,
           승인일시: result.outReplyDate,
-          응답메시지: result.outReplyMsg1
+          응답메시지: result.outReplyMsg1,
         });
-        
+
         // 승인 성공 시 취소 테스트 실행
         setTimeout(() => {
           cancelPayment(result.outAuthNo, result.outReplyDate.slice(-6));
@@ -31,7 +30,7 @@ async function testPayment() {
       } else {
         console.log('결제 승인 실패:', {
           에러코드: result.outReplyCode,
-          에러메시지: result.outReplyMsg1
+          에러메시지: result.outReplyMsg1,
         });
       }
     } catch (error) {
@@ -50,19 +49,19 @@ async function testPayment() {
         installment: '0',
         orgAuthNo: authNo,
         orgAuthDate: authDate,
-        isApproval: false
+        isApproval: false,
       });
-      
+
       if (result.isSuccess) {
         console.log('결제 취소 성공:', {
           취소승인번호: result.outAuthNo,
           취소일시: result.outReplyDate,
-          응답메시지: result.outReplyMsg1
+          응답메시지: result.outReplyMsg1,
         });
       } else {
         console.log('결제 취소 실패:', {
           에러코드: result.outReplyCode,
-          에러메시지: result.outReplyMsg1
+          에러메시지: result.outReplyMsg1,
         });
       }
     } catch (error) {
@@ -78,13 +77,12 @@ async function testPayment() {
     // WebSocket 연결 시작
     await payment.connect();
     console.log('WebSocket 연결 성공');
-    
+
     // 승인 테스트 실행
     await approvePayment();
     // await cancelPayment('61394728', '241101');
 
     payment.disconnect();
-
   } catch (error) {
     console.error('테스트 실패:', error);
     process.exit(1);

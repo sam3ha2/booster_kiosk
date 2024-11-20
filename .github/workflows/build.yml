@@ -8,10 +8,10 @@ on:
 jobs:
   release:
     runs-on: windows-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -33,7 +33,7 @@ jobs:
           $decodedDevText = [System.Text.Encoding]::UTF8.GetString($decodedDevBytes)
           $decodedDevText | Out-File -FilePath .env.development -Encoding UTF8
           echo ".env.development file created"
-          
+
           echo "Decoding and creating .env.production file..."
           $encodedProdContent = "${{ secrets.ENV_PROD_FILE }}"
           $decodedProdBytes = [System.Convert]::FromBase64String($encodedProdContent)
@@ -54,7 +54,7 @@ jobs:
 
       - name: Build Vite
         run: npm run build
-        
+
       - name: Build and publish Electron
         env:
           GH_TOKEN: ${{ env.GH_TOKEN }}

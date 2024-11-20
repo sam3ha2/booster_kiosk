@@ -7,7 +7,7 @@ class FL30CarWash extends AbstractCarWashMachine {
     super(config);
     this.client = new ModbusRTU();
     this.eventEmitter = new EventEmitter();
-    this.address = 1;  // Modbus slave address
+    this.address = 1; // Modbus slave address
     this.isConnected = false;
     this.statusCheckInterval = null;
     this.STATUS_CHECK_INTERVAL = 1000; // 1초마다 상태 확인
@@ -22,7 +22,7 @@ class FL30CarWash extends AbstractCarWashMachine {
         baudRate: 9600,
         dataBits: 8,
         stopBits: 1,
-        parity: 'even'
+        parity: 'even',
       });
       this.client.setTimeout(10000);
 
@@ -46,13 +46,13 @@ class FL30CarWash extends AbstractCarWashMachine {
       let address;
       switch (mode) {
         case 'MODE1':
-          address = 0xD0;  // M208
+          address = 0xd0; // M208
           break;
         case 'MODE2':
-          address = 0xD1;  // M209
+          address = 0xd1; // M209
           break;
         case 'MODE3':
-          address = 0xD2;  // M210
+          address = 0xd2; // M210
           break;
         default:
           throw new Error('알 수 없는 세차 모드');
@@ -70,7 +70,7 @@ class FL30CarWash extends AbstractCarWashMachine {
 
   async stop() {
     try {
-      await this.client.writeCoil(0xCE, true);  // M206
+      await this.client.writeCoil(0xce, true); // M206
       this.isWashing = false;
       this.eventEmitter.emit('stopped');
     } catch (error) {
@@ -81,7 +81,7 @@ class FL30CarWash extends AbstractCarWashMachine {
 
   async reset() {
     try {
-      await this.client.writeCoil(0xCF, true);  // M207
+      await this.client.writeCoil(0xcf, true); // M207
       this.isWashing = false;
       this.eventEmitter.emit('reset');
     } catch (error) {
@@ -102,7 +102,7 @@ class FL30CarWash extends AbstractCarWashMachine {
       7: '하부 세차 중',
       8: '세제 분사 완료, 대기 중',
       9: '스노우폼 분사 완료, 고압수 대기 중',
-      10: '결제 성공'
+      10: '결제 성공',
     };
     return statusMap[status] || this.currentStep;
   }
@@ -133,12 +133,12 @@ class FL30CarWash extends AbstractCarWashMachine {
   // Modbus 함수 코드 3 (Read Holding Registers)를 사용하여 상태 확인
   async checkStatus() {
     try {
-      const result = await this.client.readHoldingRegisters(0x64, 1);  // D100
+      const result = await this.client.readHoldingRegisters(0x64, 1); // D100
       const status = result.data[0];
       this.currentStep = this.interpretStep(status);
       this.eventEmitter.emit('statusUpdate', {
         status: status,
-        currentStep: this.currentStep
+        currentStep: this.currentStep,
       });
     } catch (error) {
       console.error('상태 확인 실패:', error);
@@ -148,7 +148,7 @@ class FL30CarWash extends AbstractCarWashMachine {
   // Modbus 함수 코드 1 (Read Coils)를 사용하여 차량 존재 여부 확인
   async checkExistCar() {
     try {
-      const result = await this.client.readCoils(0x2E, 1);  // M46
+      const result = await this.client.readCoils(0x2e, 1); // M46
       this.eventEmitter.emit('carExist', result.data[0]);
     } catch (error) {
       console.error('차량 존재 확인 실패:', error);
@@ -158,7 +158,7 @@ class FL30CarWash extends AbstractCarWashMachine {
   // Modbus 함수 코드 1 (Read Coils)를 사용하여 오류 상태 확인
   async checkErrorStatus() {
     try {
-      const result = await this.client.readCoils(0x11D, 1);  // M285
+      const result = await this.client.readCoils(0x11d, 1); // M285
       this.eventEmitter.emit('errorStatusUpdate', result.data[0]);
     } catch (error) {
       console.error('오류 상태 확인 실패:', error);
@@ -168,7 +168,7 @@ class FL30CarWash extends AbstractCarWashMachine {
   // Modbus 함수 코드 1 (Read Coils)를 사용하여 세차 완료 상태 확인
   async checkWashingComplete() {
     try {
-      const result = await this.client.readCoils(0x88, 1);  // M136
+      const result = await this.client.readCoils(0x88, 1); // M136
       this.eventEmitter.emit('washingComplete', result.data[0] === 1);
     } catch (error) {
       console.error('세차 완료 상태 확인 실패:', error);

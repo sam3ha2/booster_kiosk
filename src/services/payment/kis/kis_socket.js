@@ -13,9 +13,10 @@ class KisSocket {
   connect(endpoint = '', protocol = 'ws') {
     return new Promise((resolve, reject) => {
       try {
-        const webSocketURL = protocol === 'wss' 
-          ? `wss://127.0.0.1:1517/${endpoint}`
-          : `ws://127.0.0.1:1516/${endpoint}`;
+        const webSocketURL =
+          protocol === 'wss'
+            ? `wss://127.0.0.1:1517/${endpoint}`
+            : `ws://127.0.0.1:1516/${endpoint}`;
 
         log.info(webSocketURL + ' Connecting...');
 
@@ -40,7 +41,7 @@ class KisSocket {
           log.info('WebSocket MESSAGE');
           try {
             const response = JSON.parse(data);
-            
+
             if (response.message) {
               log.info('KIS 응답:', response);
               return;
@@ -111,7 +112,7 @@ class KisSocket {
    * Agent 중지
    */
   stopAgent() {
-    this.sendMessage('{\'KIS_Agent_Stop\':{}}');
+    this.sendMessage("{'KIS_Agent_Stop':{}}");
   }
 
   /**
@@ -131,7 +132,7 @@ class KisSocket {
     installment = '0',
     auth_no = '',
     auth_date = '',
-    is_approval = true
+    is_approval = true,
   }) {
     return {
       KIS_ICApproval: {
@@ -142,8 +143,8 @@ class KisSocket {
         inSvcAmt: svc_amt,
         inInstallment: installment,
         inOrgAuthNo: auth_no,
-        inOrgAuthDate: auth_date.slice(-6)
-      }
+        inOrgAuthDate: auth_date.slice(-6),
+      },
     };
   }
 
@@ -173,7 +174,7 @@ class KisSocket {
       outIssuerCode: response.outIssuerCode || '',
       outIssuerName: response.outIssuerName || '',
       outMerchantRegNo: response.outMerchantRegNo || '',
-      isSuccess: response.outRtn === 0 && response.outAgentCode === '0000'
+      isSuccess: response.outRtn === 0 && response.outAgentCode === '0000',
     };
   }
 }

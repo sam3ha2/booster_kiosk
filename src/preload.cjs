@@ -55,14 +55,17 @@ contextBridge.exposeInMainWorld('paymentIPC', {
 contextBridge.exposeInMainWorld('databaseIPC', {
   getPaymentsByDate: (date) => ipcRenderer.invoke('db:payment:get-payments-by-date', date),
   registerPayment: (params) => ipcRenderer.invoke('db:payment:register', params),
-  updatePaymentSuccess: (id, date, result) => ipcRenderer.invoke('db:payment:update', id, date, 'APPROVED', result),
-  updatePaymentFailure: (id, date, error) => ipcRenderer.invoke('db:payment:update', id, date, 'FAILED', error),
-  updatePaymentCancel: (id, date, result) => ipcRenderer.invoke('db:payment:update', id, date, 'CANCELED', result),
+  updatePaymentSuccess: (id, date, result) =>
+    ipcRenderer.invoke('db:payment:update', id, date, 'APPROVED', result),
+  updatePaymentFailure: (id, date, error) =>
+    ipcRenderer.invoke('db:payment:update', id, date, 'FAILED', error),
+  updatePaymentCancel: (id, date, result) =>
+    ipcRenderer.invoke('db:payment:update', id, date, 'CANCELED', result),
 });
 
 contextBridge.exposeInMainWorld('appControl', {
   relaunch: () => ipcRenderer.invoke('app:relaunch'),
   quit: () => ipcRenderer.invoke('app:quit'),
   toggleKiosk: (enable) => ipcRenderer.invoke('app:toggle-kiosk', enable),
-  getKioskState: () => ipcRenderer.invoke('app:get-kiosk-state')
-}); 
+  getKioskState: () => ipcRenderer.invoke('app:get-kiosk-state'),
+});

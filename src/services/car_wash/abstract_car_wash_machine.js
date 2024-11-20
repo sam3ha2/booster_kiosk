@@ -41,7 +41,7 @@ class AbstractCarWashMachine {
   }
 
   async sendCommand(command) {
-    console.log(`${command}`)
+    console.log(`${command}`);
     return new Promise((resolve, reject) => {
       this.serialPort.write(command, (err) => {
         if (err) {

@@ -8,7 +8,11 @@ const { app } = electron;
 class PaymentStore {
   constructor() {
     const isDevelopment = process.env.NODE_ENV === 'development';
-    this.baseDir = path.join(app.getPath('userData'), `data${isDevelopment ? '_dev' : ''}`, 'payments');
+    this.baseDir = path.join(
+      app.getPath('userData'),
+      `data${isDevelopment ? '_dev' : ''}`,
+      'payments',
+    );
     this.ensureDatabase();
   }
 
@@ -29,7 +33,7 @@ class PaymentStore {
       timeZone: 'Asia/Seoul',
       year: 'numeric',
       month: '2-digit',
-      day: '2-digit'
+      day: '2-digit',
     });
     return date.replace(/\D/g, '');
   }
@@ -38,7 +42,7 @@ class PaymentStore {
   async registerPayment(paymentData) {
     const today = this.getKoreanToday();
     const filePath = this.getFilePath(today);
-    
+
     let data = await this.getPaymentsByDate(today);
     const newPayment = {
       id: crypto.randomUUID(),
@@ -56,8 +60,8 @@ class PaymentStore {
   async updatePayment(id, date, status, updateData) {
     const filePath = this.getFilePath(date);
     let dbData = await this.getPaymentsByDate(date);
-    
-    const paymentIndex = dbData.orders.findIndex(p => p.id === id);
+
+    const paymentIndex = dbData.orders.findIndex((p) => p.id === id);
     if (paymentIndex === -1) return null;
 
     const orgData = dbData.orders[paymentIndex];
@@ -88,7 +92,7 @@ class PaymentStore {
       ...orgData,
       ...result,
       status: 'APPROVED',
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
   }
 
@@ -98,7 +102,7 @@ class PaymentStore {
       ...orgData,
       reply_msg1: error.message || '결제 실패',
       status: 'FAILED',
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
   }
 
@@ -110,7 +114,7 @@ class PaymentStore {
       reply_msg2: result.reply_msg2,
       trade_req_time: result.trade_req_time || orgData.trade_req_time,
       status: 'CANCELED',
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
   }
 
@@ -131,7 +135,7 @@ class PaymentStore {
   // 특정 ID의 결제 정보 조회
   async getPaymentById(date, id) {
     const data = await this.getPaymentsByDate(date);
-    const payment = data.orders.find(p => p.id === id);
+    const payment = data.orders.find((p) => p.id === id);
     if (payment) return payment;
     return null;
   }

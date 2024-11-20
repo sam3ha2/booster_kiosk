@@ -25,23 +25,21 @@ class CarWashManager extends EventEmitter {
   async connectDevice() {
     try {
       if (this.machine) {
-        return { 
-          success: false, 
+        return {
+          success: false,
           message: '이미 연결된 세차기가 있습니다.',
-          status: this.getMachineStatus()
+          status: this.getMachineStatus(),
         };
       }
 
       const ports = await SerialPort.list();
-      const fl30Port = ports.find((port) =>
-        port.vendorId === '0403' && port.productId === '6001'
-      );
+      const fl30Port = ports.find((port) => port.vendorId === '0403' && port.productId === '6001');
 
       if (!fl30Port) {
-        return { 
-          success: false, 
+        return {
+          success: false,
           message: '연결 가능한 세차기를 찾을 수 없습니다.',
-          status: this.getMachineStatus()
+          status: this.getMachineStatus(),
         };
       }
 
@@ -50,20 +48,20 @@ class CarWashManager extends EventEmitter {
         config: {
           id: fl30Port.path,
           portName: fl30Port.path,
-          address: 0x01
-        }
+          address: 0x01,
+        },
       });
 
       return {
         ...result,
-        status: this.getMachineStatus()
+        status: this.getMachineStatus(),
       };
     } catch (error) {
       console.error('세차기 연결 중 오류:', error);
       return {
         success: false,
         error: error.message,
-        status: this.getMachineStatus()
+        status: this.getMachineStatus(),
       };
     }
   }
@@ -74,7 +72,7 @@ class CarWashManager extends EventEmitter {
         return {
           success: false,
           message: '연결된 세차기가 없습니다.',
-          status: this.getMachineStatus()
+          status: this.getMachineStatus(),
         };
       }
 
@@ -87,14 +85,14 @@ class CarWashManager extends EventEmitter {
       return {
         success: true,
         message: '세차기 연결이 해제되었습니다.',
-        status: this.getMachineStatus()
+        status: this.getMachineStatus(),
       };
     } catch (error) {
       console.error('세차기 연결 해제 중 오류:', error);
       return {
         success: false,
         error: error.message,
-        status: this.getMachineStatus()
+        status: this.getMachineStatus(),
       };
     }
   }
@@ -148,7 +146,7 @@ class CarWashManager extends EventEmitter {
 
   sendStatusUpdate(state) {
     const windows = BrowserWindow.getAllWindows();
-    windows.forEach(window => {
+    windows.forEach((window) => {
       window.webContents.send('status-update', state);
     });
   }
@@ -194,7 +192,7 @@ class CarWashManager extends EventEmitter {
 
   startPeriodicStatusCheck(turnOn) {
     if (!this.machine) return;
-    
+
     if (turnOn) {
       this.machine.startStatusCheck();
     } else {
@@ -209,7 +207,7 @@ class CarWashManager extends EventEmitter {
   }
 
   checkMachineStatus() {
-    if (this.lastStatusReceived && (Date.now() - this.lastStatusReceived > 30000)) {
+    if (this.lastStatusReceived && Date.now() - this.lastStatusReceived > 30000) {
       this.handleConnectionIssue();
     }
   }
@@ -248,7 +246,7 @@ class CarWashManager extends EventEmitter {
       if (!this.machine) {
         return {
           connected: false,
-          error: '세차기가 연결되지 않았습니다.'
+          error: '세차기가 연결되지 않았습니다.',
         };
       }
 
@@ -259,20 +257,21 @@ class CarWashManager extends EventEmitter {
           currentStep: this.machine.currentStep || '없음',
           remainingTime: this.machine.remainingTime || 0,
           progress: this.machine.progress || 0,
-          error: this.machine.error || null
+          error: this.machine.error || null,
         },
         machineInfo: {
           type: this.machine.constructor.name,
-          portName: this.machine.config?.portName
+          portName: this.machine.config?.portName,
         },
-        lastStatusReceived: this.machine.lastStatusReceived ? 
-          this.machine.lastStatusReceived.toISOString() : null
+        lastStatusReceived: this.machine.lastStatusReceived
+          ? this.machine.lastStatusReceived.toISOString()
+          : null,
       };
     } catch (error) {
       console.error('getMachineStatus error:', error);
       return {
         connected: false,
-        error: error.message
+        error: error.message,
       };
     }
   }

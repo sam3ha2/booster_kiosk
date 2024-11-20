@@ -52,11 +52,11 @@ class PaymentManager {
    * @param {Object} params
    * @param {string} params.tran_amt - 거래금액
    * @param {string} params.vat_amt - 부가세
-   * @param {string} params.svc_amt - 봉사료 
+   * @param {string} params.svc_amt - 봉사료
    * @param {string} params.installment - 할부개월수
    */
   async requestPayment(params) {
-    return await this.processPayment({...params, is_approval: true});
+    return await this.processPayment({ ...params, is_approval: true });
   }
 
   /**
@@ -88,7 +88,7 @@ class PaymentManager {
 
   getDeviceStatus() {
     return {
-      connected: this.van.webSocket.readyState == WebSocket.OPEN
+      connected: this.van.webSocket.readyState == WebSocket.OPEN,
     };
   }
 }

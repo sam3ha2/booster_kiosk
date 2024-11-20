@@ -6,7 +6,7 @@ const carWash = new FL30CarWash({ portName: clientPortName });
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 async function initializeTest() {

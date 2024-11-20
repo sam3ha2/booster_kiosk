@@ -7,7 +7,7 @@ async function testPrinter() {
 
     const printerManager = new PrinterManager();
     printerManager.initialize();
-    
+
     // await printerManager.print({
     //   text: [
     //     { content: '123456789012345678901234567890123456789012345678901234567890', encoding: 'EUC-KR' },

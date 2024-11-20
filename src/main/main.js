@@ -30,7 +30,6 @@ const printerManager = new PrinterManager();
 const paymentManager = new PaymentManager();
 const paymentStore = new PaymentStore();
 
-
 async function loadConfigToEnv() {
   let configResult = await configManager.loadConfiguration();
   console.log(configResult);
@@ -43,7 +42,6 @@ async function loadConfigToEnv() {
 }
 
 loadConfigToEnv();
-
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -266,10 +264,20 @@ function setPrinterHandlers() {
   ipcMain.handle('printer:printTest', async (event) => {
     return await printerManager.print({
       text: [
-        { content: '123456789012345678901234567890123456789012345678901234567890', encoding: 'EUC-KR' },
-        { content: 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz', encoding: 'EUC-KR' },
-        { content: '가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하', encoding: 'EUC-KR' },
-      ]
+        {
+          content: '123456789012345678901234567890123456789012345678901234567890',
+          encoding: 'EUC-KR',
+        },
+        {
+          content: 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz',
+          encoding: 'EUC-KR',
+        },
+        {
+          content:
+            '가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하',
+          encoding: 'EUC-KR',
+        },
+      ],
     });
   });
 }
@@ -338,16 +346,16 @@ function setAppHandlers() {
   });
 
   ipcMain.handle('app:get-kiosk-state', () => {
-    return { 
-      isKiosk: mainWindow ? mainWindow.isKiosk() : false 
+    return {
+      isKiosk: mainWindow ? mainWindow.isKiosk() : false,
     };
   });
-  
+
   ipcMain.handle('app:relaunch', () => {
     app.relaunch();
     app.quit();
   });
-  
+
   ipcMain.handle('app:quit', () => {
     app.quit();
   });

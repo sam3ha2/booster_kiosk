@@ -14,9 +14,9 @@ export default defineConfig(({ command, mode }) => {
       emptyOutDir: true,
       rollupOptions: {
         input: {
-          main: path.resolve(__dirname, 'src/renderer/index.html')
-        }
-      }
+          main: path.resolve(__dirname, 'src/renderer/index.html'),
+        },
+      },
     },
     resolve: {
       alias: {
@@ -38,5 +38,5 @@ export default defineConfig(({ command, mode }) => {
     server: {
       port: 5173,
     },
-  }
+  };
 });

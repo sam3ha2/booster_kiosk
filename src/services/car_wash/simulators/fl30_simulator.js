@@ -11,7 +11,13 @@ class FL30Simulator {
     this.carPresent = false;
     this.coils = new Array(286).fill(false);
     this.registers = new Array(101).fill(0);
-    this.port = new SerialPort({ path: portName, baudRate: 9600, parity: 'even', stopBits: 1, dataBits: 8 });
+    this.port = new SerialPort({
+      path: portName,
+      baudRate: 9600,
+      parity: 'even',
+      stopBits: 1,
+      dataBits: 8,
+    });
     this.washTimer = null;
     this.washStatus = 'idle';
     this.currentMode = null;
@@ -23,7 +29,7 @@ class FL30Simulator {
       { step: 7, description: '하부 분사 중' },
       { step: 4, description: '왁스 분사 중' },
       { step: 5, description: '건조 중' },
-      { step: 1, description: '세차 종료' }
+      { step: 1, description: '세차 종료' },
     ];
     this.currentStepIndex = 0;
   }
@@ -80,7 +86,9 @@ class FL30Simulator {
     const startAddress = (request[2] << 8) | request[3];
     const quantity = (request[4] << 8) | request[5];
 
-    console.log(`[Simulator] 요청 수신 - Slave ID: ${slaveId}, 기능 코드: ${functionCode}, 시작 주소: ${startAddress}, 수량: ${quantity}`);
+    console.log(
+      `[Simulator] 요청 수신 - Slave ID: ${slaveId}, 기능 코드: ${functionCode}, 시작 주소: ${startAddress}, 수량: ${quantity}`,
+    );
 
     let response;
     switch (functionCode) {
@@ -91,7 +99,7 @@ class FL30Simulator {
         response = this.handleReadHoldingRegisters(slaveId, startAddress, quantity);
         break;
       case 5: // Write Single Coil
-        response = this.handleWriteCoil(slaveId, startAddress, request[4] === 0xFF);
+        response = this.handleWriteCoil(slaveId, startAddress, request[4] === 0xff);
         break;
       default:
         console.log('[Simulator] 지원하지 않는 기능 코드:', functionCode);
@@ -105,10 +113,10 @@ class FL30Simulator {
     const coilValues = this.coils.slice(startAddress, startAddress + quantity);
     const byteCount = Math.ceil(quantity / 8);
     const responseData = new Array(byteCount).fill(0);
-    
+
     coilValues.forEach((value, index) => {
       if (value) {
-        responseData[Math.floor(index / 8)] |= (1 << (index % 8));
+        responseData[Math.floor(index / 8)] |= 1 << index % 8;
       }
     });
 
@@ -118,16 +126,16 @@ class FL30Simulator {
   handleReadHoldingRegisters(slaveId, startAddress, quantity) {
     const registerValues = this.registers.slice(startAddress, startAddress + quantity);
     const responseData = [slaveId, 0x03, quantity * 2];
-    registerValues.forEach(value => {
-      responseData.push((value >> 8) & 0xFF);
-      responseData.push(value & 0xFF);
+    registerValues.forEach((value) => {
+      responseData.push((value >> 8) & 0xff);
+      responseData.push(value & 0xff);
     });
     return responseData;
   }
 
   handleWriteCoil(slaveId, address, value) {
     this.setCoil(address, value);
-    
+
     // 세차 시작 신호 처리
     if ((address === 208 || address === 209) && value) {
       if (this.registers[100] === 0 || this.registers[100] === 1) {
@@ -136,7 +144,7 @@ class FL30Simulator {
         console.log('[Simulator] 세차 시작 무시: 대기 중이나 종료 상태가 아님');
       }
     }
-    
+
     // 복위(Reset) 또는 정지 명령 처리
     if ((address === 207 || address === 206) && value) {
       if (this.registers[100] === 0 || this.registers[100] === 1) {
@@ -146,7 +154,7 @@ class FL30Simulator {
       }
     }
 
-    return [slaveId, 0x05, (address >> 8) & 0xFF, address & 0xFF, value ? 0xFF : 0x00, 0x00];
+    return [slaveId, 0x05, (address >> 8) & 0xff, address & 0xff, value ? 0xff : 0x00, 0x00];
   }
 
   sendResponse(response) {
@@ -161,10 +169,11 @@ class FL30Simulator {
 
   createModbusASCIIResponse(data) {
     let lrc = data.reduce((a, b) => a + b, 0);
-    lrc = ((lrc ^ 0xFF) + 1) & 0xFF;
+    lrc = ((lrc ^ 0xff) + 1) & 0xff;
     data.push(lrc);
 
-    const ascii = ':' + data.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join('') + '\r\n';
+    const ascii =
+      ':' + data.map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join('') + '\r\n';
     return Buffer.from(ascii, 'ascii');
   }
 
@@ -212,7 +221,9 @@ class FL30Simulator {
       console.log(`[Simulator] 오류 상태 변경: ${prevErrorStatus} -> ${this.errorStatus}`);
     }
     if (this.currentProcess !== prevCurrentProcess) {
-      console.log(`[Simulator] 현재 프로세스 변경: ${prevCurrentProcess} -> ${this.currentProcess}`);
+      console.log(
+        `[Simulator] 현재 프로세스 변경: ${prevCurrentProcess} -> ${this.currentProcess}`,
+      );
     }
   }
 
@@ -256,7 +267,7 @@ class FL30Simulator {
     this.setCoil(37, false); // M37 (기계 작동 중이 아님)
     this.setCoil(136, true); // M136 (세차 종료)
     this.setRegister(100, 1); // D100 (세차 종료)
-    
+
     this.status = 'idle';
 
     setTimeout(() => {

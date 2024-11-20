@@ -12,7 +12,7 @@ class TypeACarWash extends AbstractCarWashMachine {
       baudRate: 115200, // 예시로 다른 baudRate를 사용
       dataBits: 8,
       stopBits: 1,
-      parity: 'none'
+      parity: 'none',
     };
   }
 

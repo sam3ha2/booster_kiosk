@@ -17,7 +17,7 @@ class SG90Simulator {
       baudRate: 9600,
       dataBits: 7,
       stopBits: 1,
-      parity: 'even'
+      parity: 'even',
     });
     this.client.setID(1);
     console.log('[Simulator] 시뮬레이터가 초기화되었습니다.');
@@ -33,7 +33,7 @@ class SG90Simulator {
     console.log(`[Simulator] 원시 데이터 수신:`, data);
     const hexData = data.toString('hex');
     console.log(`[Simulator] 16진수 데이터: ${hexData}`);
-    
+
     // ASCII 데이터로 변환
     const asciiData = data.toString('ascii');
     console.log(`[Simulator] ASCII 데이터: ${asciiData}`);
@@ -60,12 +60,12 @@ class SG90Simulator {
     // console.log(`[Simulator] updateStatus 호출됨: status=${this.status}`);
     // 실제 장치의 동작을 모방하여 상태 업데이트
     if (this.status === 'running') {
-      await this.client.writeCoil(0x08D6, true);
+      await this.client.writeCoil(0x08d6, true);
     } else {
-      await this.client.writeCoil(0x08D6, false);
+      await this.client.writeCoil(0x08d6, false);
     }
-    await this.client.writeRegister(0x19F6, this.totalWashCount);
-    await this.client.writeRegister(0x19F8, this.dailyWashCount);
+    await this.client.writeRegister(0x19f6, this.totalWashCount);
+    await this.client.writeRegister(0x19f8, this.dailyWashCount);
   }
 
   async handleCommand(functionCode, address, value) {
@@ -83,13 +83,13 @@ class SG90Simulator {
 
   async handleWriteCoil(address, value) {
     switch (address) {
-      case 0x08D6:
+      case 0x08d6:
         this.status = value ? 'running' : 'idle';
         break;
-      case 0x0AF0:
+      case 0x0af0:
         this.carPresent = value;
         break;
-      case 0x08D9:
+      case 0x08d9:
         this.errorStatus = value;
         break;
       // 다른 코일 주소에 대한 처리를 추가할 수 있습니다.
@@ -104,11 +104,11 @@ class SG90Simulator {
       case 0x0908:
         this.startWash(address);
         break;
-      case 0x083C:
+      case 0x083c:
         this.stopWash();
         break;
       case 0x0847:
-        value === 0xFF00 ? this.pauseWash() : this.resumeWash();
+        value === 0xff00 ? this.pauseWash() : this.resumeWash();
         break;
       case 0x0820:
         this.resetWash();
@@ -177,9 +177,12 @@ export default SG90Simulator;
 // 시뮬레이터를 독립적으로 실행할 수 있는 코드
 if (require.main === module) {
   const simulator = new SG90Simulator('/dev/ttys002');
-  simulator.initialize().then(() => {
-    console.log('SG90 시뮬레이터가 실행되었습니다.');
-  }).catch((error) => {
-    console.error('SG90 시뮬레이터 실행 중 오류 발생:', error);
-  });
+  simulator
+    .initialize()
+    .then(() => {
+      console.log('SG90 시뮬레이터가 실행되었습니다.');
+    })
+    .catch((error) => {
+      console.error('SG90 시뮬레이터 실행 중 오류 발생:', error);
+    });
 }

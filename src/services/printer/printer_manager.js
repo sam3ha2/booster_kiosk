@@ -15,7 +15,10 @@ class PrinterManager {
       console.error('프린터를 찾을 수 없습니다.');
       throw new Error('프린터를 찾을 수 없습니다.');
     }
-    this.device = new escpos.USB(devices[0].deviceDescriptor.idVendor, devices[0].deviceDescriptor.idProduct);
+    this.device = new escpos.USB(
+      devices[0].deviceDescriptor.idVendor,
+      devices[0].deviceDescriptor.idProduct,
+    );
   }
 
   disconnect() {
@@ -25,7 +28,7 @@ class PrinterManager {
 
   getDeviceStatus() {
     return {
-      connected: this.device !== null
+      connected: this.device !== null,
     };
   }
 
@@ -67,19 +70,34 @@ class PrinterManager {
             .text(`${isCancel ? '[취소]' : ''}${shop.shop_name}`, 'EUC-KR')
             .size(0.5, 0.5)
             .text(`${this.alignLeftRight('사업자번호', shop.registration_number)}`, 'EUC-KR')
-            .text(`${this.alignLeftRight(`대표자: ${shop.representative_name}`, `Tel: ${shop.shop_tel}`)}`, 'EUC-KR')
+            .text(
+              `${this.alignLeftRight(`대표자: ${shop.representative_name}`, `Tel: ${shop.shop_tel}`)}`,
+              'EUC-KR',
+            )
             .text(`주  소: ${shop.shop_address}`, 'EUC-KR')
             .text('-'.repeat(48), 'EUC-KR')
             .text(`상  품: ${info.product_name}`, 'EUC-KR')
             .align('RT')
-            .text(`${this.alignLeftRight('금  액: ', `${this.getAmountText(info.tran_amt - info.vat_amt, { isCancel })}`, 20)}`, 'EUC-KR')
-            .text(`${this.alignLeftRight('부가세: ', `${this.getAmountText(info.vat_amt, { isCancel })}`, 20)}`, 'EUC-KR')
-            .text(`${this.alignLeftRight('합  계: ', `${this.getAmountText(info.tran_amt, { isCancel })}`, 20)}`, 'EUC-KR')
+            .text(
+              `${this.alignLeftRight('금  액: ', `${this.getAmountText(info.tran_amt - info.vat_amt, { isCancel })}`, 20)}`,
+              'EUC-KR',
+            )
+            .text(
+              `${this.alignLeftRight('부가세: ', `${this.getAmountText(info.vat_amt, { isCancel })}`, 20)}`,
+              'EUC-KR',
+            )
+            .text(
+              `${this.alignLeftRight('합  계: ', `${this.getAmountText(info.tran_amt, { isCancel })}`, 20)}`,
+              'EUC-KR',
+            )
             .text('-'.repeat(48), 'EUC-KR')
             .align('LT')
             .text('카드정보', 'EUC-KR')
             .text(`카드번호: ${this.getCardNumber(info.card_no)}`, 'EUC-KR')
-            .text(`승인금액: ${this.getAmountText(info.tran_amt, { isCancel, unit: '원' })}`, 'EUC-KR')
+            .text(
+              `승인금액: ${this.getAmountText(info.tran_amt, { isCancel, unit: '원' })}`,
+              'EUC-KR',
+            )
             .text(`승인번호: ${info.auth_no}`, 'EUC-KR')
             .text(`매 입 사: ${info.accepter_name || ''}`, 'EUC-KR')
             .text(`가맹번호: ${info.merchant_no || ''}`, 'EUC-KR')
@@ -87,18 +105,22 @@ class PrinterManager {
             .text(`거래일시: ${datetime}`, 'EUC-KR')
             .text('-'.repeat(48), 'EUC-KR')
             .text(`${this.alignLeftRight('본사', headquarters.company)}`, 'EUC-KR')
-            .text(`${this.alignLeftRight('사업자번호', headquarters.registration_number)}`, 'EUC-KR')
-            .text(`${this.alignLeftRight(`대표자: ${headquarters.representative}`, `Tel: ${headquarters.tel}`)}`, 'EUC-KR')
+            .text(
+              `${this.alignLeftRight('사업자번호', headquarters.registration_number)}`,
+              'EUC-KR',
+            )
+            .text(
+              `${this.alignLeftRight(`대표자: ${headquarters.representative}`, `Tel: ${headquarters.tel}`)}`,
+              'EUC-KR',
+            )
             .text(`주  소: ${headquarters.address}`, 'EUC-KR');
 
-          printer
-            .cut()
-            .close();
+          printer.cut().close();
         } catch (err) {
           console.error('프린터 출력 오류:', err);
           throw err;
         }
-      })
+      });
     } catch (error) {
       console.error('영수증 출력 오류:', error);
       throw error;
@@ -118,20 +140,13 @@ class PrinterManager {
           try {
             const printer = new escpos.Printer(this.device, this.options);
 
-            printer
-              .font('a')
-              .style('normal');
+            printer.font('a').style('normal');
 
             text.forEach(({ content, encoding, align = 'LT', size = [0.5, 0.5] }) => {
-              printer
-                .align(align)
-                .size(size[0], size[1])
-                .text(content, encoding);
+              printer.align(align).size(size[0], size[1]).text(content, encoding);
             });
 
-            printer
-              .cut()
-              .close();
+            printer.cut().close();
 
             resolve({ success: true });
           } catch (err) {
@@ -150,7 +165,7 @@ class PrinterManager {
   static getPrinterList() {
     try {
       const devices = escpos.USB.findPrinter();
-      return devices.map(device => ({
+      return devices.map((device) => ({
         vendorId: device.deviceDescriptor.idVendor,
         productId: device.deviceDescriptor.idProduct,
         manufacturer: device.manufacturer,

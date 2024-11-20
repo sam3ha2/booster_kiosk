@@ -6,7 +6,7 @@ class FL30CarWashOld extends AbstractCarWashMachine {
   constructor(config) {
     super(config);
     this.client = new ModbusRTU();
-    this.address = 0x0C; // FL3.0의 주소 (12)
+    this.address = 0x0c; // FL3.0의 주소 (12)
     this.hasDetailedState = true;
     this.eventEmitter = new EventEmitter();
     this.updateInterval = null;
@@ -22,7 +22,7 @@ class FL30CarWashOld extends AbstractCarWashMachine {
       baudRate: 9600,
       dataBits: 7,
       stopBits: 1,
-      parity: 'even'
+      parity: 'even',
     });
     this.client.setTimeout(3000);
     this.client.setID(this.address);
@@ -39,7 +39,7 @@ class FL30CarWashOld extends AbstractCarWashMachine {
       try {
         const state = await this.getState();
         this.eventEmitter.emit('stateUpdate', state);
-        
+
         // 세차 완료 확인 (하지만 업데이트는 계속 유지)
         if (state.isAvailable && !state.isWashing) {
           console.log('세차 완료.');
@@ -62,11 +62,11 @@ class FL30CarWashOld extends AbstractCarWashMachine {
     this.currentMode = mode;
     switch (mode) {
       case 'MODE1':
-        address = 0x012F; // 간단 세차
+        address = 0x012f; // 간단 세차
         this.totalTime = 8 * 60; // 8분
         break;
       case 'MODE2':
-        address = 0x012E; // 정밀 세차
+        address = 0x012e; // 정밀 세차
         this.totalTime = 12 * 60; // 12분
         break;
       default:
@@ -109,7 +109,7 @@ class FL30CarWashOld extends AbstractCarWashMachine {
 
   async status() {
     try {
-      const result = await this.client.readHoldingRegisters(0x000A, 1); // D10
+      const result = await this.client.readHoldingRegisters(0x000a, 1); // D10
       const processStatus = result.data[0];
 
       const isRunning = processStatus !== 0;
@@ -129,14 +129,17 @@ class FL30CarWashOld extends AbstractCarWashMachine {
 
   async getState() {
     const status = await this.status();
-    const elapsedTime = this.washStartTime ? Math.floor((Date.now() - this.washStartTime) / 1000) : 0;
+    const elapsedTime = this.washStartTime
+      ? Math.floor((Date.now() - this.washStartTime) / 1000)
+      : 0;
     const remainingTime = Math.max(0, this.totalTime - elapsedTime);
-    const progress = this.totalTime > 0 ? Math.min(100, Math.round((elapsedTime / this.totalTime) * 100)) : 0;
-    
+    const progress =
+      this.totalTime > 0 ? Math.min(100, Math.round((elapsedTime / this.totalTime) * 100)) : 0;
+
     const currentStep = this.interpretProcessStatus(status.processStatus);
     const isWashing = currentStep !== '대기 중';
     const isAvailable = !isWashing && status.processStatus === 0;
-    
+
     return {
       isAvailable,
       isWashing,
@@ -147,7 +150,7 @@ class FL30CarWashOld extends AbstractCarWashMachine {
       remainingPercent: 100 - progress,
       progress,
       currentStep,
-      currentMode: this.currentMode
+      currentMode: this.currentMode,
     };
   }
 
@@ -210,7 +213,7 @@ class FL30CarWashOld extends AbstractCarWashMachine {
   }
 
   async checkCarNotStoppedStatus() {
-    const result = await this.client.readCoils(0x000F, 1); // M15
+    const result = await this.client.readCoils(0x000f, 1); // M15
     return result.data[0];
   }
 

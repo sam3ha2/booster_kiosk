@@ -6,9 +6,9 @@ const { NsisUpdater } = electronUpdater;
 let updaterTimer = null;
 const updateUrl = `https://image.boosteron.co.kr/apps/kiosk${process.env.VITE_APP_ENV !== 'production' ? '-dev' : ''}`;
 
-const autoUpdater =  new NsisUpdater({
+const autoUpdater = new NsisUpdater({
   provider: 'generic',
-  url: updateUrl
+  url: updateUrl,
 });
 
 function setupAutoUpdater() {

@@ -77,7 +77,7 @@ const Admin = () => {
       const carWashStatus = await window.machineIPC.getMachineStatus();
       const scannerStatus = await window.scannerIPC.getStatus();
       const printerStatus = await window.printerIPC.getStatus();
-      
+
       setDeviceStates(prev => ({
         carWash: {
           connected: carWashStatus.connected,
@@ -99,7 +99,7 @@ const Admin = () => {
   const handleDeviceConnection = async (deviceType, action) => {
     try {
       let result;
-      
+
       switch (deviceType) {
         case 'carWash':
           if (action === 'connect') {
@@ -203,7 +203,7 @@ const Admin = () => {
   }, [isLoggedIn]);
 
   const MenuItem = ({ label, value, onClick, showArrow, actionButton, status }) => (
-    <div 
+    <div
       className="flex items-center justify-between py-4 px-6 border-b border-gray-700 hover:bg-gray-800 cursor-pointer"
       onClick={onClick}
     >
@@ -211,7 +211,7 @@ const Admin = () => {
       <div className="flex items-center">
         {status && (
           <span className={`mr-4 text-sm ${
-            status === 'error' ? 'text-red-500' : 
+            status === 'error' ? 'text-red-500' :
             status === 'ready' ? 'text-green-500' : 'text-gray-400'
           }`}>
             {status}
@@ -230,18 +230,18 @@ const Admin = () => {
 
   const AdminMenu = () => (
     <div className="w-full max-w-2xl bg-gray-900 rounded-lg overflow-hidden">
-      <MenuItem 
-        label="결제 관리" 
-        onClick={() => navigate('/payment-admin')} 
+      <MenuItem
+        label="결제 관리"
+        onClick={() => navigate('/payment-admin')}
         showArrow={true}
       />
-      
-      <MenuItem 
-        label="세차기 관리" 
+
+      <MenuItem
+        label="세차기 관리"
         value={deviceStates.carWash.connected ? deviceStates.carWash.path : '연결 안됨'}
         status={deviceStates.carWash.status?.currentStep}
         actionButton={
-          <button 
+          <button
             onClick={() => handleDeviceConnection('carWash', deviceStates.carWash.connected ? 'disconnect' : 'connect')}
             className={`px-3 py-1 rounded text-sm ${deviceStates.carWash.connected ? 'bg-red-600' : 'bg-main'}`}
           >
@@ -250,12 +250,12 @@ const Admin = () => {
         }
       />
 
-      <MenuItem 
-        label="스캐너 관리" 
+      <MenuItem
+        label="스캐너 관리"
         value={deviceStates.scanner.connected ? '연결됨' : '연결 안됨'}
         status={deviceStates.scanner.status}
         actionButton={
-          <button 
+          <button
             onClick={() => handleDeviceConnection('scanner', deviceStates.scanner.connected ? 'disconnect' : 'connect')}
             className={`px-3 py-1 rounded text-sm ${deviceStates.scanner.connected ? 'bg-red-600' : 'bg-main'}`}
           >
@@ -264,12 +264,12 @@ const Admin = () => {
         }
       />
 
-      <MenuItem 
-        label="프린터 관리" 
+      <MenuItem
+        label="프린터 관리"
         value={deviceStates.printer.connected ? '연결됨' : '연결 안됨'}
         status={deviceStates.printer.status}
         actionButton={
-          <button 
+          <button
             onClick={() => handleDeviceConnection('printer', deviceStates.printer.connected ? 'disconnect' : 'connect')}
             className={`px-3 py-1 rounded text-sm ${deviceStates.printer.connected ? 'bg-red-600' : 'bg-main'}`}
           >
@@ -280,10 +280,10 @@ const Admin = () => {
 
       {
         deviceStates.printer.connected && (
-          <MenuItem 
+          <MenuItem
             label="테스트"
             actionButton={
-              <button 
+              <button
                 onClick={() => window.printerIPC.printTest()}
                 className="px-3 py-1 rounded text-sm bg-main"
               >
@@ -293,11 +293,6 @@ const Admin = () => {
           />
         )
       }
-
-      <MenuItem 
-        label="컨트롤 패널" 
-        value={`v${APP_VERSION}`}
-      />
 
       <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700">
         <span className="text-white text-lg">키오스크 모드</span>
@@ -309,12 +304,12 @@ const Admin = () => {
               checked={isKioskMode}
               onChange={handleKioskToggle}
             />
-            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-none 
-              peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer 
+            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-none
+              peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer
               ${isKioskMode ? 'bg-green-600' : 'bg-gray-700'}
-              peer-checked:after:translate-x-full peer-checked:after:border-white 
-              after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-              after:bg-white after:border-gray-300 after:border after:rounded-full 
+              peer-checked:after:translate-x-full peer-checked:after:border-white
+              after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full
               after:h-5 after:w-5 after:transition-all`}>
             </div>
             <span className="ml-3 text-sm font-medium text-gray-300">
@@ -323,6 +318,11 @@ const Admin = () => {
           </label>
         </div>
       </div>
+
+      <MenuItem
+        label="컨트롤 패널"
+        value={`v${APP_VERSION}`}
+      />
 
       <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700">
         <div className="flex items-center justify-between w-full">
@@ -371,7 +371,7 @@ const Admin = () => {
           >
             앱 재시작
           </button>
-          <button 
+          <button
             onClick={() => window.appControl.quit()}
             className="px-3 py-1 rounded text-sm bg-red-600 hover:bg-red-700"
           >
@@ -407,7 +407,7 @@ const Admin = () => {
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          {keys.map((row, rowIndex) => 
+          {keys.map((row, rowIndex) =>
             row.map((key, colIndex) => (
               <button
                 key={`${rowIndex}-${colIndex}`}
@@ -418,8 +418,8 @@ const Admin = () => {
                 }}
                 className={`
                   h-16 rounded-lg text-2xl font-bold
-                  ${typeof key === 'number' 
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                  ${typeof key === 'number'
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}
                   transition-colors duration-200
                   flex items-center justify-center
@@ -444,7 +444,7 @@ const Admin = () => {
 
   return (
     <div className="bg-black min-h-screen flex flex-col">
-      <AppBar 
+      <AppBar
         label="관리자 페이지"
         showBack={true}
       />

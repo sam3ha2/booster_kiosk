@@ -184,7 +184,10 @@ class PrinterManager {
   }
 
   getTextLength(text) {
-    return text.split('').reduce((len, char) => {
+      // null 또는 undefined 처리
+      if (!text) return 0;
+
+      return text.split('').reduce((len, char) => {
       // 한글은 2바이트, 나머지는 1바이트로 계산
       return len + (char.match(/[가-힣]/) ? 2 : 1);
     }, 0);

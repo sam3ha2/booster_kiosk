@@ -57,7 +57,7 @@ class CarWashManager extends EventEmitter {
         status: this.getMachineStatus(),
       };
     } catch (error) {
-      console.error('세차기 연결 중 오류:', error);
+      log.error('세차기 연결 중 오류:', error);
       return {
         success: false,
         error: error.message,
@@ -88,7 +88,7 @@ class CarWashManager extends EventEmitter {
         status: this.getMachineStatus(),
       };
     } catch (error) {
-      console.error('세차기 연결 해제 중 오류:', error);
+      log.error('세차기 연결 해제 중 오류:', error);
       return {
         success: false,
         error: error.message,
@@ -126,16 +126,16 @@ class CarWashManager extends EventEmitter {
 
       return { success: true, message: `${type} 세차기가 추가되었습니다.` };
     } catch (error) {
-      console.error('세차기 추가 중 오류 발생:', error);
+      log.error('세차기 추가 중 오류 발생:', error);
       return { success: false, error: error.message };
     }
   }
 
   setupMachineEventListeners(machine) {
     machine.on('statusUpdate', (state) => {
-      if (this.lastState !== state) {
-        log.info(`세차기 상태 변경:`, state);
-        this.lastState = state;
+      if (this.lastState?.status !== state.status) {
+        log.info('세차기 상태 변경:', state);
+        this.lastState = { ...state };
       }
       this.sendStatusUpdate(state);
       this.lastStatusReceived = Date.now();
@@ -159,7 +159,7 @@ class CarWashManager extends EventEmitter {
       const result = await this.machine.start(mode);
       return result;
     } catch (error) {
-      console.error('세차 시작 중 오류 발생:', error);
+      log.error('세차 시작 중 오류 발생:', error);
       throw error;
     }
   }
@@ -172,7 +172,7 @@ class CarWashManager extends EventEmitter {
       await this.machine.stop();
       return { success: true, message: '세차가 중지되었습니다.' };
     } catch (error) {
-      console.error('세차 중지 중 오류 발생:', error);
+      log.error('세차 중지 중 오류 발생:', error);
       throw error;
     }
   }
@@ -185,7 +185,7 @@ class CarWashManager extends EventEmitter {
       await this.machine.reset();
       return { success: true, message: '세차기가 초기화되었습니다.' };
     } catch (error) {
-      console.error('세차기 리셋 중 오류 발생:', error);
+      log.error('세차기 리셋 중 오류 발생:', error);
       throw error;
     }
   }
@@ -214,7 +214,7 @@ class CarWashManager extends EventEmitter {
 
   handleConnectionIssue() {
     if (!this.hasConnectionIssue) {
-      console.error(`세차기와의 연결에 문제가 있습니다.`);
+      log.error(`세차기와의 연결에 문제가 있습니다.`);
       this.sendStatusUpdate({ error: '연결에 문제가 있습니다.' });
       this.hasConnectionIssue = true;
     }
@@ -222,7 +222,7 @@ class CarWashManager extends EventEmitter {
 
   clearConnectionIssue() {
     if (this.hasConnectionIssue) {
-      console.log(`세차기와의 연결 문제가 해결되었습니다.`);
+      log.info(`세차기와의 연결 문제가 해결되었습니다.`);
       this.sendStatusUpdate({ message: '연결 문제가 해결되었습니다.' });
       this.hasConnectionIssue = false;
     }
@@ -236,7 +236,7 @@ class CarWashManager extends EventEmitter {
   }
 
   handleMachineError(error) {
-    console.error(`세차기 오류:`, error);
+    log.error(`세차기 오류:`, error);
     this.sendStatusUpdate({ error: error.message });
   }
 
@@ -268,7 +268,7 @@ class CarWashManager extends EventEmitter {
           : null,
       };
     } catch (error) {
-      console.error('getMachineStatus error:', error);
+      log.error('getMachineStatus error:', error);
       return {
         connected: false,
         error: error.message,

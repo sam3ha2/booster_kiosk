@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import VguangScanner from './vguang/VguangScanner.js';
 import EventEmitter from 'events';
 
@@ -9,15 +10,15 @@ class ScannerManager extends EventEmitter {
 
   initialize() {
     if (this.scanner) {
-      console.log('Scanner already initialized');
+      log.info('Scanner already initialized');
       return;
     }
 
-    console.log('Initializing scanner...');
+    log.info('Initializing scanner...');
     try {
       this.scanner = new VguangScanner({ mode: 'tx400' });
       this.scanner.on('ready', () => {
-        console.log('스캐너가 준비되었습니다.');
+        log.info('스캐너가 준비되었습니다.');
         this.emit('ready');
       });
 
@@ -31,13 +32,17 @@ class ScannerManager extends EventEmitter {
       });
 
       this.scanner.on('error', (error) => {
-        console.error('스캐너 오류:', error);
+        log.error('스캐너 오류:', error);
         this.emit('error', error);
       });
     } catch (error) {
-      console.log('스캐너 초기화 실패:', error);
+      log.error('스캐너 초기화 실패:', error);
       throw error;
     }
+  }
+
+  disconnect() {
+    this.close();
   }
 
   close() {

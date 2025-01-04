@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import SimpleStore from '../database/simple_store.js';
 import { STORE_KEYS } from '../../constants/constants.js';
 import displayControl from 'display-control';
@@ -20,10 +21,10 @@ class MonitorManager {
         endTime = operatingHours.end_time;
       }
 
-      console.log(`운영 시간 설정: ${startTime} - ${endTime}`);
+      log.info(`운영 시간 설정: ${startTime} - ${endTime}`);
       this.setSchedule(startTime, endTime);
     } catch (error) {
-      console.error('운영 시간 초기화 실패:', error);
+      log.error('운영 시간 초기화 실패:', error);
       this.setSchedule(900, 2300); // 에러 시 기본값
     }
   }

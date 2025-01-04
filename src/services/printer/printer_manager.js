@@ -69,9 +69,9 @@ class PrinterManager {
             .size(1, 1)
             .text(`${isCancel ? '[취소]' : ''}${shop.shop_name}`, 'EUC-KR')
             .size(0.5, 0.5)
-            .text(`${this.alignLeftRight('사업자번호', shop.registration_number)}`, 'EUC-KR')
+            .text(`${this.alignLeftRight('사업자번호', shop.registration_number || '')}`, 'EUC-KR')
             .text(
-              `${this.alignLeftRight(`대표자: ${shop.representative_name}`, `Tel: ${shop.shop_tel}`)}`,
+              `${this.alignLeftRight(`대표자: ${shop.representative_name || ''}`, `Tel: ${shop.shop_tel}`)}`,
               'EUC-KR',
             )
             .text(`주  소: ${shop.shop_address}`, 'EUC-KR')
@@ -180,10 +180,13 @@ class PrinterManager {
   alignLeftRight(left, right, lineWidth = 48) {
     const availableSpace = lineWidth - this.getTextLength(left) - this.getTextLength(right);
     const spaces = ' '.repeat(Math.max(0, availableSpace));
-    return `${left}${spaces}${right}`;
+    return `${left || ''}${spaces}${right || ''}`;
   }
 
   getTextLength(text) {
+    // null 또는 undefined 처리
+    if (!text) return 0;
+
     return text.split('').reduce((len, char) => {
       // 한글은 2바이트, 나머지는 1바이트로 계산
       return len + (char.match(/[가-힣]/) ? 2 : 1);

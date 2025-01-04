@@ -272,7 +272,6 @@ function setPrinterHandlers() {
       }
       return await printerManager.printReceipt(data);
     } catch (error) {
-      log.error('영수증 출력 실패:', error);
       throw error;
     }
   });

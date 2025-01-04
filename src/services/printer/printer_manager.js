@@ -1,5 +1,6 @@
 import escpos from 'escpos';
 import escposUsb from 'escpos-usb';
+import log from 'electron-log';
 
 escpos.USB = escposUsb;
 
@@ -12,13 +13,14 @@ class PrinterManager {
     this.options = { encoding };
     const devices = escpos.USB.findPrinter();
     if (devices.length === 0) {
-      console.error('프린터를 찾을 수 없습니다.');
+      log.error('프린터를 찾을 수 없습니다.');
       throw new Error('프린터를 찾을 수 없습니다.');
     }
     this.device = new escpos.USB(
       devices[0].deviceDescriptor.idVendor,
       devices[0].deviceDescriptor.idProduct,
     );
+    log.info('프린터 연결 성공');
   }
 
   disconnect() {
@@ -55,7 +57,7 @@ class PrinterManager {
 
       this.device.open((error) => {
         if (error) {
-          console.error('프린터 연결 오류:', error);
+          log.error('프린터 연결 오류:', error);
           throw error;
         }
 
@@ -117,12 +119,12 @@ class PrinterManager {
 
           printer.cut().close();
         } catch (err) {
-          console.error('프린터 출력 오류:', err);
+          log.error('프린터 출력 오류:', err);
           throw err;
         }
       });
     } catch (error) {
-      console.error('영수증 출력 오류:', error);
+      log.error('영수증 출력 오류:', error);
       throw error;
     }
   }
@@ -132,7 +134,7 @@ class PrinterManager {
       return new Promise((resolve, reject) => {
         this.device.open((error) => {
           if (error) {
-            console.error('프린터 연결 오류:', error);
+            log.error('프린터 연결 오류:', error);
             reject(error);
             return;
           }
@@ -150,13 +152,13 @@ class PrinterManager {
 
             resolve({ success: true });
           } catch (err) {
-            console.error('프린터 출력 오류:', err);
+            log.error('프린터 출력 오류:', err);
             reject(err);
           }
         });
       });
     } catch (error) {
-      console.error('프린터 초기화 오류:', error);
+      log.error('프린터 초기화 오류:', error);
       throw error;
     }
   }
@@ -172,7 +174,7 @@ class PrinterManager {
         product: device.product,
       }));
     } catch (error) {
-      console.error('프린터 목록 조회 오류:', error);
+      log.error('프린터 목록 조회 오류:', error);
       return [];
     }
   }

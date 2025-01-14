@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../components/AppBar';
-import { STORE_KEYS } from '../../constants/constants';
+import { STORAGE_KEYS, STORE_KEYS } from '../../constants/constants';
 import { MenuItem } from '../components/MenuItem';
 import { DeviceStatus } from '../components/DeviceStatus';
 
@@ -9,6 +9,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(process.env.NODE_ENV === 'development');
   const [isKioskMode, setIsKioskMode] = useState(false);
+  const [useAppOnly, setUseAppOnly] = useState(localStorage.getItem(STORAGE_KEYS.USE_ONLY_APP) === 'true');
   const [pinCode, setPinCode] = useState('');
   const [monitorSchedule, setMonitorSchedule] = useState({
     startTime: '09:00',
@@ -73,6 +74,11 @@ const Admin = () => {
       alert('키오스크 모드 설정에 실패했습니다.');
     }
   };
+
+  const handleAppOnlyToggle = async (e) => {
+    localStorage.setItem(STORAGE_KEYS.USE_ONLY_APP, e.target.checked);
+    setUseAppOnly(e.target.checked);
+  }
 
   const loadMonitorSchedule = async () => {
     try {
@@ -151,8 +157,33 @@ const Admin = () => {
               after:bg-white after:border-gray-300 after:border after:rounded-full
               after:h-5 after:w-5 after:transition-all`}>
             </div>
-            <span className="ml-3 text-sm font-medium text-gray-300">
-              {isKioskMode ? '활성화' : '비활성화'}
+            <span className={`${isKioskMode ? 'mr-4' : 'ml-6'} text-sm font-medium text-gray-300`}>
+              {isKioskMode ? '활성' : '비활성'}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between py-4 px-6 border-b border-gray-700">
+        <span className="text-white text-lg">앱으로만 사용</span>
+        <div className="flex items-center">
+          <label className="inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={useAppOnly}
+              onChange={handleAppOnlyToggle}
+            />
+            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-none
+              peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer
+              ${useAppOnly ? 'bg-green-600' : 'bg-gray-700'}
+              peer-checked:after:translate-x-full peer-checked:after:border-white
+              after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+              after:bg-white after:border-gray-300 after:border after:rounded-full
+              after:h-5 after:w-5 after:transition-all`}>
+            </div>
+            <span className={`${useAppOnly ? 'mr-4' : 'ml-6'} text-sm font-medium text-gray-300`}>
+              {useAppOnly ? '사용' : '비사용'}
             </span>
           </label>
         </div>

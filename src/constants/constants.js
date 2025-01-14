@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   RECEIPT_INFO_UPDATED_AT: 'receipt_info_updated_at',
   SHOP_NAME: 'shop_name',
   LAST_PAYMENT: 'last_payment',
+  USE_ONLY_APP: 'use_only_app',
 };
 
 export const STORE_KEYS = {

@@ -30,6 +30,7 @@ const Home = () => {
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
   const [carWashState, setCarWashState] = useState(null);
+  const useAppOnly = localStorage.getItem(STORAGE_KEYS.USE_ONLY_APP) === 'true';
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   // 영수증 정보 로드
@@ -38,13 +39,13 @@ const Home = () => {
       try {
         const lastUpdated = localStorage.getItem(STORAGE_KEYS.RECEIPT_INFO_UPDATED_AT);
         const now = Date.now();
-        
+
         // 저장된 정보가 없거나, 마지막 업데이트로부터 6시간이 지났으면 새로 로드
         if (isFirstTime || !lastUpdated || (now - parseInt(lastUpdated)) > RECEIPT_INFO_REFRESH_TIME) {
           isFirstTime = false;
           console.log('영수증 정보 새로 로드');
           const response = await ApiService.getReceiptInfo();
-          
+
           if (response.item) {
             localStorage.setItem(STORAGE_KEYS.RECEIPT_INFO, JSON.stringify(response.item));
             localStorage.setItem(STORAGE_KEYS.SHOP_NAME, response.item.shop_name || '씻자');
@@ -87,7 +88,7 @@ const Home = () => {
 
     window.scannerIPC.onQrCodeScanned(qrCodeListener);
     window.scannerIPC.onScannerError(scannerErrorListener);
-    
+
     // 개발 환경에서 초기 상태 설정
     if (isDevelopment && !carWashState) {
       setCarWashState({
@@ -125,7 +126,7 @@ const Home = () => {
       if (qrCodeData.qr_idx && qrCodeData.qr_created_at && qrCodeData.qr_checksum) {
         const targetMode = await getReservedTargetMode(qrCodeData);
         const controlResponse = await window.machineIPC.startWash(targetMode);
-          
+
         if (controlResponse.success) {
           console.log('예약이 확인되었습니다. 세차를 시작합니다.');
         } else {
@@ -149,7 +150,7 @@ const Home = () => {
         ...qrData,
         is_test: isDevelopment ? 'Y' : null,
       });
-      
+
       if (reservationResponse.item) {
         const updateResponse = await ApiService.updateReservationStatus(
           reservationResponse.item.idx,
@@ -159,7 +160,7 @@ const Home = () => {
             is_test: isDevelopment ? 'Y' : null,
           }
         );
-        
+
         if (updateResponse.type === 'SUCCESS') {
           return reservationResponse.item.product.target_mode;
         } else {
@@ -197,6 +198,13 @@ const Home = () => {
       ) : (
         // 세차 중이 아닐 때 표시되는 UI
         <>
+        {useAppOnly ? (
+          <div className="flex space-x-4">
+            <div className="text-center text-xl bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-700 leading-relaxed">
+              현재는 앱 예약 후<br />QR 코드를 통해서 동작합니다.
+            </div>
+          </div>
+        ) : (
           <div className="flex space-x-4">
             <HomeButton
               onClick={() => moveToSelectProductPage()}
@@ -206,6 +214,7 @@ const Home = () => {
               icon={<ArrowIcon direction="right" color="text-white" size="w-8 h-8" />}
             />
           </div>
+        )}
         </>
       )}
       <button onClick={toggleUsageGuide} className="fixed bottom-0 bg-gray-800 py-4 w-full text-white font-bold text-xl rounded-t-3xl">

@@ -69,7 +69,9 @@ export const DeviceStatus = () => {
 
       switch (deviceType) {
         case 'carWash':
-          result = await window.machineIPC[`${action}Machine`]();
+          result = action === 'connect'
+            ? await window.machineIPC.connectMachine()
+            : await window.machineIPC.disconnectMachine();
           if (!result.success) {
             alert(result.message || `세차기 ${action === 'connect' ? '연결' : '해제'} 실패`);
           }
@@ -84,8 +86,15 @@ export const DeviceStatus = () => {
           break;
 
         case 'scanner':
+          result = action === 'connect'
+            ? await window.scannerIPC.connect()
+            : await window.scannerIPC.disconnect();
+          updateDeviceState({ connected: result.connected });
+          break;
         case 'printer':
-          result = await window[`${deviceType}IPC`][action]();
+          result = action === 'connect'
+            ? await window.printerIPC.connect()
+            : await window.printerIPC.disconnect();
           updateDeviceState({ connected: result.connected });
           break;
       }

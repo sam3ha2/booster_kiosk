@@ -22,6 +22,7 @@ const { app, BrowserWindow, ipcMain, globalShortcut } = electron;
 dotenv.config({ path: ['.env.development.local', '.env.development', '.env'] });
 
 // 로그 설정
+log.initialize();
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 

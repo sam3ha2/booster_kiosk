@@ -1,4 +1,5 @@
 import axios from 'axios';
+import log from 'electron-log/renderer';
 
 const API_BASE_URL = process.env.API_BASE_URL;
 
@@ -21,6 +22,9 @@ api.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    log.info(`>>> [${config.method}] ${config.url}`, {
+      params: config.params,
+    });
     return config;
   },
   (error) => {
@@ -30,22 +34,29 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    log.info(`<<< [${response.config.method}] ${response.config.url}`, {
+      data: response.data,
+      status: response.status,
+      statusText: response.statusText,
+    });
+    return response;
+  },
   (error) => {
     if (error.response) {
       // 서버 응답이 있는 경우
-      console.error('API Error:', error.response.data);
+      log.error('API Error:', error.response.data);
       return Promise.reject(error.response.data);
     } else if (error.request) {
       // 요청은 보냈지만 응답을 받지 못한 경우
-      console.error('No response received:', error.request);
+      log.error('No response received:', error.request);
       return Promise.reject({
         code: 'NO_RESPONSE',
         message: '서버로부터 응답을 받지 못했습니다.',
       });
     } else {
       // 요청 설정 중 오류가 발생한 경우
-      console.error('Request error:', error.message);
+      log.error('Request error:', error.message);
       return Promise.reject({
         code: 'REQUEST_ERROR',
         message: '요청 중 오류가 발생했습니다.',

@@ -1,3 +1,4 @@
+import log from 'electron-log/renderer';
 import React, { useState, useEffect } from 'react';
 import AppBar from '../components/AppBar';
 import { STORAGE_KEYS, HEADQUARTERS } from '../../constants/constants';
@@ -30,7 +31,7 @@ const PaymentAdmin = () => {
       const data = await window.databaseIPC.getPaymentsByDate(date);
       setPayments(data.orders);
     } catch (error) {
-      console.error('결제 데이터 로딩 실패:', error);
+      log.error('결제 데이터 로딩 실패:', error);
     } finally {
       setLoading(false);
     }
@@ -41,7 +42,7 @@ const PaymentAdmin = () => {
     
     try {
       setLoading(true);
-      console.log('결제 취소 요청:', selectedPayment);
+      log.info('결제 취소 요청:', selectedPayment);
 
       const isSimulated = selectedPayment.auth_no.startsWith('SIM');
 
@@ -82,7 +83,7 @@ const PaymentAdmin = () => {
         throw new Error(result.outReplyMsg1 || '결제 취소 실패');
       }
     } catch (error) {
-      console.error('결제 취소 실패:', error);
+      log.error('결제 취소 실패:', error);
       alert(`결제 취소 실패: ${error.message}`);
     } finally {
       setLoading(false);
@@ -96,7 +97,7 @@ const PaymentAdmin = () => {
     
     try {
       setLoading(true);
-      console.log('영수증 출력 요청:', selectedPayment);
+      log.info('영수증 출력 요청:', selectedPayment);
 
       await window.printerIPC.printReceipt({
         shop: JSON.parse(localStorage.getItem(STORAGE_KEYS.RECEIPT_INFO)),
@@ -105,7 +106,7 @@ const PaymentAdmin = () => {
         isCancel: selectedPayment.status === 'CANCELED'
       });
     } catch (error) {
-      console.error('영수증 출력 실패:', error);
+      log.error('영수증 출력 실패:', error);
       alert(`영수증 출력 실패: ${error.message}`);
     } finally {
       setLoading(false);

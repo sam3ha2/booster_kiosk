@@ -1,3 +1,4 @@
+import log from 'electron-log/renderer';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Product } from '../../models/models';
@@ -106,7 +107,7 @@ const ProductList = () => {
         const response = await ApiService.getProducts();
         setProducts(response.list.map(p => new Product(p.idx, p.name, p.description, p.price, p.duration, p.target_mode, p.payment_rf_only)));
       } catch (err) {
-        console.error('상품 목록을 불러오는데 실패했습니다:', err);
+        log.error('상품 목록을 불러오는데 실패했습니다:', err);
         setError(err);
       } finally {
         setLoading(false);
@@ -145,11 +146,11 @@ const ProductList = () => {
   };
 
   const processPayment = async (isSimulated = false) => {
+    log.info('selectedProduct : ', selectedProduct, selectedProduct.tran_amt);
+
     if (selectedProduct.tran_amt === 0) {
       setPaymentStatus('processing');
       setPaymentMessage('예약 생성 중...');
-
-      console.log('selectedProduct : ', selectedProduct)
 
       // 예약 요청
       const reservationResponse = await ApiService.createReservation({
@@ -162,19 +163,19 @@ const ProductList = () => {
         status: 'COMPLETE'
       });
 
-      console.log('예약이 완료되었습니다:', reservationResponse);
+      log.info('예약이 완료되었습니다:', reservationResponse);
 
       // 세차기 동작 시작
       try {
         const result = await window.machineIPC.startWash(selectedProduct.targetMode);
-        console.log('세차기 제어 결과:', result);
+        log.info('세차기 제어 결과:', result);
         if (result.success) {
           setPaymentStatus('success');
         } else {
           throw new Error(result.error || '세차기 시작 실패');
         }
       } catch (error) {
-        console.error('세차기 시작 중 오류 발생:', error);
+        log.error('세차기 시작 중 오류 발생:', error);
         setPaymentStatus('failed');
         setPaymentMessage('세차기 실패: ' + error.message);
       } finally {
@@ -184,8 +185,6 @@ const ProductList = () => {
     try {
       setPaymentStatus('processing');
       setPaymentMessage('결제 처리 중...');
-
-      console.log('selectedProduct : ', selectedProduct)
 
       const vatAmt = Utils.getVatAmount(selectedProduct.price);
       const paymentParams = {
@@ -215,6 +214,8 @@ const ProductList = () => {
           throw new Error(result.outReplyMsg1 || '결제 실패');
         }
       }
+
+      log.info('결제 결과:', result);
 
       const paymentInfo = {
         accepter_code: result.outAccepterCode,
@@ -256,25 +257,25 @@ const ProductList = () => {
         status: 'COMPLETE'
       });
 
-      console.log('예약이 완료되었습니다:', reservationResponse);
+      log.info('예약이 완료되었습니다:', reservationResponse);
 
       await window.databaseIPC.updatePaymentSuccess(paymentRecord.id, result.outReplyDate, { reservation_idx: reservationResponse.item.idx });
 
       // 세차기 동작 시작
       try {
         const result = await window.machineIPC.startWash(selectedProduct.targetMode);
-        console.log('세차기 제어 결과:', result);
+        log.info('세차기 제어 결과:', result);
         if (result.success) {
           setPaymentStatus('success');
         } else {
           throw new Error(result.error || '세차기 시작 실패');
         }
       } catch (error) {
-        console.error('세차기 시작 중 오류 발생:', error);
+        log.error('세차기 시작 중 오류 발생:', error);
         throw new Error('세차기를 시작할 수 없습니다. 관리자에게 문의해주세요.');
       }
     } catch (error) {
-      console.error('결제 또는 예약 중 오류가 발생했습니다:', error);
+      log.error('결제 또는 예약 중 오류가 발생했습니다:', error);
       setPaymentStatus('failed');
       setPaymentMessage('결제 실패: ' + error.message);
     }
@@ -309,7 +310,8 @@ const ProductList = () => {
     try {
       const lastPayment = JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_PAYMENT));
       if (!lastPayment) {
-        console.error('결제 정보를 찾을 수 없습니다.');
+        log.error('결제 정보를 찾을 수 없습니다.');
+        alert('결제 정보를 찾을 수 없습니다.');
         return;
       }
 
@@ -322,9 +324,10 @@ const ProductList = () => {
         headquarters: HEADQUARTERS
       });
 
-      console.log('영수증 출력 완료');
+      log.info('영수증 출력 완료', lastPayment);
     } catch (error) {
-      console.error('영수증 출력 실패:', error);
+      log.error('영수증 출력 실패:', error);
+      alert(`영수증 출력에 실패했습니다: ${error}`);
     } finally {
       handleClose();
     }

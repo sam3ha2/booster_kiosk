@@ -1,3 +1,4 @@
+import log from 'electron-log/renderer';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../components/AppBar';
@@ -51,7 +52,7 @@ const Admin = () => {
         const { isKiosk } = await window.appControl.getKioskState();
         setIsKioskMode(isKiosk);
       } catch (error) {
-        console.error('키오스크 상태 로드 실패:', error);
+        log.error('키오스크 상태 로드 실패:', error);
       }
     };
 
@@ -70,7 +71,7 @@ const Admin = () => {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('키오스크 모드 설정 실패:', error);
+      log.error('키오스크 모드 설정 실패:', error);
       alert('키오스크 모드 설정에 실패했습니다.');
     }
   };
@@ -90,7 +91,7 @@ const Admin = () => {
         });
       }
     } catch (error) {
-      console.error('모니터 스케줄 로드 실패:', error);
+      log.error('모니터 스케줄 로드 실패:', error);
     }
   };
 
@@ -124,7 +125,7 @@ const Admin = () => {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('운영 시간 설정 실패:', error);
+      log.error('운영 시간 설정 실패:', error);
       alert('운영 시간 설정에 실패했습니다.');
     }
   };

@@ -1,3 +1,4 @@
+import log from 'electron-log/renderer';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../utils/api_service';
@@ -75,15 +76,15 @@ const Home = () => {
 
     const qrCodeListener = (data) => {
       if (isWashing) return;
-      console.log("QR 코드 스캔 데이터:", data);
+      log.info("QR 코드 스캔 데이터:", data);
       window.scannerIPC.beep();
       window.scannerIPC.toggleLight(false);
       processQrCode(data);
     };
 
     const scannerErrorListener = (error) => {
-      console.error("스캐너 오류:", error);
-      alert('QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.');
+      log.error("스캐너 오류:", error);
+      alert(`QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
     };
 
     window.scannerIPC.onQrCodeScanned(qrCodeListener);
@@ -117,19 +118,29 @@ const Home = () => {
   };
 
   const processQrCode = async (qrData) => {
+    let qrCodeData;
     try {
-      const qrCodeData = JSON.parse(qrData);
+      qrCodeData = JSON.parse(qrData);
+      log.info(qrCodeData);
+    } catch (error) {
+      log.error('QR 코드 데이터 파싱 오류:', error);
+      alert('유효하지 않은 QR 코드입니다. 다시 시도해주세요.');
+      return;
+    } finally {
+      closeQrScanner();
+    }
 
-      console.log(qrCodeData);
-
+    try {
       // 예약 QR 코드인 경우
       if (qrCodeData.qr_idx && qrCodeData.qr_created_at && qrCodeData.qr_checksum) {
         const targetMode = await getReservedTargetMode(qrCodeData);
+        log.info('예약된 세차 모드:', targetMode);
         const controlResponse = await window.machineIPC.startWash(targetMode);
 
         if (controlResponse.success) {
-          console.log('예약이 확인되었습니다. 세차를 시작합니다.');
+          log.info('예약이 확인되었습니다. 세차를 시작합니다.');
         } else {
+          log.error('세차기 시작에 실패했습니다:', controlResponse.error);
           alert('세차기 시작에 실패했습니다. 관리자에게 문의해주세요.');
         }
       }
@@ -138,7 +149,8 @@ const Home = () => {
         moveToSelectProductPage(qrCodeData.discount);
       }
     } catch (error) {
-      console.error('QR 코드 데이터 파싱 오류:', error);
+      log.error('세차기 시작 오류:', error);
+      alert(`세차기 시작 중 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
     } finally {
       closeQrScanner();
     }
@@ -170,8 +182,8 @@ const Home = () => {
         throw new Error('유효하지 않은 QR 코드');
       }
     } catch (error) {
-      console.error('예약 확인 중 오류가 발생했습니다:', error);
-      alert('예약 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      log.error('예약 확인 중 오류가 발생했습니다:', error);
+      alert(`예약 확인 중 오류가 발생했습니다. 다시 시도해주세요.\n(${error.message})`);
     }
   };
 

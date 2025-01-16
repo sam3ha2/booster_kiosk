@@ -10,18 +10,18 @@ const AppBar = ({ label, image, showBack = false, onBack }) => {
             <BackButton onClick={onBack} />
           </div>
         )}
-        
+
         {label && (
           <h2 className="text-white text-2xl font-bold">
             {label}
           </h2>
         )}
-        
+
         {image && (
-          <img 
-            src={image} 
+          <img
+            src={image}
             alt="Header Image"
-            className="h-4 object-contain" 
+            className="h-4 object-contain"
           />
         )}
       </div>
@@ -29,4 +29,4 @@ const AppBar = ({ label, image, showBack = false, onBack }) => {
   );
 };
 
-export default AppBar; 
+export default AppBar;

@@ -14,8 +14,8 @@ const BackButton = ({ onClick }) => {
   };
 
   return (
-    <button 
-      onClick={handleClick} 
+    <button
+      onClick={handleClick}
       className="bg-white rounded-full p-3 hover:bg-gray-100 transition-colors"
     >
       <ArrowIcon direction="left" />
@@ -23,4 +23,4 @@ const BackButton = ({ onClick }) => {
   );
 };
 
-export default BackButton; 
+export default BackButton;

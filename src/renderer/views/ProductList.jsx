@@ -11,7 +11,7 @@ import Utils from '../../utils/utils';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const ServiceOption = ({ product, onSelect, discount = 0 }) => (
-  <div className="bg-gray-800 rounded-full py-4 pl-8 pr-5 mb-2 flex justify-between items-center cursor-pointer" 
+  <div className="bg-gray-800 rounded-full py-4 pl-8 pr-5 mb-2 flex justify-between items-center cursor-pointer"
         onClick={() => onSelect({...product, tran_amt: Math.max(0, product.price - discount)})}>
     <div className="w-full">
       <div className="flex justify-between">
@@ -55,9 +55,9 @@ const Body = ({ loading, error, products, discount, onSelect }) => {
   return (
     <div className="max-w py-2 px-8 overflow-y-auto h-full">
       {products.map((product) => (
-        <ServiceOption 
-          key={product.idx} 
-          product={product} 
+        <ServiceOption
+          key={product.idx}
+          product={product}
           onSelect={onSelect}
           discount={discount}
         />
@@ -67,22 +67,22 @@ const Body = ({ loading, error, products, discount, onSelect }) => {
 };
 
 const CloseButton = ({ onClick }) => (
-  <button 
+  <button
     onClick={onClick}
     className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
   >
-    <svg 
-      className="w-6 h-6" 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24" 
+    <svg
+      className="w-6 h-6"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-        strokeWidth={2} 
-        d="M6 18L18 6M6 6l12 12" 
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M6 18L18 6M6 6l12 12"
       />
     </svg>
   </button>
@@ -345,14 +345,14 @@ const ProductList = () => {
               <CloseButton onClick={() => setPaymentStatus(null)} />
               <h2 className="text-2xl font-bold mb-8">결제 방식 선택</h2>
               <div className="flex flex-col gap-4">
-                <button 
-                  onClick={() => processPayment(false)} 
+                <button
+                  onClick={() => processPayment(false)}
                   className="bg-blue-500 text-white px-6 py-4 rounded-xl text-xl hover:bg-blue-600"
                 >
                   실제 결제 진행
                 </button>
-                <button 
-                  onClick={() => processPayment(true)} 
+                <button
+                  onClick={() => processPayment(true)}
                   className="bg-green-500 text-white px-6 py-4 rounded-xl text-xl hover:bg-green-600"
                 >
                   가상 결제 시뮬레이션
@@ -401,14 +401,14 @@ const ProductList = () => {
   return (
     <div className="bg-black h-full flex flex-col">
       <div className="sticky top-0 flex-none bg-black">
-        <AppBar 
+        <AppBar
           label="상품 선택"
           showBack={true}
           onBack={handleBack}
         />
       </div>
       <div className="flex-1 overflow-hidden">
-        <Body 
+        <Body
           loading={loading}
           error={error}
           products={products}

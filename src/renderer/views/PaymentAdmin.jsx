@@ -39,7 +39,7 @@ const PaymentAdmin = () => {
 
   const handleCancel = async () => {
     if (!selectedPayment) return;
-    
+
     try {
       setLoading(true);
       log.info('결제 취소 요청:', selectedPayment);
@@ -55,7 +55,7 @@ const PaymentAdmin = () => {
       } else {
         result = await window.paymentIPC.processCancel(selectedPayment);
       }
-      
+
       if (result.isSuccess) {
         const cancelResponse = await ApiService.updateReservationStatus(
           selectedPayment.reservation_idx,
@@ -94,7 +94,7 @@ const PaymentAdmin = () => {
 
   const handlePrintReceipt = async () => {
     if (!selectedPayment) return;
-    
+
     try {
       setLoading(true);
       log.info('영수증 출력 요청:', selectedPayment);
@@ -138,7 +138,7 @@ const PaymentAdmin = () => {
   return (
     <div className="h-screen bg-gray-900 text-white flex flex-col">
       <div className="flex-none">
-        <AppBar 
+        <AppBar
           label="결제 내역"
           showBack={true}
         />
@@ -175,8 +175,8 @@ const PaymentAdmin = () => {
               {payments.map((payment) => (
                 <tr key={payment.id} className="border-b border-gray-700 hover:bg-gray-700">
                   <td className="px-2 py-2 text-center text-sm">
-                    {payment.trade_req_time ? 
-                      payment.trade_req_time.replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5:$6') 
+                    {payment.trade_req_time ?
+                      payment.trade_req_time.replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5:$6')
                       : new Date(payment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                   </td>
                   <td className="px-2 py-2 text-center text-sm">{payment.card_no ? `${payment.card_no}${'*'.repeat(14 - payment.card_no.length)}` : ''}</td>

@@ -29,6 +29,7 @@ const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
 const Home = () => {
   const navigate = useNavigate();
   const [showQrScanner, setShowQrScanner] = useState(false);
+  const [showInfoMessage, setShowInfoMessage] = useState(null);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
   const [carWashState, setCarWashState] = useState(null);
   const useAppOnly = localStorage.getItem(STORAGE_KEYS.USE_ONLY_APP) === 'true';
@@ -75,7 +76,7 @@ const Home = () => {
     window.machineIPC.onStatusUpdate(statusUpdateListener);
 
     const qrCodeListener = (data) => {
-      if (isWashing) return;
+      if (isWashing || showInfoMessage) return;
       log.info("QR 코드 스캔 데이터:", data);
       window.scannerIPC.beep();
       window.scannerIPC.toggleLight(false);
@@ -118,23 +119,16 @@ const Home = () => {
   };
 
   const processQrCode = async (qrData) => {
-    let qrCodeData;
     try {
-      qrCodeData = JSON.parse(qrData);
+      const qrCodeData = JSON.parse(qrData);
       log.info(qrCodeData);
-    } catch (error) {
-      log.error('QR 코드 데이터 파싱 오류:', error);
-      alert('유효하지 않은 QR 코드입니다. 다시 시도해주세요.');
-      return;
-    } finally {
-      closeQrScanner();
-    }
 
-    try {
+      setShowInfoMessage('예약 확인 중입니다...');
       // 예약 QR 코드인 경우
       if (qrCodeData.qr_idx && qrCodeData.qr_created_at && qrCodeData.qr_checksum) {
         const targetMode = await getReservedTargetMode(qrCodeData);
         log.info('예약된 세차 모드:', targetMode);
+        setShowInfoMessage('기기 시동 중입니다...');
         const controlResponse = await window.machineIPC.startWash(targetMode);
 
         if (controlResponse.success) {
@@ -149,10 +143,16 @@ const Home = () => {
         moveToSelectProductPage(qrCodeData.discount);
       }
     } catch (error) {
-      log.error('세차기 시작 오류:', error);
-      alert(`세차기 시작 중 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
+      if (error instanceof SyntaxError) {
+        log.error('QR 코드 데이터 구문 분석 오류:', error);
+        alert('QR 코드 형식이 올바르지 않습니다. 다시 시도해주세요.');
+      } else {
+        log.error(error);
+        alert(`세차기 시작 중 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
+      }
     } finally {
       closeQrScanner();
+      setShowInfoMessage(null);
     }
   }
 
@@ -182,8 +182,7 @@ const Home = () => {
         throw new Error('유효하지 않은 QR 코드');
       }
     } catch (error) {
-      log.error('예약 확인 중 오류가 발생했습니다:', error);
-      alert(`예약 확인 중 오류가 발생했습니다. 다시 시도해주세요.\n(${error.message})`);
+      throw new Error(`예약 확인 중 오류가 발생했습니다. 다시 시도해주세요.\n(${error.message})`);
     }
   };
 
@@ -246,6 +245,17 @@ const Home = () => {
             <p className="mb-4">예약 확인을 위해 QR 코드를 스캐너에 보여주세요.</p>
             <div className="bg-gray-200 w-full h-64 flex items-center justify-center">
               <p>스캐너가 활성화되었습니다. QR 코드를 스캔해주세요.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 예약 확인 모달 관련 코드 */}
+      {showInfoMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-lg max-w-md w-full text-white text-center">
+            <div className="flex justify-center items-center">
+              <h2 className="text-xl font-bold">{showInfoMessage}</h2>
             </div>
           </div>
         </div>

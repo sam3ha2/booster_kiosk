@@ -5,6 +5,7 @@ import ApiService from '../../utils/api_service';
 import AppBar from '../components/AppBar';
 import CarWashStatus from '../components/CarWashStatus';
 import boosterIcon from '../../assets/images/ic_booster_logo.png';
+import btn_qr from '../../assets/images/btn_qr.svg';
 import ArrowIcon from '../components/ArrowIcon';
 import { STORAGE_KEYS, RECEIPT_INFO_REFRESH_TIME } from '../../constants/constants';
 import { Usage } from '../components/Usage';
@@ -16,14 +17,19 @@ const isDiscountable = true;
 const HomeButton = ({ onClick, disabled, icon, text, subText }) => (
   <button
     onClick={onClick}
-    className={`bg-gray-800 text-white px-2 py-0 rounded-full flex flex-col items-center transition duration-300 w-44 h-60 justify-center ${
+    className={`bg-gray-800 text-white px-2 py-0 rounded-full flex flex-col items-center transition duration-300 w-44 h-64 justify-center ${
       disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
     }`}
     disabled={disabled}
   >
-    <span className="text-2xl font-normal mt-4">{text}</span>
-    <span className="text-2xl font-bold text-main">{subText}</span>
-    <span className="mt-10 text-2xl">{icon}</span>
+    <div className='flex-1 flex flex-col justify-end items-center mb-2'>
+      <span className='text-2xl font-normal'>{text}</span>
+      <span className='text-2xl font-bold text-main'>{subText}</span>
+    </div>
+
+    <div className='flex-1 flex justify-start items-center mb-4'>
+      <span className='text-2xl'>{icon}</span>
+    </div>
   </button>
 );
 
@@ -210,14 +216,8 @@ const Home = () => {
       ) : (
         // 세차 중이 아닐 때 표시되는 UI
         <>
-        {useAppOnly ? (
-          <div className="flex space-x-4">
-            <div className="text-center text-xl bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-700 leading-relaxed">
-              현재는 앱 예약 후<br />QR 코드를 통해서 동작합니다.
-            </div>
-          </div>
-        ) : (
-          <div className="flex space-x-4">
+        <div className="flex space-x-4">
+          {!useAppOnly && (
             <HomeButton
               onClick={() => moveToSelectProductPage()}
               disabled={false}
@@ -225,8 +225,15 @@ const Home = () => {
               subText="현장결제"
               icon={<ArrowIcon direction="right" color="text-white" size="w-8 h-8" />}
             />
-          </div>
-        )}
+          )}
+          <HomeButton
+            onClick={() => setShowQrScanner(true)}
+            disabled={false}
+            text="자동세차"
+            subText="QR확인"
+            icon={<img src={btn_qr} alt="QR" className="" />}
+          />
+        </div>
         </>
       )}
       <button onClick={toggleUsageGuide} className="fixed bottom-0 bg-gray-800 py-4 w-full text-white font-bold text-xl rounded-t-3xl">

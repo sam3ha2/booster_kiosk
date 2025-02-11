@@ -270,19 +270,19 @@ const Home = () => {
             <h2 className="text-2xl font-bold mb-6 text-center">부스터 키오스크 사용 안내</h2>
             <div className="space-y-6">
               <div className="flex items-start">
-                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shrink-0">
                   <span className="text-xl">1</span>
                 </div>
                 <p className='text-xl'>앱 예약, 구독은 메인화면에서 QR코드를 스캔해 주세요.<br/>현장에서 결제할 경우 '자동세차 현장결제' 버튼을 눌러주세요.</p>
               </div>
               <div className="flex items-start">
-                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shrink-0">
                   <span className="text-xl">2</span>
                 </div>
                 <p className='text-xl'>QR확인은 모니터 왼쪽 하단에 30cm 거리 안에서 스캔하고 세차를 진행해 주세요.</p>
               </div>
               <div className="flex items-start">
-                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shrink-0">
                   <span className="text-xl">3</span>
                 </div>
                 <p className='text-xl'>현장 결제는 원하는 상품을 선택 후 모니터 하단에서 카드결제하고 세차를 진행해 주세요.</p>

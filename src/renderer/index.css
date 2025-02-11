@@ -1,3 +1,105 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --text-*: initial;
+  --text-xs: 1rem;
+  --text-sm: 1.25rem;
+  --text-base: 1.5rem;
+  --text-lg: 1.75rem;
+  --text-xl: 2rem;
+  --text-2xl: 2.5rem;
+  --text-3xl: 3rem;
+  --text-4xl: 3.5rem;
+  --text-5xl: 4rem;
+
+  --spacing-*: initial;
+  --spacing-0: 0px;
+  --spacing-1: 0.5rem;
+  --spacing-2: 1rem;
+  --spacing-3: 1.5rem;
+  --spacing-4: 2rem;
+  --spacing-5: 2.5rem;
+  --spacing-6: 3rem;
+  --spacing-8: 4rem;
+  --spacing-10: 5rem;
+  --spacing-12: 6rem;
+  --spacing-16: 8rem;
+  --spacing-20: 10rem;
+  --spacing-24: 12rem;
+  --spacing-32: 16rem;
+  --spacing-40: 20rem;
+  --spacing-48: 24rem;
+  --spacing-56: 28rem;
+  --spacing-64: 32rem;
+  --spacing-px: 1px;
+  --spacing-0_5: 0.125rem;
+
+  --color-main: #57f3a8;
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+  --radius-full: 9999px;
+
+  --width-1: 0.5rem;
+  --width-2: 1rem;
+  --width-3: 1.5rem;
+  --width-4: 2rem;
+  --width-5: 2.5rem;
+  --width-6: 3rem;
+  --width-8: 4rem;
+  --width-10: 5rem;
+  --width-12: 6rem;
+  --width-16: 8rem;
+  --width-20: 10rem;
+  --width-24: 12rem;
+  --width-32: 16rem;
+  --width-40: 20rem;
+  --width-44: 22rem;
+  --width-48: 24rem;
+  --width-56: 28rem;
+  --width-64: 32rem;
+
+  --height-1: 0.5rem;
+  --height-2: 1rem;
+  --height-3: 1.5rem;
+  --height-4: 2rem;
+  --height-5: 2.5rem;
+  --height-6: 3rem;
+  --height-8: 4rem;
+  --height-10: 5rem;
+  --height-12: 6rem;
+  --height-16: 8rem;
+  --height-20: 10rem;
+  --height-24: 12rem;
+  --height-32: 16rem;
+  --height-40: 20rem;
+  --height-44: 22rem;
+  --height-48: 24rem;
+  --height-56: 28rem;
+  --height-60: 30rem;
+  --height-64: 32rem;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}

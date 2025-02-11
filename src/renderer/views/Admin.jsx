@@ -150,7 +150,7 @@ const Admin = () => {
               checked={isKioskMode}
               onChange={handleKioskToggle}
             />
-            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-none
+            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-hidden
               peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer
               ${isKioskMode ? 'bg-green-600' : 'bg-gray-700'}
               peer-checked:after:translate-x-full peer-checked:after:border-white
@@ -175,7 +175,7 @@ const Admin = () => {
               checked={useAppOnly}
               onChange={handleAppOnlyToggle}
             />
-            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-none
+            <div className={`relative w-11 h-6 bg-gray-600 peer-focus:outline-hidden
               peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer
               ${useAppOnly ? 'bg-green-600' : 'bg-gray-700'}
               peer-checked:after:translate-x-full peer-checked:after:border-white

@@ -174,7 +174,7 @@ class KisSocket {
       outIssuerCode: response.outIssuerCode || '',
       outIssuerName: response.outIssuerName || '',
       outMerchantRegNo: response.outMerchantRegNo || '',
-      isSuccess: response.outRtn === 0 && response.outAgentCode === '0000',
+      isSuccess: response.outRtn === 0 && response.outReplyCode === '0000',
     };
   }
 }

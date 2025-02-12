@@ -9,6 +9,8 @@ import btn_qr from '../../assets/images/btn_qr.svg';
 import ArrowIcon from '../components/ArrowIcon';
 import { STORAGE_KEYS, RECEIPT_INFO_REFRESH_TIME } from '../../constants/constants';
 import { Usage } from '../components/Usage';
+import { BottomSheet } from '../components/BottomSheet';
+import { QrScan } from '../components/QrScan';
 
 let isFirstTime = true;
 const isDiscountable = true;
@@ -82,22 +84,6 @@ const Home = () => {
   useEffect(() => {
     window.machineIPC.onStatusUpdate(statusUpdateListener);
 
-    const qrCodeListener = (data) => {
-      if (isWashing || showInfoMessage) return;
-      log.info("QR 코드 스캔 데이터:", data);
-      window.scannerIPC.beep();
-      window.scannerIPC.toggleLight(false);
-      processQrCode(data);
-    };
-
-    const scannerErrorListener = (error) => {
-      log.error("스캐너 오류:", error);
-      alert(`QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
-    };
-
-    window.scannerIPC.onQrCodeScanned(qrCodeListener);
-    window.scannerIPC.onScannerError(scannerErrorListener);
-
     // 개발 환경에서 초기 상태 설정
     if (isDevelopment && !carWashState) {
       setCarWashState({
@@ -112,10 +98,35 @@ const Home = () => {
 
     return () => {
       window.machineIPC.offStatusUpdate(statusUpdateListener);
+    };
+  }, [statusUpdateListener]);
+
+  useEffect(() => {
+    window.scannerIPC.toggleLight(showQrScanner);
+    if (!showQrScanner) {
+      return;
+    }
+
+    const qrCodeListener = (data) => {
+      if (isWashing || showInfoMessage) return;
+      log.info("QR 코드 스캔 데이터:", data);
+      window.scannerIPC.beep();
+      processQrCode(data);
+    };
+
+    const scannerErrorListener = (error) => {
+      log.error("스캐너 오류:", error);
+      alert(`QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
+    };
+
+    window.scannerIPC.onQrCodeScanned(qrCodeListener);
+    window.scannerIPC.onScannerError(scannerErrorListener);
+
+    return () => {
       window.scannerIPC.offQrCodeScanned(qrCodeListener);
       window.scannerIPC.offScannerError(scannerErrorListener);
     };
-  }, [statusUpdateListener]);
+  }, [showQrScanner]);
 
   const moveToSelectProductPage = (discount = 0) => {
     navigate('/products', { state: { discount } });
@@ -149,6 +160,7 @@ const Home = () => {
       else if (isDiscountable && qrCodeData.discount && qrCodeData.issue_date) {
         moveToSelectProductPage(qrCodeData.discount);
       }
+      closeQrScanner();
     } catch (error) {
       if (error instanceof SyntaxError) {
         log.error('QR 코드 데이터 구문 분석 오류:', error);
@@ -158,7 +170,6 @@ const Home = () => {
         alert(`세차기 시작 중 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
       }
     } finally {
-      closeQrScanner();
       setShowInfoMessage(null);
     }
   }
@@ -240,24 +251,6 @@ const Home = () => {
         부스터 키오스크 사용 안내
       </button>
 
-      {/* 모달 관련 코드 */}
-      {showQrScanner && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg max-w-md w-full text-black">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">QR 코드를 스캔해주세요</h2>
-              <button onClick={closeQrScanner} className="text-gray-500 hover:text-gray-700">
-                <span className="text-2xl">&times;</span>
-              </button>
-            </div>
-            <p className="mb-4">예약 확인을 위해 QR 코드를 스캐너에 보여주세요.</p>
-            <div className="bg-gray-200 w-full h-64 flex items-center justify-center">
-              <p>스캐너가 활성화되었습니다. QR 코드를 스캔해주세요.</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 예약 확인 모달 관련 코드 */}
       {showInfoMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -269,18 +262,20 @@ const Home = () => {
         </div>
       )}
 
-      {showUsageGuide && (
-        <div className="fixed inset-0 bg-black/80 z-50">
-          {/* 바텀시트 */}
-          <div
-            className={`fixed bottom-0 w-full bg-gray-800 p-8 rounded-t-[64px] text-white transition-transform duration-300 transform ${
-              showUsageGuide ? 'translate-y-0' : 'translate-y-full'
-            }`}
-          >
-            <Usage withSubscribe={true} onClickClose={toggleUsageGuide} />
-          </div>
-        </div>
-      )}
+      <BottomSheet
+        isShow={showQrScanner}
+        toggle={closeQrScanner}
+        title="QR을 스캐너에 보여주세요."
+        withHandleBar={true}
+        child={<QrScan />}
+      />
+      <BottomSheet
+        isShow={showUsageGuide}
+        toggle={toggleUsageGuide}
+        title="부스터 키오스크 사용 안내"
+        withHandleBar={true}
+        child={<Usage withSubscribe={true} />}
+      />
     </div>
   );
 };

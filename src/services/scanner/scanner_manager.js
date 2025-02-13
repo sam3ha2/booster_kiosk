@@ -14,7 +14,7 @@ class ScannerManager extends EventEmitter {
       return;
     }
 
-    log.info('Initializing scanner...');
+    log.info('Initializing scanner...(이후 로그에 오류 없으면 연결)');
     try {
       this.scanner = new VguangScanner({ mode: 'tx400' });
       this.scanner.on('ready', () => {

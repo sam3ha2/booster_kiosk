@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MenuItem } from "./MenuItem";
+import { QrScan } from './QrScan';
+import { BottomSheet } from './BottomSheet';
 
-const DeviceMenuItem = ({ deviceType, label, connected, path, status, onConnect, onDisconnect }) => {
+const DeviceMenuItem = ({ deviceType, label, connected, path, status, onConnect, onDisconnect, onClickExtraButton }) => {
   const handleConnection = () => {
     if (connected) {
       onDisconnect(deviceType);
@@ -13,13 +15,19 @@ const DeviceMenuItem = ({ deviceType, label, connected, path, status, onConnect,
   return (
     <MenuItem
       label={label}
-      value={connected ? (path || '연결됨') : '연결 안됨'}
+      value={connected ? (path || '') : ''}
       status={status}
       actionButton={<button
         onClick={handleConnection}
         className={`px-3 py-1 rounded text-sm ${connected ? 'bg-red-600' : 'bg-main'}`}
       >
         {connected ? '해제' : '연결'}
+      </button>}
+      extraButton={connected && onClickExtraButton && <button
+        onClick={onClickExtraButton}
+        className={`ml-2 px-3 py-1 rounded text-sm bg-blue-600`}
+      >
+        테스트
       </button>} />
   );
 };
@@ -30,6 +38,7 @@ export const DeviceStatus = () => {
     scanner: { connected: false, status: null },
     printer: { connected: false, status: null }
   });
+  const [showQrScanner, setShowQrScanner] = useState(false);
 
   const loadDeviceStates = async () => {
     try {
@@ -142,6 +151,31 @@ export const DeviceStatus = () => {
     };
   }, []);
 
+  useEffect(() => {
+    window.scannerIPC.toggleLight(showQrScanner);
+    if (!showQrScanner) {
+      return;
+    }
+
+    const qrCodeListener = (data) => {
+      window.scannerIPC.beep();
+      setShowQrScanner(false);
+      alert(data);
+    };
+
+    const scannerErrorListener = (error) => {
+      alert(`QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
+    };
+
+    window.scannerIPC.onQrCodeScanned(qrCodeListener);
+    window.scannerIPC.onScannerError(scannerErrorListener);
+
+    return () => {
+      window.scannerIPC.offQrCodeScanned(qrCodeListener);
+      window.scannerIPC.offScannerError(scannerErrorListener);
+    };
+  }, [showQrScanner]);
+
   const handleConnect = (deviceType) => handleDeviceConnection(deviceType, 'connect');
   const handleDisconnect = (deviceType) => handleDeviceConnection(deviceType, 'disconnect');
 
@@ -163,6 +197,7 @@ export const DeviceStatus = () => {
         status={deviceStates.scanner.status}
         onConnect={handleConnect}
         onDisconnect={handleDisconnect}
+        onClickExtraButton={() => setShowQrScanner(true)}
       />
       <DeviceMenuItem
         deviceType="printer"
@@ -171,20 +206,16 @@ export const DeviceStatus = () => {
         status={deviceStates.printer.status}
         onConnect={handleConnect}
         onDisconnect={handleDisconnect}
+        onClickExtraButton={() => window.printerIPC.printTest()}
       />
-      {deviceStates.printer.connected && (
-        <MenuItem
-          label="테스트"
-          actionButton={
-            <button
-              onClick={() => window.printerIPC.printTest()}
-              className="px-3 py-1 rounded text-sm bg-main"
-            >
-              출력
-            </button>
-          }
-        />
-      )}
+
+      <BottomSheet
+        isShow={showQrScanner}
+        toggle={() => setShowQrScanner(false)}
+        title="QR을 스캐너에 보여주세요."
+        withHandleBar={true}
+        child={<QrScan />}
+      />
     </>
   );
 };

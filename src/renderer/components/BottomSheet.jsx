@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export const BottomSheet = ({ isShow, toggle, title, child, withHandleBar }) => {
+export const BottomSheet = ({ isShow, toggle, title, child, withHandleBar, isModal }) => {
   const [lastY, setLastY] = useState(0); // 마지막 Y 좌표
   const [directionUp, setDirectionUp] = useState(false); // 마지막 이동 방향이 위인지
   const [draggedY, setDraggedY] = useState(0);
@@ -17,6 +17,7 @@ export const BottomSheet = ({ isShow, toggle, title, child, withHandleBar }) => 
   }, [isShow]);
 
   const handleTouchStart = (e) => {
+    if (isModal) return;
     setLastY(e.touches[0].clientY); // 마지막 Y 좌표 초기화
     setDraggedY(0);
     setIsDragging(true);
@@ -24,6 +25,7 @@ export const BottomSheet = ({ isShow, toggle, title, child, withHandleBar }) => 
   };
 
   const handleTouchMove = (e) => {
+    if (isModal) return;
     if (!isDragging) return;
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - lastY;
@@ -36,6 +38,7 @@ export const BottomSheet = ({ isShow, toggle, title, child, withHandleBar }) => 
   };
 
   const handleTouchEnd = () => {
+    if (isModal) return;
     setIsDragging(false);
 
     // 마지막 이동 방향이 위쪽(살짝이라도 올리면) → 복귀
@@ -65,7 +68,7 @@ export const BottomSheet = ({ isShow, toggle, title, child, withHandleBar }) => 
       className={`fixed inset-0 bg-black/80 z-50 transition-opacity duration-300 ${
         isShow && !isClosing ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
-      onClick={closeSheet} // 배경 클릭 시 닫힘
+      onClick={isModal ? null : closeSheet} // 배경 클릭 시 닫힘
     >
       <div
         className="fixed bottom-0 w-full bg-[#3e3e3e] p-8 rounded-t-[64px] text-white transition-transform duration-300 transform"
@@ -78,7 +81,7 @@ export const BottomSheet = ({ isShow, toggle, title, child, withHandleBar }) => 
         onTouchMove={handleTouchMove} // 드래그 중
         onTouchEnd={handleTouchEnd} // 드래그 종료
       >
-        {withHandleBar ? (
+        {isModal ? null : withHandleBar ? (
           <div className="w-16 h-2 bg-gray-400 rounded-full mx-auto mb-4 cursor-pointer" />
         ) : (
           <button onClick={closeSheet} className="absolute top-8 right-6 w-12 h-12 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">

@@ -7,6 +7,8 @@ import AppBar from '../components/AppBar';
 import ArrowIcon from '../components/ArrowIcon';
 import { HEADQUARTERS, STORAGE_KEYS } from '../../constants/constants';
 import Utils from '../../utils/utils';
+import { BottomSheet } from '../components/BottomSheet';
+import { PaymentProcess } from '../components/PaymentProcess';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -340,7 +342,7 @@ const ProductList = () => {
         return null;
       } else if (isDevelopment) {
         return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-gray-800 p-8 mx-8 rounded-3xl max-w-md w-full text-white relative">
               <CloseButton onClick={() => setPaymentStatus(null)} />
               <h2 className="text-2xl font-bold mb-8">결제 방식 선택</h2>
@@ -367,7 +369,7 @@ const ProductList = () => {
     }
     if (paymentStatus === 'processing') {
       return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
             <div className="flex flex-col items-center">
               <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mb-4"></div>
@@ -379,7 +381,7 @@ const ProductList = () => {
     }
     if (paymentStatus === 'failed') {
       return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
             <CloseButton onClick={() => setPaymentStatus(null)} />
             <h2 className="text-2xl font-bold mb-4">결제 실패</h2>
@@ -418,7 +420,7 @@ const ProductList = () => {
       </div>
       {renderPaymentModal()}
       {paymentStatus === 'success' && selectedProduct.tran_amt > 0 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
             <h2 className="text-2xl font-bold mb-4 text-center">결제가<br/>완료되었습니다.</h2>
             <p className="mb-4 text-center text-base">모니터 하단에 카드를 회수해 주세요.</p>
@@ -434,7 +436,7 @@ const ProductList = () => {
         </div>
       )}
       {paymentStatus === 'success' && selectedProduct.tran_amt === 0 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-8 rounded-3xl max-w-md w-full text-white relative">
             <h2 className="text-2xl font-bold mb-4 text-center">세차가 시작됩니다.</h2>
             <div className="flex justify-center mt-6">
@@ -445,6 +447,12 @@ const ProductList = () => {
           </div>
         </div>
       )}
+      <BottomSheet
+        isShow={paymentStatus === 'processing'}
+        title='신용카드를 주세요.'
+        isModal={true}
+        child={<PaymentProcess />}
+      />
     </div>
   );
 };

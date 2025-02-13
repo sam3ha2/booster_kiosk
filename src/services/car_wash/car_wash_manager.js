@@ -241,7 +241,7 @@ class CarWashManager extends EventEmitter {
   }
 
   // 연결 상태 및 정보를 반환하는 메서드
-  async getMachineStatus() {
+  getMachineStatus() {
     try {
       if (!this.machine) {
         return {

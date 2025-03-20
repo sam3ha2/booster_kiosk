@@ -132,6 +132,7 @@ class KisSocket {
     installment = '0',
     auth_no = '',
     auth_date = '',
+    van_key = '',
     is_approval = true,
   }) {
     return {
@@ -144,6 +145,7 @@ class KisSocket {
         inInstallment: installment,
         inOrgAuthNo: auth_no,
         inOrgAuthDate: auth_date.slice(-6),
+        inVanKey: van_key,
       },
     };
   }

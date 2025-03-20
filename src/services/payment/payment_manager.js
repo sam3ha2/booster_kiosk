@@ -68,6 +68,7 @@ class PaymentManager {
    * @param {string} params.installment - 할부개월수
    * @param {string} params.org_auth_no - 원거래 승인번호
    * @param {string} params.org_auth_date - 원거래 승인일자
+   * @param {string} params.van_key - van key
    */
   async requestCancel(params) {
     return await this.processPayment({ ...params, is_approval: false });

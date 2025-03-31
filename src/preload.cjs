@@ -28,7 +28,7 @@ contextBridge.exposeInMainWorld('scannerIPC', {
     ipcRenderer.removeAllListeners('qrCodeScanned');
     ipcRenderer.on('qrCodeScanned', (event, data) => callback(data));
   },
-  offQrCodeScanned: (callback) => ipcRenderer.removeListener('qrCodeScanned', callback),
+  offQrCodeScanned: () => ipcRenderer.removeAllListeners('qrCodeScanned'),
   onScannerError: (callback) => {
     ipcRenderer.removeAllListeners('scannerError');
     ipcRenderer.on('scannerError', (event, error) => callback(error));

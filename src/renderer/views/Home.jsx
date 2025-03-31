@@ -72,6 +72,26 @@ const Home = () => {
     };
 
     loadReceiptInfo();
+
+    const qrCodeListener = (data) => {
+      if (isWashing || showInfoMessage) return;
+      log.info("QR 코드 스캔 데이터:", data);
+      window.scannerIPC.beep();
+      processQrCode(data);
+    };
+
+    const scannerErrorListener = (error) => {
+      log.error("스캐너 오류:", error);
+      alert(`QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
+    };
+
+    window.scannerIPC.onQrCodeScanned(qrCodeListener);
+    window.scannerIPC.onScannerError(scannerErrorListener);
+
+    return () => {
+      window.scannerIPC.offQrCodeScanned();
+      window.scannerIPC.offScannerError(scannerErrorListener);
+    };
   }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   const statusUpdateListener = useCallback((data) => {
@@ -103,29 +123,6 @@ const Home = () => {
 
   useEffect(() => {
     window.scannerIPC.toggleLight(showQrScanner);
-    if (!showQrScanner) {
-      return;
-    }
-
-    const qrCodeListener = (data) => {
-      if (isWashing || showInfoMessage) return;
-      log.info("QR 코드 스캔 데이터:", data);
-      window.scannerIPC.beep();
-      processQrCode(data);
-    };
-
-    const scannerErrorListener = (error) => {
-      log.error("스캐너 오류:", error);
-      alert(`QR 스캐너 오류가 발생했습니다. 다시 시도해주세요.(${error})`);
-    };
-
-    window.scannerIPC.onQrCodeScanned(qrCodeListener);
-    window.scannerIPC.onScannerError(scannerErrorListener);
-
-    return () => {
-      window.scannerIPC.offQrCodeScanned(qrCodeListener);
-      window.scannerIPC.offScannerError(scannerErrorListener);
-    };
   }, [showQrScanner]);
 
   const moveToSelectProductPage = (discount = 0) => {
@@ -141,6 +138,7 @@ const Home = () => {
       const qrCodeData = JSON.parse(qrData);
       log.info(qrCodeData);
 
+      closeQrScanner();
       setShowInfoMessage('예약 확인 중입니다...');
       // 예약 QR 코드인 경우
       if (qrCodeData.qr_idx && qrCodeData.qr_created_at && qrCodeData.qr_checksum) {
@@ -160,7 +158,6 @@ const Home = () => {
       else if (isDiscountable && qrCodeData.discount && qrCodeData.issue_date) {
         moveToSelectProductPage(qrCodeData.discount);
       }
-      closeQrScanner();
     } catch (error) {
       if (error instanceof SyntaxError) {
         log.error('QR 코드 데이터 구문 분석 오류:', error);
